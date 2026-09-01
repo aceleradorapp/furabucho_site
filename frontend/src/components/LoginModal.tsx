@@ -32,20 +32,20 @@ export function LoginModal({ open, onOpenChange }: { open: boolean; onOpenChange
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 data-[state=open]:animate-in data-[state=open]:fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-card-lg bg-card p-8 shadow-2xl focus:outline-none">
+        <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 data-[state=open]:animate-in data-[state=open]:fade-in" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-card-lg bg-[#141418] border border-white/10 p-8 shadow-2xl focus:outline-none">
           <div className="flex items-center justify-between mb-6">
-            <Dialog.Title className="font-display uppercase tracking-wider text-xl text-text-main">
+            <Dialog.Title className="font-display uppercase tracking-wider text-xl text-white">
               Área do Membro
             </Dialog.Title>
-            <Dialog.Close className="text-text-muted hover:text-text-main">
+            <Dialog.Close className="text-zinc-400 hover:text-white transition">
               <X size={20} />
             </Dialog.Close>
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="text-sm text-text-muted" htmlFor="identifier">
+              <label className="text-sm text-zinc-400" htmlFor="identifier">
                 E-mail ou usuário
               </label>
               <input
@@ -55,12 +55,12 @@ export function LoginModal({ open, onOpenChange }: { open: boolean; onOpenChange
                 onChange={(e) => setIdentifier(e.target.value)}
                 required
                 autoFocus
-                className="mt-1 w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
+                className="mt-1 w-full rounded-lg bg-white/5 border border-white/10 text-white px-3 py-2 outline-none focus:border-[#FF5E14] transition"
               />
             </div>
 
             <div>
-              <label className="text-sm text-text-muted" htmlFor="password">
+              <label className="text-sm text-zinc-400" htmlFor="password">
                 Senha
               </label>
               <div className="relative mt-1">
@@ -70,24 +70,24 @@ export function LoginModal({ open, onOpenChange }: { open: boolean; onOpenChange
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full rounded-lg border border-border px-3 py-2 pr-16 outline-none focus:border-primary"
+                  className="w-full rounded-lg bg-white/5 border border-white/10 text-white px-3 py-2 pr-16 outline-none focus:border-[#FF5E14] transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-white transition"
                 >
                   {showPassword ? 'ocultar' : 'mostrar'}
                 </button>
               </div>
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-400">{error}</p>}
 
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 rounded-full bg-primary hover:bg-primary-hover text-white font-medium py-2.5 transition disabled:opacity-60"
+              className="mt-2 rounded-full bg-[#FF5E14] hover:bg-[#E04D0B] text-white font-medium py-2.5 transition disabled:opacity-60"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>

@@ -29,10 +29,10 @@ export const IMAGE_SPECS: Record<string, ImageSpec> = {
     outputHeight: 900,
   },
   banner: {
-    aspect: 16 / 6,
+    aspect: 21 / 9,
     label: 'Banner do carrossel',
-    helpText: 'Formato bem panorâmico (16:6). Recomendado: 1600×600px ou mais.',
-    outputWidth: 1600,
-    outputHeight: 600,
+    helpText: 'Formato panorâmico (21:9), o mesmo usado no carrossel da home. Recomendado: 1680×720px ou mais.',
+    outputWidth: 1680,
+    outputHeight: 720,
   },
 };
