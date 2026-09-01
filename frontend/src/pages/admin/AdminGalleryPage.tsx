@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
 import { PrivateLayout } from '../../components/PrivateLayout';
+import { UPLOADS_BASE } from '../../lib/config';
 
 interface GallerySummary {
   id: number;
@@ -12,7 +13,6 @@ interface GallerySummary {
   imageCount: number;
 }
 
-const UPLOADS_BASE = 'http://localhost:4321';
 const currentYear = new Date().getFullYear();
 
 export function AdminGalleryPage() {

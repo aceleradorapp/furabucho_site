@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { PrivateLayout } from '../components/PrivateLayout';
+import { UPLOADS_BASE } from '../lib/config';
 
 interface GallerySummary {
   id: number;
@@ -13,7 +14,6 @@ interface GallerySummary {
   imageCount: number;
 }
 
-const UPLOADS_BASE = 'http://localhost:4321';
 
 export function GalleryListPage() {
   const [galleries, setGalleries] = useState<GallerySummary[]>([]);

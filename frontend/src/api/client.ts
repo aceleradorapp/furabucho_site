@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:4321/api';
+import { API_URL } from '../lib/config';
 
 export class ApiError extends Error {
   status: number;

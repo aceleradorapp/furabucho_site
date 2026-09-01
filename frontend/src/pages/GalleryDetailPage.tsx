@@ -5,6 +5,7 @@ import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { api } from '../api/client';
 import { PrivateLayout } from '../components/PrivateLayout';
+import { UPLOADS_BASE } from '../lib/config';
 
 interface GalleryImage {
   id: number;
@@ -19,7 +20,6 @@ interface GalleryDetail {
   images: GalleryImage[];
 }
 
-const UPLOADS_BASE = 'http://localhost:4321';
 
 export function GalleryDetailPage() {
   const { id } = useParams();

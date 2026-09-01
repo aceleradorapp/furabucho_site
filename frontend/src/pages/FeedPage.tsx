@@ -6,6 +6,7 @@ import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { PrivateLayout } from '../components/PrivateLayout';
+import { UPLOADS_BASE } from '../lib/config';
 
 interface PostComment {
   id: number;
@@ -25,7 +26,6 @@ interface FeedPost {
   comments: PostComment[];
 }
 
-const UPLOADS_BASE = 'http://localhost:4321';
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();

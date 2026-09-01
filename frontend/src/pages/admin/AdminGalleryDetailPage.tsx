@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import { PrivateLayout } from '../../components/PrivateLayout';
+import { UPLOADS_BASE } from '../../lib/config';
 
 interface GalleryImage {
   id: number;
@@ -17,7 +18,6 @@ interface GalleryDetail {
   images: GalleryImage[];
 }
 
-const UPLOADS_BASE = 'http://localhost:4321';
 
 export function AdminGalleryDetailPage() {
   const { id } = useParams();

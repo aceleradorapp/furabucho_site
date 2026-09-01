@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { LoginModal } from '../components/LoginModal';
+import { UPLOADS_BASE } from '../lib/config';
 
 interface SiteSettings {
   siteName: string;
@@ -24,7 +25,6 @@ interface Banner {
   active: boolean;
 }
 
-const UPLOADS_BASE = 'http://localhost:4321';
 
 export function LandingPage() {
   const [searchParams, setSearchParams] = useSearchParams();

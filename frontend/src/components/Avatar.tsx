@@ -1,11 +1,11 @@
+import { UPLOADS_BASE } from '../lib/config';
+
 const COLORS = ['#FF5E14', '#8B2CFF', '#0EA5E9', '#16A34A', '#DB2777', '#CA8A04'];
 
 function colorFor(name: string) {
   const sum = name.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
   return COLORS[sum % COLORS.length];
 }
-
-const UPLOADS_BASE = 'http://localhost:4321';
 
 export function Avatar({
   name,

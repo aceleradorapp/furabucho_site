@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import { ImageUploadButton } from '../../components/ImageUploadButton';
 import { PrivateLayout } from '../../components/PrivateLayout';
+import { UPLOADS_BASE } from '../../lib/config';
 import { IMAGE_SPECS } from '../../lib/imageSpecs';
 
 interface SiteSettings {
@@ -24,7 +25,6 @@ interface Banner {
   active: boolean;
 }
 
-const UPLOADS_BASE = 'http://localhost:4321';
 
 export function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
