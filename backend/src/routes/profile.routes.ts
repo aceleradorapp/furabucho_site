@@ -8,18 +8,21 @@ export const profileRouter = Router();
 profileRouter.use(requireAuth);
 
 profileRouter.patch('/', async (req: AuthedRequest, res) => {
-  const { name } = req.body as { name?: string };
+  const { name, birthDate } = req.body as { name?: string; birthDate?: string | null };
   if (!name || !name.trim()) {
     return res.status(400).json({ error: 'Informe um nome' });
   }
 
   const user = await prisma.user.update({
     where: { id: req.userId },
-    data: { name: name.trim() },
+    data: {
+      name: name.trim(),
+      ...(birthDate !== undefined ? { birthDate: birthDate ? new Date(birthDate) : null } : {}),
+    },
     include: { role: true },
   });
 
-  res.json({ id: user.id, name: user.name, avatarUrl: user.avatarUrl });
+  res.json({ id: user.id, name: user.name, avatarUrl: user.avatarUrl, birthDate: user.birthDate });
 });
 
 profileRouter.post('/avatar', upload.single('image'), async (req: AuthedRequest, res) => {

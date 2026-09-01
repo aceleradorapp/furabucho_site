@@ -60,7 +60,7 @@ function App() {
       <Route
         path="/admin/usuarios"
         element={
-          <ProtectedRoute requirePermission="canManageUsers">
+          <ProtectedRoute requirePermission={['canManageUsers', 'canManageMemberProfiles']}>
             <AdminUsersPage />
           </ProtectedRoute>
         }

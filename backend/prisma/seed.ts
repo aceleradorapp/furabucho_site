@@ -4,7 +4,7 @@ import { prisma } from '../src/lib/prisma';
 async function main() {
   const admin = await prisma.role.upsert({
     where: { key: 'admin' },
-    update: { canManageGallery: true },
+    update: { canManageGallery: true, canManageMemberProfiles: true },
     create: {
       key: 'admin',
       label: 'Administrador',
@@ -12,12 +12,13 @@ async function main() {
       canManageSettings: true,
       canManagePosts: true,
       canManageGallery: true,
+      canManageMemberProfiles: true,
     },
   });
 
   await prisma.role.upsert({
     where: { key: 'membro_ajudante' },
-    update: {},
+    update: { canManageMemberProfiles: true },
     create: {
       key: 'membro_ajudante',
       label: 'Membro Ajudante',
@@ -25,6 +26,7 @@ async function main() {
       canManageSettings: true,
       canManagePosts: true,
       canManageGallery: false,
+      canManageMemberProfiles: true,
     },
   });
 

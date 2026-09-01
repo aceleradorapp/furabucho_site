@@ -14,6 +14,13 @@ export const IMAGE_SPECS: Record<string, ImageSpec> = {
     outputWidth: 480,
     outputHeight: 480,
   },
+  caricature: {
+    aspect: 1,
+    label: 'Caricatura',
+    helpText: 'Formato quadrado. Recomendado: 400×400px (mínimo).',
+    outputWidth: 480,
+    outputHeight: 480,
+  },
   logo: {
     aspect: 1,
     label: 'Logo do site',

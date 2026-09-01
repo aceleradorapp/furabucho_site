@@ -10,6 +10,7 @@ export interface AuthedRequest extends Request {
     canManageSettings: boolean;
     canManagePosts: boolean;
     canManageGallery: boolean;
+    canManageMemberProfiles: boolean;
   };
 }
 
@@ -39,6 +40,7 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
       canManageSettings: user.role.canManageSettings,
       canManagePosts: user.role.canManagePosts,
       canManageGallery: user.role.canManageGallery,
+      canManageMemberProfiles: user.role.canManageMemberProfiles,
     };
     next();
   } catch {
@@ -46,11 +48,25 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
   }
 }
 
-type PermissionKey = 'canManageUsers' | 'canManageSettings' | 'canManagePosts' | 'canManageGallery';
+type PermissionKey =
+  | 'canManageUsers'
+  | 'canManageSettings'
+  | 'canManagePosts'
+  | 'canManageGallery'
+  | 'canManageMemberProfiles';
 
 export function requirePermission(permission: PermissionKey) {
   return (req: AuthedRequest, res: Response, next: NextFunction) => {
     if (!req.userRole?.[permission]) {
+      return res.status(403).json({ error: 'Sem permissão para esta ação' });
+    }
+    next();
+  };
+}
+
+export function requireAnyPermission(...permissions: PermissionKey[]) {
+  return (req: AuthedRequest, res: Response, next: NextFunction) => {
+    if (!permissions.some((permission) => req.userRole?.[permission])) {
       return res.status(403).json({ error: 'Sem permissão para esta ação' });
     }
     next();

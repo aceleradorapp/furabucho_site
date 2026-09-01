@@ -27,6 +27,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
     user.permissions.canManageSettings ||
     user.permissions.canManageUsers ||
     user.permissions.canManageGallery ||
+    user.permissions.canManageMemberProfiles ||
     user.role === 'admin';
 
   function isActive(path: string) {
@@ -87,7 +88,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                         </Link>
                       </DropdownMenu.Item>
                     )}
-                    {user.permissions.canManageUsers && (
+                    {(user.permissions.canManageUsers || user.permissions.canManageMemberProfiles) && (
                       <DropdownMenu.Item asChild>
                         <Link
                           to="/admin/usuarios"

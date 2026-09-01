@@ -13,13 +13,15 @@ rolesRouter.get('/', async (_req, res) => {
 
 rolesRouter.patch('/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const { label, canManageUsers, canManageSettings, canManagePosts, canManageGallery } = req.body as {
-    label?: string;
-    canManageUsers?: boolean;
-    canManageSettings?: boolean;
-    canManagePosts?: boolean;
-    canManageGallery?: boolean;
-  };
+  const { label, canManageUsers, canManageSettings, canManagePosts, canManageGallery, canManageMemberProfiles } =
+    req.body as {
+      label?: string;
+      canManageUsers?: boolean;
+      canManageSettings?: boolean;
+      canManagePosts?: boolean;
+      canManageGallery?: boolean;
+      canManageMemberProfiles?: boolean;
+    };
 
   const role = await prisma.role.update({
     where: { id },
@@ -29,6 +31,7 @@ rolesRouter.patch('/:id', async (req, res) => {
       ...(canManageSettings !== undefined ? { canManageSettings } : {}),
       ...(canManagePosts !== undefined ? { canManagePosts } : {}),
       ...(canManageGallery !== undefined ? { canManageGallery } : {}),
+      ...(canManageMemberProfiles !== undefined ? { canManageMemberProfiles } : {}),
     },
   });
 

@@ -15,6 +15,7 @@ model Role {
   canManageSettings Boolean @default(false)
   canManagePosts  Boolean @default(false)
   canManageGallery Boolean @default(false)
+  canManageMemberProfiles Boolean @default(false)
 
   users           User[]
 }
@@ -22,10 +23,14 @@ model Role {
 model User {
   id                Int       @id @default(autoincrement())
   name              String
+  nickname          String?
   username          String    @unique
   email             String    @unique
   passwordHash      String
   avatarUrl         String?
+  caricatureUrl     String?
+  birthDate         DateTime? @db.Date
+  isPontaFirme      Boolean   @default(false)
   roleId            Int
   role              Role      @relation(fields: [roleId], references: [id])
   mustChangePassword Boolean  @default(true)

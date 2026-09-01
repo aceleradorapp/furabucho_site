@@ -10,6 +10,7 @@ interface Role {
   canManageSettings: boolean;
   canManagePosts: boolean;
   canManageGallery: boolean;
+  canManageMemberProfiles: boolean;
 }
 
 const PERMISSION_LABELS: { key: keyof Role; label: string; description: string }[] = [
@@ -21,6 +22,11 @@ const PERMISSION_LABELS: { key: keyof Role; label: string; description: string }
   },
   { key: 'canManagePosts', label: 'Criar postagens', description: 'Publicar novos cards no feed' },
   { key: 'canManageGallery', label: 'Gerenciar galeria', description: 'Criar álbuns e subir/remover fotos' },
+  {
+    key: 'canManageMemberProfiles',
+    label: 'Gerenciar perfis de membros',
+    description: 'Editar apelido e caricatura de qualquer membro na lista de usuários',
+  },
 ];
 
 export function AdminRolesPage() {

@@ -7,6 +7,7 @@ export interface AuthUser {
   username: string;
   email: string;
   avatarUrl: string | null;
+  birthDate: string | null;
   mustChangePassword: boolean;
   role: string;
   roleLabel: string;
@@ -15,6 +16,7 @@ export interface AuthUser {
     canManageSettings: boolean;
     canManagePosts: boolean;
     canManageGallery: boolean;
+    canManageMemberProfiles: boolean;
   };
 }
 

@@ -1,21 +1,9 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-  AlertCircle,
-  ArrowDown,
-  ArrowUp,
-  Check,
-  Eye,
-  EyeOff,
-  ImagePlus,
-  Loader2,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ArrowDown, ArrowUp, Eye, EyeOff, ImagePlus, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from '../../api/client';
 import { ImageUploadButton } from '../../components/ImageUploadButton';
 import { PrivateLayout } from '../../components/PrivateLayout';
+import { SaveStatusBadge, type SaveStatus } from '../../components/SaveStatusBadge';
 import { UPLOADS_BASE } from '../../lib/config';
 import { IMAGE_SPECS } from '../../lib/imageSpecs';
 
@@ -38,8 +26,6 @@ interface Banner {
   order: number;
   active: boolean;
 }
-
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 const AUTOSAVE_DELAY = 900;
 const STATUS_RESET_DELAY = 2200;
@@ -499,35 +485,5 @@ function IconButton({
     >
       {icon}
     </button>
-  );
-}
-
-function SaveStatusBadge({ status, compact }: { status: SaveStatus; compact?: boolean }) {
-  return (
-    <AnimatePresence mode="wait">
-      {status !== 'idle' && (
-        <motion.span
-          key={status}
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.15 }}
-          className={`inline-flex items-center gap-1.5 font-medium rounded-full ${
-            compact ? 'text-[10px] px-2 py-0.5' : 'text-xs px-3 py-1'
-          } ${
-            status === 'saving'
-              ? 'bg-card-subtle text-text-muted'
-              : status === 'saved'
-                ? 'bg-green-50 text-green-700'
-                : 'bg-red-50 text-red-600'
-          }`}
-        >
-          {status === 'saving' && <Loader2 size={compact ? 10 : 12} className="animate-spin" />}
-          {status === 'saved' && <Check size={compact ? 10 : 12} />}
-          {status === 'error' && <AlertCircle size={compact ? 10 : 12} />}
-          {status === 'saving' ? 'Salvando…' : status === 'saved' ? 'Salvo' : 'Erro ao salvar'}
-        </motion.span>
-      )}
-    </AnimatePresence>
   );
 }

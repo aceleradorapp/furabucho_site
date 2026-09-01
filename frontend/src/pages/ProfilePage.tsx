@@ -6,9 +6,15 @@ import { ImageUploadButton } from '../components/ImageUploadButton';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { IMAGE_SPECS } from '../lib/imageSpecs';
 
+function toDateInputValue(iso: string | null | undefined) {
+  if (!iso) return '';
+  return iso.slice(0, 10);
+}
+
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
+  const [birthDate, setBirthDate] = useState(toDateInputValue(user?.birthDate));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +27,7 @@ export function ProfilePage() {
     setError(null);
     setMessage(null);
     try {
-      await api.patch('/profile', { name });
+      await api.patch('/profile', { name, birthDate: birthDate || null });
       await refreshUser();
       setMessage('Perfil atualizado.');
     } catch (err) {
@@ -60,6 +66,19 @@ export function ProfilePage() {
               required
               className="mt-1 w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
             />
+          </div>
+
+          <div>
+            <label className="text-sm text-text-muted">Data de nascimento</label>
+            <input
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
+            />
+            <p className="text-xs text-text-muted mt-1">
+              Usaremos para avisar a galera nos aniversários do mês. Só o dia e mês são exibidos publicamente.
+            </p>
           </div>
 
           <div>

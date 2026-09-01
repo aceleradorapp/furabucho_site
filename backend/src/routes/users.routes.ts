@@ -2,17 +2,18 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import { requireAuth, requirePermission } from '../middleware/auth';
+import { upload } from '../lib/upload';
+import { requireAdmin, requireAnyPermission, requireAuth, requirePermission } from '../middleware/auth';
 
 export const usersRouter = Router();
 
-usersRouter.use(requireAuth, requirePermission('canManageUsers'));
+usersRouter.use(requireAuth);
 
 function generateTempPassword() {
   return crypto.randomBytes(6).toString('base64').replace(/[+/=]/g, '').slice(0, 8) + '1A';
 }
 
-usersRouter.get('/', async (_req, res) => {
+usersRouter.get('/', requireAnyPermission('canManageUsers', 'canManageMemberProfiles'), async (_req, res) => {
   const users = await prisma.user.findMany({
     include: { role: true },
     orderBy: { createdAt: 'desc' },
@@ -22,22 +23,26 @@ usersRouter.get('/', async (_req, res) => {
     users.map((u) => ({
       id: u.id,
       name: u.name,
+      nickname: u.nickname,
       username: u.username,
       email: u.email,
       role: u.role.key,
       roleLabel: u.role.label,
       mustChangePassword: u.mustChangePassword,
       createdAt: u.createdAt,
+      avatarUrl: u.avatarUrl,
+      caricatureUrl: u.caricatureUrl,
+      isPontaFirme: u.isPontaFirme,
     })),
   );
 });
 
-usersRouter.get('/roles', async (_req, res) => {
+usersRouter.get('/roles', requirePermission('canManageUsers'), async (_req, res) => {
   const roles = await prisma.role.findMany({ select: { id: true, key: true, label: true } });
   res.json(roles);
 });
 
-usersRouter.post('/', async (req, res) => {
+usersRouter.post('/', requirePermission('canManageUsers'), async (req, res) => {
   const { name, username, email, roleId, password } = req.body as {
     name?: string;
     username?: string;
@@ -76,7 +81,7 @@ usersRouter.post('/', async (req, res) => {
   }
 });
 
-usersRouter.patch('/:id', async (req, res) => {
+usersRouter.patch('/:id', requirePermission('canManageUsers'), async (req, res) => {
   const id = Number(req.params.id);
   const { name, roleId } = req.body as { name?: string; roleId?: number };
 
@@ -90,4 +95,52 @@ usersRouter.patch('/:id', async (req, res) => {
   });
 
   res.json({ id: user.id, name: user.name, role: user.role.key });
+});
+
+usersRouter.patch(
+  '/:id/profile-extras',
+  requireAnyPermission('canManageUsers', 'canManageMemberProfiles'),
+  async (req, res) => {
+    const id = Number(req.params.id);
+    const { nickname, caricatureUrl } = req.body as { nickname?: string | null; caricatureUrl?: string | null };
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(nickname !== undefined ? { nickname } : {}),
+        ...(caricatureUrl !== undefined ? { caricatureUrl } : {}),
+      },
+    });
+
+    res.json({ id: user.id, nickname: user.nickname, caricatureUrl: user.caricatureUrl });
+  },
+);
+
+usersRouter.post(
+  '/:id/caricature',
+  requireAnyPermission('canManageUsers', 'canManageMemberProfiles'),
+  upload.single('image'),
+  async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Envie uma imagem' });
+    const id = Number(req.params.id);
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { caricatureUrl: `/uploads/${req.file.filename}` },
+    });
+
+    res.json({ id: user.id, caricatureUrl: user.caricatureUrl });
+  },
+);
+
+usersRouter.patch('/:id/ponta-firme', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { isPontaFirme } = req.body as { isPontaFirme?: boolean };
+
+  if (typeof isPontaFirme !== 'boolean') {
+    return res.status(400).json({ error: 'Valor inválido' });
+  }
+
+  const user = await prisma.user.update({ where: { id }, data: { isPontaFirme } });
+  res.json({ id: user.id, isPontaFirme: user.isPontaFirme });
 });
