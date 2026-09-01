@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  username     String    @unique
+  email        String    @unique
+  passwordHash String
+  avatarUrl    String?
+  role         String    @default("member")
+  createdAt    DateTime  @default(now())
+
+  posts        Post[]
+  likes        Like[]
+  comments     Comment[]
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @db.Text
+  bannerUrl   String?
+  eventDate   DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+}
+
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  title     String
+  message   String   @db.Text
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  authorId  Int
+  author    User      @relation(fields: [authorId], references: [id])
+  imageUrl  String
+  caption   String?   @db.Text
+  createdAt DateTime  @default(now())
+
+  likes     Like[]
+  comments  Comment[]
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  text      String   @db.Text
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}

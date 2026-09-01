@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: theme('colors.canvas');
+  color: theme('colors.text.main');
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
