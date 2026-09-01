@@ -1,14 +1,55 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #FF5E14;
+  --color-primary-hover: #E04D0B;
+  --color-accent-dark: #121212;
+  --color-canvas: #FF6827;
+  --color-card: #FFFFFF;
+  --color-card-subtle: #F8F9FA;
+  --color-text-main: #18181B;
+  --color-text-muted: #71717A;
+  --color-border: #E4E4E7;
+
+  --background-image-gradient-hero: linear-gradient(135deg, rgba(28, 10, 48, 0.65) 0%, rgba(139, 44, 255, 0.4) 50%, rgba(255, 94, 20, 0.3) 100%);
+
+  --font-display: "Oswald", "Bebas Neue", sans-serif;
+
+  --radius-card: 32px;
+  --radius-card-lg: 44px;
+}
 
 :root {
   color-scheme: light;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  background: theme('colors.canvas');
-  color: theme('colors.text.main');
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-text-main);
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a,
+label[for],
+input[type="checkbox"],
+input[type="radio"],
+select {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: var(--color-primary);
+  color: white;
 }

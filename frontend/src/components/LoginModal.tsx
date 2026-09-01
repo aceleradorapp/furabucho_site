@@ -1,0 +1,99 @@
+import * as Dialog from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ApiError } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
+
+export function LoginModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const loggedUser = await login(identifier, password);
+      onOpenChange(false);
+      navigate(loggedUser.mustChangePassword ? '/trocar-senha' : '/feed');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Não foi possível entrar');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 data-[state=open]:animate-in data-[state=open]:fade-in" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-card-lg bg-card p-8 shadow-2xl focus:outline-none">
+          <div className="flex items-center justify-between mb-6">
+            <Dialog.Title className="font-display uppercase tracking-wider text-xl text-text-main">
+              Área do Membro
+            </Dialog.Title>
+            <Dialog.Close className="text-text-muted hover:text-text-main">
+              <X size={20} />
+            </Dialog.Close>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="text-sm text-text-muted" htmlFor="identifier">
+                E-mail ou usuário
+              </label>
+              <input
+                id="identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+                autoFocus
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-text-muted" htmlFor="password">
+                Senha
+              </label>
+              <div className="relative mt-1">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-border px-3 py-2 pr-16 outline-none focus:border-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted"
+                >
+                  {showPassword ? 'ocultar' : 'mostrar'}
+                </button>
+              </div>
+            </div>
+
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 rounded-full bg-primary hover:bg-primary-hover text-white font-medium py-2.5 transition disabled:opacity-60"
+            >
+              {loading ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}

@@ -3,6 +3,12 @@ import dotenv from 'dotenv';
 import express from 'express';
 import path from 'path';
 import { authRouter } from './routes/auth.routes';
+import { usersRouter } from './routes/users.routes';
+import { settingsRouter } from './routes/settings.routes';
+import { bannersRouter } from './routes/banners.routes';
+import { postsRouter } from './routes/posts.routes';
+import { rolesRouter } from './routes/roles.routes';
+import { profileRouter } from './routes/profile.routes';
 
 dotenv.config();
 
@@ -14,6 +20,12 @@ app.use('/uploads', express.static(path.join(__dirname, '..', process.env.UPLOAD
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRouter);
+app.use('/api/admin/users', usersRouter);
+app.use('/api/settings', settingsRouter);
+app.use('/api/banners', bannersRouter);
+app.use('/api/posts', postsRouter);
+app.use('/api/admin/roles', rolesRouter);
+app.use('/api/profile', profileRouter);
 
 const port = Number(process.env.PORT) || 4321;
 app.listen(port, () => console.log(`Fura-Bucho API rodando em http://localhost:${port}`));

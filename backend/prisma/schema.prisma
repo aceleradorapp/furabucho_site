@@ -7,19 +7,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           Int       @id @default(autoincrement())
-  name         String
-  username     String    @unique
-  email        String    @unique
-  passwordHash String
-  avatarUrl    String?
-  role         String    @default("member")
-  createdAt    DateTime  @default(now())
+model Role {
+  id              Int     @id @default(autoincrement())
+  key             String  @unique
+  label           String
+  canManageUsers  Boolean @default(false)
+  canManageSettings Boolean @default(false)
+  canManagePosts  Boolean @default(false)
 
-  posts        Post[]
-  likes        Like[]
-  comments     Comment[]
+  users           User[]
+}
+
+model User {
+  id                Int       @id @default(autoincrement())
+  name              String
+  username          String    @unique
+  email             String    @unique
+  passwordHash      String
+  avatarUrl         String?
+  roleId            Int
+  role              Role      @relation(fields: [roleId], references: [id])
+  mustChangePassword Boolean  @default(true)
+  createdAt         DateTime  @default(now())
+
+  posts             Post[]
+  likes             Like[]
+  comments          Comment[]
+}
+
+model SiteSettings {
+  id           Int      @id @default(autoincrement())
+  siteName     String   @default("Amigos Fura-Bucho")
+  subtitle     String?
+  foundingYear Int?
+  logoUrl      String?
+  heroTitle    String?
+  heroImageUrl String?
+  aboutText    String?  @db.Text
+  updatedAt    DateTime @updatedAt
+}
+
+model Banner {
+  id        Int      @id @default(autoincrement())
+  imageUrl  String
+  title     String?
+  subtitle  String?
+  linkUrl   String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 }
 
 model Event {
