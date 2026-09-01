@@ -1,5 +1,6 @@
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Heart, MessageCircle, Plus, Send } from 'lucide-react';
+import { Ban, Heart, MessageCircle, Plus, Send, ShieldAlert, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
@@ -16,6 +17,7 @@ interface FeedPost {
   id: number;
   imageUrl: string;
   caption: string | null;
+  blocked: boolean;
   createdAt: string;
   author: { id: number; name: string; avatarUrl: string | null };
   likeCount: number;
@@ -80,6 +82,17 @@ export function FeedPage() {
     await load();
   }
 
+  async function handleToggleBlock(post: FeedPost) {
+    await api.patch(`/posts/${post.id}/block`, { blocked: !post.blocked });
+    await load();
+  }
+
+  async function handleDeletePost(postId: number) {
+    if (!window.confirm('Excluir esta postagem definitivamente?')) return;
+    await api.delete(`/posts/${postId}`);
+    await load();
+  }
+
   return (
     <PrivateLayout>
       <div className="max-w-xl mx-auto py-6 px-2 sm:px-4">
@@ -119,13 +132,56 @@ export function FeedPage() {
 
         <div className="flex flex-col gap-4">
           {posts.map((post) => (
-            <article key={post.id} className="bg-white rounded-2xl border border-border overflow-hidden">
-              <header className="flex items-center gap-2 px-4 py-3">
-                <Avatar name={post.author.name} avatarUrl={post.author.avatarUrl} size={32} />
-                <div>
-                  <p className="text-sm font-medium text-text-main">{post.author.name}</p>
-                  <p className="text-xs text-text-muted">{timeAgo(post.createdAt)}</p>
+            <article
+              key={post.id}
+              className={`bg-white rounded-2xl border overflow-hidden ${post.blocked ? 'border-red-300' : 'border-border'}`}
+            >
+              <header className="flex items-center justify-between gap-2 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Avatar name={post.author.name} avatarUrl={post.author.avatarUrl} size={32} />
+                  <div>
+                    <p className="text-sm font-medium text-text-main">{post.author.name}</p>
+                    <p className="text-xs text-text-muted">{timeAgo(post.createdAt)}</p>
+                  </div>
+                  {post.blocked && (
+                    <span className="text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full ml-1">
+                      bloqueado
+                    </span>
+                  )}
                 </div>
+
+                {user?.role === 'admin' && (
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <button
+                        className="p-1.5 rounded-full hover:bg-card-subtle text-text-muted"
+                        aria-label="Ações de administrador"
+                      >
+                        <ShieldAlert size={18} />
+                      </button>
+                    </DropdownMenu.Trigger>
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content
+                        align="end"
+                        sideOffset={6}
+                        className="bg-card rounded-xl shadow-2xl border border-border py-2 min-w-[180px] z-40"
+                      >
+                        <DropdownMenu.Item
+                          onSelect={() => handleToggleBlock(post)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer"
+                        >
+                          <Ban size={16} /> {post.blocked ? 'Desbloquear' : 'Bloquear'}
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item
+                          onSelect={() => handleDeletePost(post.id)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-card-subtle outline-none cursor-pointer"
+                        >
+                          <Trash2 size={16} /> Excluir
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
+                )}
               </header>
 
               <div className="relative" onDoubleClick={() => handleLike(post)}>

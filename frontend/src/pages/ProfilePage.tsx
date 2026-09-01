@@ -1,17 +1,17 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { ImageUploadButton } from '../components/ImageUploadButton';
 import { PrivateLayout } from '../components/PrivateLayout';
+import { IMAGE_SPECS } from '../lib/imageSpecs';
 
 export function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
@@ -31,19 +31,11 @@ export function ProfilePage() {
     }
   }
 
-  async function handleAvatarChange(file: File) {
-    setUploading(true);
-    setError(null);
-    try {
-      const form = new FormData();
-      form.append('image', file);
-      await api.post('/profile/avatar', form);
-      await refreshUser();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Não foi possível enviar a foto');
-    } finally {
-      setUploading(false);
-    }
+  async function handleAvatarUpload(blob: Blob) {
+    const form = new FormData();
+    form.append('image', blob, 'avatar.jpg');
+    await api.post('/profile/avatar', form);
+    await refreshUser();
   }
 
   return (
@@ -54,21 +46,8 @@ export function ProfilePage() {
         <div className="flex items-center gap-4 mb-8">
           <Avatar name={user.name} avatarUrl={user.avatarUrl} size={80} />
           <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleAvatarChange(e.target.files[0])}
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="text-sm rounded-full border border-border px-4 py-1.5 hover:border-primary transition disabled:opacity-60"
-            >
-              {uploading ? 'Enviando...' : 'Trocar foto'}
-            </button>
-            <p className="text-xs text-text-muted mt-2">PNG ou JPG, até 8MB.</p>
+            <ImageUploadButton spec={IMAGE_SPECS.avatar} buttonLabel="Trocar foto" onUpload={handleAvatarUpload} />
+            <p className="text-xs text-text-muted mt-2">{IMAGE_SPECS.avatar.helpText}</p>
           </div>
         </div>
 

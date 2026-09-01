@@ -1,7 +1,8 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Home, LogOut, Settings, ShieldCheck, Users, UserRound } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Home, Images, LogOut, Settings, ShieldCheck, Users, UserRound } from 'lucide-react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from './Avatar';
 
@@ -9,10 +10,24 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [siteName, setSiteName] = useState('Fura-Bucho');
+
+  useEffect(() => {
+    function loadSiteName() {
+      api.get<{ siteName: string }>('/settings').then((s) => setSiteName(s.siteName));
+    }
+    loadSiteName();
+    window.addEventListener('site-settings-updated', loadSiteName);
+    return () => window.removeEventListener('site-settings-updated', loadSiteName);
+  }, []);
 
   if (!user) return null;
 
-  const hasSettingsMenu = user.permissions.canManageSettings || user.permissions.canManageUsers || user.role === 'admin';
+  const hasSettingsMenu =
+    user.permissions.canManageSettings ||
+    user.permissions.canManageUsers ||
+    user.permissions.canManageGallery ||
+    user.role === 'admin';
 
   function isActive(path: string) {
     return location.pathname === path;
@@ -29,7 +44,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/feed" className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-primary" />
-            <span className="font-display uppercase tracking-wider text-sm text-text-main">Fura-Bucho</span>
+            <span className="font-display uppercase tracking-wider text-sm text-text-main">{siteName}</span>
           </Link>
 
           <nav className="flex items-center gap-1">
@@ -39,6 +54,14 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
               aria-label="Feed"
             >
               <Home size={22} />
+            </Link>
+
+            <Link
+              to="/galeria"
+              className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/galeria') ? 'text-primary' : 'text-text-main'}`}
+              aria-label="Galeria"
+            >
+              <Images size={22} />
             </Link>
 
             {hasSettingsMenu && (
@@ -71,6 +94,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
                         >
                           <Users size={16} /> Usuários
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions.canManageGallery && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin/galeria"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <Images size={16} /> Gerenciar galeria
                         </Link>
                       </DropdownMenu.Item>
                     )}
@@ -131,6 +164,13 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around h-16">
         <Link to="/feed" className={`p-2 ${isActive('/feed') ? 'text-primary' : 'text-text-muted'}`} aria-label="Feed">
           <Home size={24} />
+        </Link>
+        <Link
+          to="/galeria"
+          className={`p-2 ${isActive('/galeria') ? 'text-primary' : 'text-text-muted'}`}
+          aria-label="Galeria"
+        >
+          <Images size={24} />
         </Link>
         <Link to="/perfil" className={isActive('/perfil') ? 'text-primary' : 'text-text-muted'} aria-label="Perfil">
           <Avatar name={user.name} avatarUrl={user.avatarUrl} size={28} />

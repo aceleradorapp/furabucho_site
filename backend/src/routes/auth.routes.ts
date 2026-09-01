@@ -13,7 +13,14 @@ function serializeUser(user: {
   email: string;
   avatarUrl: string | null;
   mustChangePassword: boolean;
-  role: { key: string; label: string; canManageUsers: boolean; canManageSettings: boolean; canManagePosts: boolean };
+  role: {
+    key: string;
+    label: string;
+    canManageUsers: boolean;
+    canManageSettings: boolean;
+    canManagePosts: boolean;
+    canManageGallery: boolean;
+  };
 }) {
   return {
     id: user.id,
@@ -28,6 +35,7 @@ function serializeUser(user: {
       canManageUsers: user.role.canManageUsers,
       canManageSettings: user.role.canManageSettings,
       canManagePosts: user.role.canManagePosts,
+      canManageGallery: user.role.canManageGallery,
     },
   };
 }

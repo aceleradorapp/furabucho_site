@@ -1,10 +1,14 @@
 import { Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { AdminGalleryDetailPage } from './pages/admin/AdminGalleryDetailPage'
+import { AdminGalleryPage } from './pages/admin/AdminGalleryPage'
 import { AdminRolesPage } from './pages/admin/AdminRolesPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { FeedPage } from './pages/FeedPage'
+import { GalleryDetailPage } from './pages/GalleryDetailPage'
+import { GalleryListPage } from './pages/GalleryListPage'
 import { LandingPage } from './pages/LandingPage'
 import { ProfilePage } from './pages/ProfilePage'
 
@@ -30,6 +34,22 @@ function App() {
         }
       />
       <Route
+        path="/galeria"
+        element={
+          <ProtectedRoute>
+            <GalleryListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/galeria/:id"
+        element={
+          <ProtectedRoute>
+            <GalleryDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/configuracoes"
         element={
           <ProtectedRoute requirePermission="canManageSettings">
@@ -50,6 +70,22 @@ function App() {
         element={
           <ProtectedRoute requireAdmin>
             <AdminRolesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/galeria"
+        element={
+          <ProtectedRoute requirePermission="canManageGallery">
+            <AdminGalleryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/galeria/:id"
+        element={
+          <ProtectedRoute requirePermission="canManageGallery">
+            <AdminGalleryDetailPage />
           </ProtectedRoute>
         }
       />

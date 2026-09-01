@@ -9,6 +9,7 @@ interface Role {
   canManageUsers: boolean;
   canManageSettings: boolean;
   canManagePosts: boolean;
+  canManageGallery: boolean;
 }
 
 const PERMISSION_LABELS: { key: keyof Role; label: string; description: string }[] = [
@@ -19,6 +20,7 @@ const PERMISSION_LABELS: { key: keyof Role; label: string; description: string }
     description: 'Editar nome/imagens do site e os banners',
   },
   { key: 'canManagePosts', label: 'Criar postagens', description: 'Publicar novos cards no feed' },
+  { key: 'canManageGallery', label: 'Gerenciar galeria', description: 'Criar álbuns e subir/remover fotos' },
 ];
 
 export function AdminRolesPage() {

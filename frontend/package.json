@@ -18,8 +18,10 @@
     "lucide-react": "^1.39.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-easy-crop": "^6.2.3",
     "react-router-dom": "^7.18.3",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "yet-another-react-lightbox": "^3.32.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

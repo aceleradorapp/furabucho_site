@@ -9,6 +9,7 @@ export interface AuthedRequest extends Request {
     canManageUsers: boolean;
     canManageSettings: boolean;
     canManagePosts: boolean;
+    canManageGallery: boolean;
   };
 }
 
@@ -37,6 +38,7 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
       canManageUsers: user.role.canManageUsers,
       canManageSettings: user.role.canManageSettings,
       canManagePosts: user.role.canManagePosts,
+      canManageGallery: user.role.canManageGallery,
     };
     next();
   } catch {
@@ -44,7 +46,7 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
   }
 }
 
-type PermissionKey = 'canManageUsers' | 'canManageSettings' | 'canManagePosts';
+type PermissionKey = 'canManageUsers' | 'canManageSettings' | 'canManagePosts' | 'canManageGallery';
 
 export function requirePermission(permission: PermissionKey) {
   return (req: AuthedRequest, res: Response, next: NextFunction) => {

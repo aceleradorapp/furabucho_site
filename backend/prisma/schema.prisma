@@ -14,6 +14,7 @@ model Role {
   canManageUsers  Boolean @default(false)
   canManageSettings Boolean @default(false)
   canManagePosts  Boolean @default(false)
+  canManageGallery Boolean @default(false)
 
   users           User[]
 }
@@ -82,6 +83,7 @@ model Post {
   author    User      @relation(fields: [authorId], references: [id])
   imageUrl  String
   caption   String?   @db.Text
+  blocked   Boolean   @default(false)
   createdAt DateTime  @default(now())
 
   likes     Like[]
@@ -94,7 +96,7 @@ model Like {
   userId    Int
   createdAt DateTime @default(now())
 
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([postId, userId])
@@ -107,6 +109,24 @@ model Comment {
   text      String   @db.Text
   createdAt DateTime @default(now())
 
-  post      Post     @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model Gallery {
+  id        Int      @id @default(autoincrement())
+  title     String
+  year      Int
+  createdAt DateTime @default(now())
+
+  images    GalleryImage[]
+}
+
+model GalleryImage {
+  id        Int      @id @default(autoincrement())
+  galleryId Int
+  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  imageUrl  String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 }

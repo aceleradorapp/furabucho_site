@@ -14,6 +14,7 @@ export interface AuthUser {
     canManageUsers: boolean;
     canManageSettings: boolean;
     canManagePosts: boolean;
+    canManageGallery: boolean;
   };
 }
 
