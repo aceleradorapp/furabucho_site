@@ -17,12 +17,14 @@ settingsRouter.get('/', async (_req, res) => {
 });
 
 settingsRouter.put('/', requireAuth, requirePermission('canManageSettings'), async (req, res) => {
-  const { siteName, subtitle, foundingYear, heroTitle, aboutText } = req.body as {
+  const { siteName, subtitle, foundingYear, heroTitle, aboutText, logoUrl, heroImageUrl } = req.body as {
     siteName?: string;
-    subtitle?: string;
-    foundingYear?: number;
-    heroTitle?: string;
-    aboutText?: string;
+    subtitle?: string | null;
+    foundingYear?: number | null;
+    heroTitle?: string | null;
+    aboutText?: string | null;
+    logoUrl?: string | null;
+    heroImageUrl?: string | null;
   };
 
   const settings = await getOrCreateSettings();
@@ -34,6 +36,8 @@ settingsRouter.put('/', requireAuth, requirePermission('canManageSettings'), asy
       ...(foundingYear !== undefined ? { foundingYear } : {}),
       ...(heroTitle !== undefined ? { heroTitle } : {}),
       ...(aboutText !== undefined ? { aboutText } : {}),
+      ...(logoUrl !== undefined ? { logoUrl } : {}),
+      ...(heroImageUrl !== undefined ? { heroImageUrl } : {}),
     },
   });
 

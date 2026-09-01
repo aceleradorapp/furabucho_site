@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import type { ImageSpec } from '../lib/imageSpecs';
 import { ImageCropModal } from './ImageCropModal';
 
@@ -9,7 +9,7 @@ export function ImageUploadButton({
   className,
 }: {
   spec: ImageSpec;
-  buttonLabel: string;
+  buttonLabel: ReactNode;
   onUpload: (blob: Blob) => Promise<void>;
   className?: string;
 }) {
