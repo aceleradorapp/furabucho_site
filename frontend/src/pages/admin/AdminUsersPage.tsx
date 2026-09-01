@@ -25,6 +25,7 @@ export function AdminUsersPage() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState<number | ''>('');
   const [error, setError] = useState<string | null>(null);
   const [lastCreated, setLastCreated] = useState<{ email: string; tempPassword: string } | null>(null);
@@ -53,11 +54,13 @@ export function AdminUsersPage() {
         username,
         email,
         roleId,
+        ...(password ? { password } : {}),
       });
       setLastCreated({ email: created.email, tempPassword: created.tempPassword });
       setName('');
       setUsername('');
       setEmail('');
+      setPassword('');
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível cadastrar');
@@ -97,6 +100,16 @@ export function AdminUsersPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="mt-1 w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-text-muted">Senha temporária (opcional)</label>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Deixe em branco para gerar automaticamente"
+              minLength={6}
               className="mt-1 w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
             />
           </div>

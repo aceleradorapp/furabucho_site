@@ -38,21 +38,25 @@ usersRouter.get('/roles', async (_req, res) => {
 });
 
 usersRouter.post('/', async (req, res) => {
-  const { name, username, email, roleId } = req.body as {
+  const { name, username, email, roleId, password } = req.body as {
     name?: string;
     username?: string;
     email?: string;
     roleId?: number;
+    password?: string;
   };
 
   if (!name || !username || !email || !roleId) {
     return res.status(400).json({ error: 'Preencha nome, usuário, e-mail e papel' });
   }
+  if (password && password.length < 6) {
+    return res.status(400).json({ error: 'A senha temporária deve ter ao menos 6 caracteres' });
+  }
 
   const role = await prisma.role.findUnique({ where: { id: roleId } });
   if (!role) return res.status(400).json({ error: 'Papel inválido' });
 
-  const tempPassword = generateTempPassword();
+  const tempPassword = password || generateTempPassword();
   const passwordHash = await bcrypt.hash(tempPassword, 10);
 
   try {
