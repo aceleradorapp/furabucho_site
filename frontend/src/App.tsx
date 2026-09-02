@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { AdminAnnouncementsPage } from './pages/admin/AdminAnnouncementsPage'
 import { AdminGalleryDetailPage } from './pages/admin/AdminGalleryDetailPage'
 import { AdminGalleryPage } from './pages/admin/AdminGalleryPage'
 import { AdminRolesPage } from './pages/admin/AdminRolesPage'
@@ -70,6 +71,14 @@ function App() {
         element={
           <ProtectedRoute requireAdmin>
             <AdminRolesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/novidades"
+        element={
+          <ProtectedRoute requirePermission="canManagePosts">
+            <AdminAnnouncementsPage />
           </ProtectedRoute>
         }
       />

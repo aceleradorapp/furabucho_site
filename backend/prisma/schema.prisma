@@ -39,6 +39,8 @@ model User {
   posts             Post[]
   likes             Like[]
   comments          Comment[]
+  announcements     Announcement[]
+  announcementViews AnnouncementView[]
 }
 
 model SiteSettings {
@@ -75,11 +77,29 @@ model Event {
 }
 
 model Announcement {
-  id        Int      @id @default(autoincrement())
-  title     String
-  message   String   @db.Text
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?  @db.Text
+  imageUrl    String
+  link        String?
+  active      Boolean  @default(true)
+  scheduledAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  authorId    Int
+  author      User     @relation(fields: [authorId], references: [id])
+
+  views       AnnouncementView[]
+}
+
+model AnnouncementView {
+  id             Int          @id @default(autoincrement())
+  announcementId Int
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  userId         Int
+  user           User         @relation(fields: [userId], references: [id])
+  viewedAt       DateTime     @default(now())
+
+  @@unique([announcementId, userId])
 }
 
 model Post {

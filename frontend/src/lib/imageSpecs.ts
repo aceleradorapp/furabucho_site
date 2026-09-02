@@ -21,6 +21,13 @@ export const IMAGE_SPECS: Record<string, ImageSpec> = {
     outputWidth: 480,
     outputHeight: 480,
   },
+  announcement: {
+    aspect: 9 / 16,
+    label: 'Imagem da novidade',
+    helpText: 'Formato retrato (9:16), igual à tela de um celular. Recomendado: 1080×1920px ou mais.',
+    outputWidth: 1080,
+    outputHeight: 1920,
+  },
   logo: {
     aspect: 1,
     label: 'Logo do site',

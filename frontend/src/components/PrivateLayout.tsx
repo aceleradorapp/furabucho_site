@@ -1,16 +1,25 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Home, Images, LogOut, Settings, ShieldCheck, Sparkles, Users, UserRound } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Home, Images, LogOut, Megaphone, Settings, ShieldCheck, Sparkles, Users, UserRound } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { AnnouncementBellButton, AnnouncementFullscreenViewer, type AnnouncementItem } from './AnnouncementsBell';
 import { Avatar } from './Avatar';
+
+const ANNOUNCEMENT_AUTO_SHOW_DELAY = 3000;
+const ANNOUNCEMENT_POLL_INTERVAL = 20000;
 
 export function PrivateLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [siteName, setSiteName] = useState('Fura-Bucho');
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const [activeAnnouncement, setActiveAnnouncement] = useState<AnnouncementItem | null>(null);
+  const [bellOpenDesktop, setBellOpenDesktop] = useState(false);
+  const [bellOpenMobile, setBellOpenMobile] = useState(false);
+  const shownAnnouncementIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     function loadSiteName() {
@@ -20,6 +29,58 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
     window.addEventListener('site-settings-updated', loadSiteName);
     return () => window.removeEventListener('site-settings-updated', loadSiteName);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAnnouncements() {
+      const data = await api.get<AnnouncementItem[]>('/announcements/active');
+      if (cancelled) return data;
+      setAnnouncements(data);
+      return data;
+    }
+
+    async function checkAutoShow() {
+      const data = await loadAnnouncements();
+      if (cancelled) return;
+      const unseen = data.find((a) => !a.viewed && !shownAnnouncementIdsRef.current.has(a.id));
+      if (unseen) {
+        shownAnnouncementIdsRef.current.add(unseen.id);
+        setActiveAnnouncement(unseen);
+      }
+    }
+
+    if (location.pathname === '/feed') {
+      const initialTimer = setTimeout(checkAutoShow, ANNOUNCEMENT_AUTO_SHOW_DELAY);
+      const pollInterval = setInterval(checkAutoShow, ANNOUNCEMENT_POLL_INTERVAL);
+      return () => {
+        cancelled = true;
+        clearTimeout(initialTimer);
+        clearInterval(pollInterval);
+      };
+    }
+
+    loadAnnouncements();
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
+
+  async function markAnnouncementViewed(id: number) {
+    await api.post(`/announcements/${id}/view`);
+    setAnnouncements((prev) => prev.map((a) => (a.id === id ? { ...a, viewed: true } : a)));
+  }
+
+  function handleCloseAnnouncement() {
+    if (activeAnnouncement) markAnnouncementViewed(activeAnnouncement.id);
+    setActiveAnnouncement(null);
+  }
+
+  async function handleDeleteAnnouncement(id: number) {
+    if (!window.confirm('Excluir esta novidade?')) return;
+    await api.delete(`/announcements/${id}`);
+    setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+  }
 
   if (!user) return null;
 
@@ -71,6 +132,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
               <Images size={22} />
             </Link>
 
+            <AnnouncementBellButton
+              announcements={announcements}
+              open={bellOpenDesktop}
+              onOpenChange={setBellOpenDesktop}
+              onSelect={setActiveAnnouncement}
+              onDelete={handleDeleteAnnouncement}
+              canManage={user.permissions.canManagePosts}
+              className="p-2 rounded-full hover:bg-card-subtle transition text-text-main"
+            />
+
             {hasSettingsMenu && (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
@@ -101,6 +172,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
                         >
                           <Users size={16} /> Usuários
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions.canManagePosts && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin/novidades"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <Megaphone size={16} /> Novidades
                         </Link>
                       </DropdownMenu.Item>
                     )}
@@ -198,10 +279,24 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
         >
           <Images size={24} />
         </Link>
+        <AnnouncementBellButton
+          announcements={announcements}
+          open={bellOpenMobile}
+          onOpenChange={setBellOpenMobile}
+          onSelect={setActiveAnnouncement}
+          onDelete={handleDeleteAnnouncement}
+          canManage={user.permissions.canManagePosts}
+          className="p-2 text-text-muted"
+          iconSize={24}
+        />
         <Link to="/perfil" className={isActive('/perfil') ? 'text-primary' : 'text-text-muted'} aria-label="Perfil">
           <Avatar name={user.name} avatarUrl={user.avatarUrl} size={28} />
         </Link>
       </nav>
+
+      {activeAnnouncement && (
+        <AnnouncementFullscreenViewer announcement={activeAnnouncement} onClose={handleCloseAnnouncement} />
+      )}
     </div>
   );
 }
