@@ -1,47 +1,48 @@
 import bcrypt from 'bcrypt';
+import { ALL_PERMISSION_KEYS } from '../src/lib/permissions';
 import { prisma } from '../src/lib/prisma';
 
+const ROLE_PERMISSION_DEFAULTS: Record<string, Record<string, boolean>> = {
+  admin: Object.fromEntries(ALL_PERMISSION_KEYS.map((key) => [key, true])),
+  membro_ajudante: {
+    'members.view': true,
+    'members.create': false,
+    'members.editProfile': true,
+    'members.changeRole': false,
+    'members.delete': true,
+    'settings.edit': true,
+    'gallery.manage': false,
+    'feed.create': true,
+    'feed.moderate': false,
+    'announcements.manage': true,
+  },
+  membro: Object.fromEntries(ALL_PERMISSION_KEYS.map((key) => [key, false])),
+};
+
+async function upsertRole(key: string, label: string) {
+  const role = await prisma.role.upsert({
+    where: { key },
+    update: { label },
+    create: { key, label },
+  });
+
+  const defaults = ROLE_PERMISSION_DEFAULTS[key] ?? {};
+  for (const permissionKey of ALL_PERMISSION_KEYS) {
+    const value = defaults[permissionKey] ?? false;
+    await prisma.rolePermission.upsert({
+      where: { roleId_key: { roleId: role.id, key: permissionKey } },
+      update: {},
+      create: { roleId: role.id, key: permissionKey, value },
+    });
+  }
+
+  return role;
+}
+
 async function main() {
-  const admin = await prisma.role.upsert({
-    where: { key: 'admin' },
-    update: { canManageGallery: true, canManageMemberProfiles: true },
-    create: {
-      key: 'admin',
-      label: 'Administrador',
-      canManageUsers: true,
-      canManageSettings: true,
-      canManagePosts: true,
-      canManageGallery: true,
-      canManageMemberProfiles: true,
-    },
-  });
-
-  await prisma.role.upsert({
-    where: { key: 'membro_ajudante' },
-    update: { canManageMemberProfiles: true },
-    create: {
-      key: 'membro_ajudante',
-      label: 'Membro Ajudante',
-      canManageUsers: false,
-      canManageSettings: true,
-      canManagePosts: true,
-      canManageGallery: false,
-      canManageMemberProfiles: true,
-    },
-  });
-
-  await prisma.role.upsert({
-    where: { key: 'membro' },
-    update: {},
-    create: {
-      key: 'membro',
-      label: 'Membro',
-      canManageUsers: false,
-      canManageSettings: false,
-      canManagePosts: false,
-      canManageGallery: false,
-    },
-  });
+  const admin = await upsertRole('admin', 'Administrador');
+  await upsertRole('membro_ajudante', 'Membro Ajudante');
+  await upsertRole('membro', 'Membro');
 
   const passwordHash = await bcrypt.hash('mm230475', 10);
 

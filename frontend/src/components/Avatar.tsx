@@ -19,7 +19,7 @@ export function Avatar({
   if (avatarUrl) {
     return (
       <img
-        src={avatarUrl.startsWith('http') ? avatarUrl : `${UPLOADS_BASE}${avatarUrl}`}
+        src={/^(https?:|blob:|data:)/.test(avatarUrl) ? avatarUrl : `${UPLOADS_BASE}${avatarUrl}`}
         alt={name}
         className="rounded-full object-cover shrink-0"
         style={{ width: size, height: size }}

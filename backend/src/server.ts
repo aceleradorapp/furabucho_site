@@ -12,6 +12,7 @@ import { rolesRouter } from './routes/roles.routes';
 import { profileRouter } from './routes/profile.routes';
 import { galleryRouter } from './routes/gallery.routes';
 import { announcementsRouter } from './routes/announcements.routes';
+import { userPermissionsRouter } from './routes/userPermissions.routes';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use('/api/admin/roles', rolesRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/galleries', galleryRouter);
 app.use('/api/announcements', announcementsRouter);
+app.use('/api/admin/user-permissions', userPermissionsRouter);
 
 app.use((err: { code?: string; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
   if (err.code === 'P2025') {

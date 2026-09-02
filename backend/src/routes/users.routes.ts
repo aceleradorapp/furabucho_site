@@ -13,7 +13,7 @@ function generateTempPassword() {
   return crypto.randomBytes(6).toString('base64').replace(/[+/=]/g, '').slice(0, 8) + '1A';
 }
 
-usersRouter.get('/', requireAnyPermission('canManageUsers', 'canManageMemberProfiles'), async (_req, res) => {
+usersRouter.get('/', requirePermission('members.view'), async (_req, res) => {
   const users = await prisma.user.findMany({
     include: { role: true },
     orderBy: { createdAt: 'desc' },
@@ -39,62 +39,82 @@ usersRouter.get('/', requireAnyPermission('canManageUsers', 'canManageMemberProf
   );
 });
 
-usersRouter.get('/roles', requirePermission('canManageUsers'), async (_req, res) => {
+usersRouter.get('/roles', requireAnyPermission('members.create', 'members.changeRole'), async (_req, res) => {
   const roles = await prisma.role.findMany({ select: { id: true, key: true, label: true } });
   res.json(roles);
 });
 
-usersRouter.post('/', requirePermission('canManageUsers'), async (req, res) => {
-  const { name, username, email, roleId, password, nickname, whatsapp } = req.body as {
-    name?: string;
-    username?: string;
-    email?: string;
-    roleId?: number;
-    password?: string;
-    nickname?: string;
-    whatsapp?: string;
-  };
+usersRouter.post(
+  '/',
+  requirePermission('members.create'),
+  upload.fields([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'caricature', maxCount: 1 },
+  ]),
+  async (req: AuthedRequest, res) => {
+    const { name, username, email, password, nickname, whatsapp } = req.body as {
+      name?: string;
+      username?: string;
+      email?: string;
+      password?: string;
+      nickname?: string;
+      whatsapp?: string;
+    };
+    let { roleId } = req.body as { roleId?: string | number };
 
-  if (!name || !username || !email || !roleId) {
-    return res.status(400).json({ error: 'Preencha nome, usuário, e-mail e papel' });
-  }
-  if (password && password.length < 6) {
-    return res.status(400).json({ error: 'A senha temporária deve ter ao menos 6 caracteres' });
-  }
+    if (!name || !username || !email) {
+      return res.status(400).json({ error: 'Preencha nome, usuário e e-mail' });
+    }
+    if (password && password.length < 6) {
+      return res.status(400).json({ error: 'A senha temporária deve ter ao menos 6 caracteres' });
+    }
 
-  const role = await prisma.role.findUnique({ where: { id: roleId } });
-  if (!role) return res.status(400).json({ error: 'Papel inválido' });
+    if (!req.effectivePermissions?.['members.changeRole']) {
+      const membro = await prisma.role.findUnique({ where: { key: 'membro' } });
+      roleId = membro?.id;
+    }
+    if (!roleId) return res.status(400).json({ error: 'Papel inválido' });
 
-  const tempPassword = password || generateTempPassword();
-  const passwordHash = await bcrypt.hash(tempPassword, 10);
+    const role = await prisma.role.findUnique({ where: { id: Number(roleId) } });
+    if (!role) return res.status(400).json({ error: 'Papel inválido' });
 
-  try {
-    const user = await prisma.user.create({
-      data: {
-        name,
-        username,
-        email,
-        roleId,
-        passwordHash,
-        mustChangePassword: true,
-        ...(nickname?.trim() ? { nickname: nickname.trim() } : {}),
-        ...(whatsapp?.trim() ? { whatsapp: whatsapp.trim() } : {}),
-      },
-    });
-    res.status(201).json({
-      id: user.id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      role: role.key,
-      tempPassword,
-    });
-  } catch {
-    res.status(409).json({ error: 'E-mail ou usuário já cadastrado' });
-  }
-});
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+    const avatarFile = files?.avatar?.[0];
+    const caricatureFile = files?.caricature?.[0];
 
-usersRouter.patch('/:id', requirePermission('canManageUsers'), async (req, res) => {
+    const tempPassword = password || generateTempPassword();
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+    try {
+      const user = await prisma.user.create({
+        data: {
+          name,
+          username,
+          email,
+          roleId: role.id,
+          passwordHash,
+          mustChangePassword: true,
+          ...(nickname?.trim() ? { nickname: nickname.trim() } : {}),
+          ...(whatsapp?.trim() ? { whatsapp: whatsapp.trim() } : {}),
+          ...(avatarFile ? { avatarUrl: `/uploads/${avatarFile.filename}` } : {}),
+          ...(caricatureFile ? { caricatureUrl: `/uploads/${caricatureFile.filename}` } : {}),
+        },
+      });
+      res.status(201).json({
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        role: role.key,
+        tempPassword,
+      });
+    } catch {
+      res.status(409).json({ error: 'E-mail ou usuário já cadastrado' });
+    }
+  },
+);
+
+usersRouter.patch('/:id', requirePermission('members.changeRole'), async (req, res) => {
   const id = Number(req.params.id);
   const { roleId } = req.body as { roleId?: number };
 
@@ -109,14 +129,14 @@ usersRouter.patch('/:id', requirePermission('canManageUsers'), async (req, res) 
   res.json({ id: user.id, name: user.name, roleId: user.roleId, role: user.role.key, roleLabel: user.role.label });
 });
 
-usersRouter.delete('/:id', requireAnyPermission('canManageUsers', 'canManageMemberProfiles'), async (req: AuthedRequest, res) => {
+usersRouter.delete('/:id', requirePermission('members.delete'), async (req: AuthedRequest, res) => {
   const id = Number(req.params.id);
 
   if (id === req.userId) {
     return res.status(400).json({ error: 'Você não pode excluir sua própria conta' });
   }
 
-  if (req.userRole?.key !== 'admin') {
+  if (req.userRoleKey !== 'admin') {
     const target = await prisma.user.findUnique({ where: { id }, include: { role: true } });
     if (target?.role.key === 'admin') {
       return res.status(403).json({ error: 'Apenas administradores podem excluir a conta de outro administrador' });
@@ -127,41 +147,52 @@ usersRouter.delete('/:id', requireAnyPermission('canManageUsers', 'canManageMemb
   res.status(204).end();
 });
 
-usersRouter.patch(
-  '/:id/profile-extras',
-  requireAnyPermission('canManageUsers', 'canManageMemberProfiles'),
-  async (req, res) => {
-    const id = Number(req.params.id);
-    const { name, nickname, whatsapp, caricatureUrl } = req.body as {
-      name?: string;
-      nickname?: string | null;
-      whatsapp?: string | null;
-      caricatureUrl?: string | null;
-    };
+usersRouter.patch('/:id/profile-extras', requirePermission('members.editProfile'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, nickname, whatsapp, avatarUrl, caricatureUrl } = req.body as {
+    name?: string;
+    nickname?: string | null;
+    whatsapp?: string | null;
+    avatarUrl?: string | null;
+    caricatureUrl?: string | null;
+  };
 
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
-        ...(name?.trim() ? { name: name.trim() } : {}),
-        ...(nickname !== undefined ? { nickname } : {}),
-        ...(whatsapp !== undefined ? { whatsapp } : {}),
-        ...(caricatureUrl !== undefined ? { caricatureUrl } : {}),
-      },
-    });
+  const user = await prisma.user.update({
+    where: { id },
+    data: {
+      ...(name?.trim() ? { name: name.trim() } : {}),
+      ...(nickname !== undefined ? { nickname } : {}),
+      ...(whatsapp !== undefined ? { whatsapp } : {}),
+      ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+      ...(caricatureUrl !== undefined ? { caricatureUrl } : {}),
+    },
+  });
 
-    res.json({
-      id: user.id,
-      name: user.name,
-      nickname: user.nickname,
-      whatsapp: user.whatsapp,
-      caricatureUrl: user.caricatureUrl,
-    });
-  },
-);
+  res.json({
+    id: user.id,
+    name: user.name,
+    nickname: user.nickname,
+    whatsapp: user.whatsapp,
+    avatarUrl: user.avatarUrl,
+    caricatureUrl: user.caricatureUrl,
+  });
+});
+
+usersRouter.post('/:id/avatar', requirePermission('members.editProfile'), upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Envie uma imagem' });
+  const id = Number(req.params.id);
+
+  const user = await prisma.user.update({
+    where: { id },
+    data: { avatarUrl: `/uploads/${req.file.filename}` },
+  });
+
+  res.json({ id: user.id, avatarUrl: user.avatarUrl });
+});
 
 usersRouter.post(
   '/:id/caricature',
-  requireAnyPermission('canManageUsers', 'canManageMemberProfiles'),
+  requirePermission('members.editProfile'),
   upload.single('image'),
   async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Envie uma imagem' });

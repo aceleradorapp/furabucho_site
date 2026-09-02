@@ -11,13 +11,7 @@ export interface AuthUser {
   mustChangePassword: boolean;
   role: string;
   roleLabel: string;
-  permissions: {
-    canManageUsers: boolean;
-    canManageSettings: boolean;
-    canManagePosts: boolean;
-    canManageGallery: boolean;
-    canManageMemberProfiles: boolean;
-  };
+  permissions: Record<string, boolean>;
 }
 
 interface AuthContextValue {

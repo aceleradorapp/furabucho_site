@@ -8,16 +8,32 @@ datasource db {
 }
 
 model Role {
-  id              Int     @id @default(autoincrement())
-  key             String  @unique
-  label           String
-  canManageUsers  Boolean @default(false)
-  canManageSettings Boolean @default(false)
-  canManagePosts  Boolean @default(false)
-  canManageGallery Boolean @default(false)
-  canManageMemberProfiles Boolean @default(false)
+  id          Int     @id @default(autoincrement())
+  key         String  @unique
+  label       String
 
-  users           User[]
+  users       User[]
+  permissions RolePermission[]
+}
+
+model RolePermission {
+  id     Int     @id @default(autoincrement())
+  roleId Int
+  role   Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  key    String
+  value  Boolean @default(false)
+
+  @@unique([roleId, key])
+}
+
+model UserPermissionOverride {
+  id     Int     @id @default(autoincrement())
+  userId Int
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key    String
+  value  Boolean
+
+  @@unique([userId, key])
 }
 
 model User {
@@ -42,6 +58,7 @@ model User {
   comments          Comment[]
   announcements     Announcement[]
   announcementViews AnnouncementView[]
+  permissionOverrides UserPermissionOverride[]
 }
 
 model SiteSettings {

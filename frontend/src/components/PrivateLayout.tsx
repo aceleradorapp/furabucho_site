@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Home, Images, LogOut, Megaphone, Settings, ShieldCheck, Sparkles, Users, UserRound } from 'lucide-react';
+import { Home, Images, KeyRound, LogOut, Megaphone, Settings, ShieldCheck, Sparkles, Users, UserRound } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
@@ -93,10 +93,9 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
   const isProfileComplete = missingProfileParts.length === 0;
 
   const hasSettingsMenu =
-    user.permissions.canManageSettings ||
-    user.permissions.canManageUsers ||
-    user.permissions.canManageGallery ||
-    user.permissions.canManageMemberProfiles ||
+    user.permissions['settings.edit'] ||
+    user.permissions['members.view'] ||
+    user.permissions['gallery.manage'] ||
     user.role === 'admin';
 
   function isActive(path: string) {
@@ -140,7 +139,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
               onOpenChange={setBellOpenDesktop}
               onSelect={setActiveAnnouncement}
               onDelete={handleDeleteAnnouncement}
-              canManage={user.permissions.canManagePosts}
+              canManage={user.permissions['announcements.manage']}
               className="p-2 rounded-full hover:bg-card-subtle transition text-text-main"
             />
 
@@ -157,7 +156,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                     sideOffset={8}
                     className="bg-card rounded-xl shadow-2xl border border-border py-2 min-w-[220px] z-40"
                   >
-                    {user.permissions.canManageSettings && (
+                    {user.permissions['settings.edit'] && (
                       <DropdownMenu.Item asChild>
                         <Link
                           to="/admin/configuracoes"
@@ -167,7 +166,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                         </Link>
                       </DropdownMenu.Item>
                     )}
-                    {(user.permissions.canManageUsers || user.permissions.canManageMemberProfiles) && (
+                    {user.permissions['members.view'] && (
                       <DropdownMenu.Item asChild>
                         <Link
                           to="/admin/usuarios"
@@ -177,7 +176,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                         </Link>
                       </DropdownMenu.Item>
                     )}
-                    {user.permissions.canManagePosts && (
+                    {user.permissions['announcements.manage'] && (
                       <DropdownMenu.Item asChild>
                         <Link
                           to="/admin/novidades"
@@ -187,7 +186,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                         </Link>
                       </DropdownMenu.Item>
                     )}
-                    {user.permissions.canManageGallery && (
+                    {user.permissions['gallery.manage'] && (
                       <DropdownMenu.Item asChild>
                         <Link
                           to="/admin/galeria"
@@ -204,6 +203,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
                         >
                           <ShieldCheck size={16} /> Papéis
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.role === 'admin' && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin/permissoes"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <KeyRound size={16} /> Permissões por usuário
                         </Link>
                       </DropdownMenu.Item>
                     )}
@@ -287,7 +296,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           onOpenChange={setBellOpenMobile}
           onSelect={setActiveAnnouncement}
           onDelete={handleDeleteAnnouncement}
-          canManage={user.permissions.canManagePosts}
+          canManage={user.permissions['announcements.manage']}
           className="p-2 text-text-muted"
           iconSize={24}
         />

@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import { computeEffectivePermissions } from '../lib/permissions';
 import { prisma } from '../lib/prisma';
 import { AuthedRequest, requireAuth } from '../middleware/auth';
 
@@ -17,12 +18,9 @@ function serializeUser(user: {
   role: {
     key: string;
     label: string;
-    canManageUsers: boolean;
-    canManageSettings: boolean;
-    canManagePosts: boolean;
-    canManageGallery: boolean;
-    canManageMemberProfiles: boolean;
+    permissions: { key: string; value: boolean }[];
   };
+  permissionOverrides: { key: string; value: boolean }[];
 }) {
   return {
     id: user.id,
@@ -34,15 +32,11 @@ function serializeUser(user: {
     mustChangePassword: user.mustChangePassword,
     role: user.role.key,
     roleLabel: user.role.label,
-    permissions: {
-      canManageUsers: user.role.canManageUsers,
-      canManageSettings: user.role.canManageSettings,
-      canManagePosts: user.role.canManagePosts,
-      canManageGallery: user.role.canManageGallery,
-      canManageMemberProfiles: user.role.canManageMemberProfiles,
-    },
+    permissions: computeEffectivePermissions(user.role.key, user.role.permissions, user.permissionOverrides),
   };
 }
+
+const userInclude = { role: { include: { permissions: true } }, permissionOverrides: true } as const;
 
 authRouter.post('/login', async (req, res) => {
   const { identifier, password } = req.body as { identifier?: string; password?: string };
@@ -53,7 +47,7 @@ authRouter.post('/login', async (req, res) => {
 
   const user = await prisma.user.findFirst({
     where: { OR: [{ email: identifier }, { username: identifier }] },
-    include: { role: true },
+    include: userInclude,
   });
 
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
@@ -66,7 +60,7 @@ authRouter.post('/login', async (req, res) => {
 });
 
 authRouter.get('/me', requireAuth, async (req: AuthedRequest, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.userId }, include: { role: true } });
+  const user = await prisma.user.findUnique({ where: { id: req.userId }, include: userInclude });
   if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
   res.json({ user: serializeUser(user) });
 });

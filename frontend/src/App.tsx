@@ -5,6 +5,7 @@ import { AdminGalleryDetailPage } from './pages/admin/AdminGalleryDetailPage'
 import { AdminGalleryPage } from './pages/admin/AdminGalleryPage'
 import { AdminRolesPage } from './pages/admin/AdminRolesPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
+import { AdminUserPermissionsPage } from './pages/admin/AdminUserPermissionsPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { FeedPage } from './pages/FeedPage'
@@ -53,7 +54,7 @@ function App() {
       <Route
         path="/admin/configuracoes"
         element={
-          <ProtectedRoute requirePermission="canManageSettings">
+          <ProtectedRoute requirePermission="settings.edit">
             <AdminSettingsPage />
           </ProtectedRoute>
         }
@@ -61,7 +62,7 @@ function App() {
       <Route
         path="/admin/usuarios"
         element={
-          <ProtectedRoute requirePermission={['canManageUsers', 'canManageMemberProfiles']}>
+          <ProtectedRoute requirePermission="members.view">
             <AdminUsersPage />
           </ProtectedRoute>
         }
@@ -75,9 +76,17 @@ function App() {
         }
       />
       <Route
+        path="/admin/permissoes"
+        element={
+          <ProtectedRoute requireAdmin>
+            <AdminUserPermissionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/novidades"
         element={
-          <ProtectedRoute requirePermission="canManagePosts">
+          <ProtectedRoute requirePermission="announcements.manage">
             <AdminAnnouncementsPage />
           </ProtectedRoute>
         }
@@ -85,7 +94,7 @@ function App() {
       <Route
         path="/admin/galeria"
         element={
-          <ProtectedRoute requirePermission="canManageGallery">
+          <ProtectedRoute requirePermission="gallery.manage">
             <AdminGalleryPage />
           </ProtectedRoute>
         }
@@ -93,7 +102,7 @@ function App() {
       <Route
         path="/admin/galeria/:id"
         element={
-          <ProtectedRoute requirePermission="canManageGallery">
+          <ProtectedRoute requirePermission="gallery.manage">
             <AdminGalleryDetailPage />
           </ProtectedRoute>
         }

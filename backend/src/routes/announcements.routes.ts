@@ -27,7 +27,7 @@ announcementsRouter.get('/active', async (req: AuthedRequest, res) => {
   );
 });
 
-announcementsRouter.get('/', requirePermission('canManagePosts'), async (_req, res) => {
+announcementsRouter.get('/', requirePermission('announcements.manage'), async (_req, res) => {
   const announcements = await prisma.announcement.findMany({
     orderBy: { scheduledAt: 'desc' },
     include: { author: { select: { id: true, name: true } } },
@@ -38,7 +38,7 @@ announcementsRouter.get('/', requirePermission('canManagePosts'), async (_req, r
 
 announcementsRouter.post(
   '/',
-  requirePermission('canManagePosts'),
+  requirePermission('announcements.manage'),
   upload.single('image'),
   async (req: AuthedRequest, res) => {
     if (!req.file) return res.status(400).json({ error: 'Envie uma imagem para a novidade' });
@@ -81,7 +81,7 @@ announcementsRouter.post('/:id/view', async (req: AuthedRequest, res) => {
   res.json({ ok: true });
 });
 
-announcementsRouter.delete('/:id', requirePermission('canManagePosts'), async (req, res) => {
+announcementsRouter.delete('/:id', requirePermission('announcements.manage'), async (req, res) => {
   const id = Number(req.params.id);
   await prisma.announcement.delete({ where: { id } });
   res.status(204).end();

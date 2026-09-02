@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import { AuthedRequest, requireAdmin, requireAuth, requirePermission } from '../middleware/auth';
+import { AuthedRequest, requireAuth, requirePermission } from '../middleware/auth';
 import { isVideoFile, postUpload } from '../lib/upload';
 
 export const postsRouter = Router();
@@ -8,7 +8,7 @@ export const postsRouter = Router();
 postsRouter.use(requireAuth);
 
 postsRouter.get('/', async (req: AuthedRequest, res) => {
-  const isAdmin = req.userRole?.key === 'admin';
+  const isAdmin = req.userRoleKey === 'admin';
 
   const posts = await prisma.post.findMany({
     where: isAdmin ? {} : { blocked: false },
@@ -41,7 +41,7 @@ postsRouter.get('/', async (req: AuthedRequest, res) => {
 
 postsRouter.post(
   '/',
-  requirePermission('canManagePosts'),
+  requirePermission('feed.create'),
   postUpload.single('media'),
   async (req: AuthedRequest, res) => {
     const { caption } = req.body as { caption?: string };
@@ -103,7 +103,7 @@ postsRouter.post('/:id/comments', async (req: AuthedRequest, res) => {
   res.status(201).json(comment);
 });
 
-postsRouter.patch('/:id/block', requireAdmin, async (req, res) => {
+postsRouter.patch('/:id/block', requirePermission('feed.moderate'), async (req, res) => {
   const id = Number(req.params.id);
   const { blocked } = req.body as { blocked?: boolean };
 
@@ -115,7 +115,7 @@ postsRouter.patch('/:id/block', requireAdmin, async (req, res) => {
   res.json(post);
 });
 
-postsRouter.delete('/:id', requireAdmin, async (req, res) => {
+postsRouter.delete('/:id', requirePermission('feed.moderate'), async (req, res) => {
   const id = Number(req.params.id);
   await prisma.post.delete({ where: { id } });
   res.status(204).end();

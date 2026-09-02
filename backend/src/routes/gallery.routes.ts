@@ -9,7 +9,7 @@ galleryRouter.use(requireAuth);
 
 galleryRouter.get('/', async (req: AuthedRequest, res) => {
   const { title, year } = req.query as { title?: string; year?: string };
-  const isManager = req.userRole?.canManageGallery ?? false;
+  const isManager = req.effectivePermissions?.['gallery.manage'] ?? false;
 
   const galleries = await prisma.gallery.findMany({
     where: {
@@ -40,7 +40,7 @@ galleryRouter.get('/', async (req: AuthedRequest, res) => {
 
 galleryRouter.get('/:id', async (req: AuthedRequest, res) => {
   const id = Number(req.params.id);
-  const isManager = req.userRole?.canManageGallery ?? false;
+  const isManager = req.effectivePermissions?.['gallery.manage'] ?? false;
 
   const gallery = await prisma.gallery.findUnique({
     where: { id },
@@ -56,7 +56,7 @@ galleryRouter.get('/:id', async (req: AuthedRequest, res) => {
   res.json(gallery);
 });
 
-galleryRouter.post('/', requirePermission('canManageGallery'), async (req, res) => {
+galleryRouter.post('/', requirePermission('gallery.manage'), async (req, res) => {
   const { title, year } = req.body as { title?: string; year?: number };
   if (!title || !year) return res.status(400).json({ error: 'Informe título e ano' });
 
@@ -64,7 +64,7 @@ galleryRouter.post('/', requirePermission('canManageGallery'), async (req, res) 
   res.status(201).json(gallery);
 });
 
-galleryRouter.patch('/:id', requirePermission('canManageGallery'), async (req, res) => {
+galleryRouter.patch('/:id', requirePermission('gallery.manage'), async (req, res) => {
   const id = Number(req.params.id);
   const { title, year } = req.body as { title?: string; year?: number };
 
@@ -79,7 +79,7 @@ galleryRouter.patch('/:id', requirePermission('canManageGallery'), async (req, r
   res.json(gallery);
 });
 
-galleryRouter.delete('/:id', requirePermission('canManageGallery'), async (req, res) => {
+galleryRouter.delete('/:id', requirePermission('gallery.manage'), async (req, res) => {
   const id = Number(req.params.id);
   await prisma.gallery.delete({ where: { id } });
   res.status(204).end();
@@ -87,7 +87,7 @@ galleryRouter.delete('/:id', requirePermission('canManageGallery'), async (req, 
 
 galleryRouter.post(
   '/:id/images',
-  requirePermission('canManageGallery'),
+  requirePermission('gallery.manage'),
   upload.array('images', 20),
   async (req, res) => {
     const galleryId = Number(req.params.id);
@@ -109,7 +109,7 @@ galleryRouter.post(
   },
 );
 
-galleryRouter.patch('/:galleryId/images/:imageId', requirePermission('canManageGallery'), async (req, res) => {
+galleryRouter.patch('/:galleryId/images/:imageId', requirePermission('gallery.manage'), async (req, res) => {
   const imageId = Number(req.params.imageId);
   const { active } = req.body as { active?: boolean };
 
@@ -121,7 +121,7 @@ galleryRouter.patch('/:galleryId/images/:imageId', requirePermission('canManageG
   res.json(image);
 });
 
-galleryRouter.delete('/:galleryId/images/:imageId', requirePermission('canManageGallery'), async (req, res) => {
+galleryRouter.delete('/:galleryId/images/:imageId', requirePermission('gallery.manage'), async (req, res) => {
   const imageId = Number(req.params.imageId);
   await prisma.galleryImage.delete({ where: { id: imageId } });
   res.status(204).end();

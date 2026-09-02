@@ -16,7 +16,7 @@ settingsRouter.get('/', async (_req, res) => {
   res.json(settings);
 });
 
-settingsRouter.put('/', requireAuth, requirePermission('canManageSettings'), async (req, res) => {
+settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (req, res) => {
   const { siteName, subtitle, foundingYear, heroTitle, aboutText, logoUrl, heroImageUrl } = req.body as {
     siteName?: string;
     subtitle?: string | null;
@@ -47,7 +47,7 @@ settingsRouter.put('/', requireAuth, requirePermission('canManageSettings'), asy
 settingsRouter.post(
   '/logo',
   requireAuth,
-  requirePermission('canManageSettings'),
+  requirePermission('settings.edit'),
   upload.single('image'),
   async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Envie um arquivo de imagem' });
@@ -63,7 +63,7 @@ settingsRouter.post(
 settingsRouter.post(
   '/hero-image',
   requireAuth,
-  requirePermission('canManageSettings'),
+  requirePermission('settings.edit'),
   upload.single('image'),
   async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Envie um arquivo de imagem' });

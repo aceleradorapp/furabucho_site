@@ -129,7 +129,7 @@ export function FeedPage() {
   return (
     <PrivateLayout>
       <div className="max-w-xl mx-auto py-6 px-2 sm:px-4">
-        {user?.permissions.canManagePosts && (
+        {user?.permissions['feed.create'] && (
           <button
             onClick={() => setComposerOpen(true)}
             className="w-full flex items-center gap-3 bg-white rounded-2xl border border-border px-4 py-3 mb-5 text-left hover:border-primary/40 hover:shadow-sm transition"
@@ -310,13 +310,13 @@ export function FeedPage() {
             <div className="text-center text-text-muted py-16 flex flex-col items-center gap-2">
               <ImageIcon size={36} className="text-border" />
               <p>Nenhuma postagem ainda.</p>
-              {user?.permissions.canManagePosts && <p className="text-sm">Que tal ser o primeiro a publicar algo?</p>}
+              {user?.permissions['feed.create'] && <p className="text-sm">Que tal ser o primeiro a publicar algo?</p>}
             </div>
           )}
         </div>
       </div>
 
-      {user?.permissions.canManagePosts && (
+      {user?.permissions['feed.create'] && (
         <PostComposerModal open={composerOpen} onOpenChange={setComposerOpen} onPublished={load} />
       )}
     </PrivateLayout>

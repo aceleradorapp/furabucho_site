@@ -13,7 +13,7 @@ bannersRouter.get('/', async (_req, res) => {
 bannersRouter.post(
   '/',
   requireAuth,
-  requirePermission('canManageSettings'),
+  requirePermission('settings.edit'),
   upload.single('image'),
   async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'Envie uma imagem de banner' });
@@ -38,7 +38,7 @@ bannersRouter.post(
   },
 );
 
-bannersRouter.patch('/:id', requireAuth, requirePermission('canManageSettings'), async (req, res) => {
+bannersRouter.patch('/:id', requireAuth, requirePermission('settings.edit'), async (req, res) => {
   const id = Number(req.params.id);
   const { title, subtitle, linkUrl, order, active } = req.body as {
     title?: string;
@@ -62,7 +62,7 @@ bannersRouter.patch('/:id', requireAuth, requirePermission('canManageSettings'),
   res.json(banner);
 });
 
-bannersRouter.delete('/:id', requireAuth, requirePermission('canManageSettings'), async (req, res) => {
+bannersRouter.delete('/:id', requireAuth, requirePermission('settings.edit'), async (req, res) => {
   const id = Number(req.params.id);
   await prisma.banner.delete({ where: { id } });
   res.status(204).end();
