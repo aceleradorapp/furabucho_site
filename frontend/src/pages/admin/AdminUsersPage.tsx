@@ -1,4 +1,4 @@
-import { BadgeCheck, ImagePlus, Search, X } from 'lucide-react';
+import { BadgeCheck, ImagePlus, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
@@ -21,6 +21,7 @@ interface MemberUser {
   nickname: string | null;
   username: string;
   email: string;
+  roleId: number;
   role: string;
   roleLabel: string;
   mustChangePassword: boolean;
@@ -47,12 +48,14 @@ export function AdminUsersPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nickname, setNickname] = useState('');
   const [roleId, setRoleId] = useState<number | ''>('');
   const [error, setError] = useState<string | null>(null);
   const [lastCreated, setLastCreated] = useState<{ email: string; tempPassword: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const nicknameTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const nameTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   async function load() {
     const u = await api.get<MemberUser[]>('/admin/users');
@@ -68,6 +71,7 @@ export function AdminUsersPage() {
     load();
     return () => {
       nicknameTimeoutsRef.current.forEach(clearTimeout);
+      nameTimeoutsRef.current.forEach(clearTimeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -96,12 +100,14 @@ export function AdminUsersPage() {
         email,
         roleId,
         ...(password ? { password } : {}),
+        ...(nickname.trim() ? { nickname: nickname.trim() } : {}),
       });
       setLastCreated({ email: created.email, tempPassword: created.tempPassword });
       setName('');
       setUsername('');
       setEmail('');
       setPassword('');
+      setNickname('');
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível cadastrar');
@@ -138,6 +144,61 @@ export function AdminUsersPage() {
       });
     }, AUTOSAVE_DELAY);
     nicknameTimeoutsRef.current.set(id, timeout);
+  }
+
+  function updateName(id: number, value: string) {
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, name: value } : u)));
+
+    const existing = nameTimeoutsRef.current.get(id);
+    if (existing) clearTimeout(existing);
+    const timeout = setTimeout(() => {
+      persistRowAction(id, async () => {
+        await api.patch<{ name: string }>(`/admin/users/${id}`, { name: value });
+      });
+    }, AUTOSAVE_DELAY);
+    nameTimeoutsRef.current.set(id, timeout);
+  }
+
+  async function handleRoleChange(target: MemberUser, newRoleId: number) {
+    const previousRoleId = target.roleId;
+    const role = roles.find((r) => r.id === newRoleId);
+    if (!role) return;
+
+    setUsers((prev) =>
+      prev.map((u) => (u.id === target.id ? { ...u, roleId: newRoleId, role: role.key, roleLabel: role.label } : u)),
+    );
+
+    const ok = await persistRowAction(target.id, async () => {
+      await api.patch(`/admin/users/${target.id}`, { roleId: newRoleId });
+    });
+
+    if (!ok) {
+      const previousRole = roles.find((r) => r.id === previousRoleId);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === target.id && previousRole
+            ? { ...u, roleId: previousRoleId, role: previousRole.key, roleLabel: previousRole.label }
+            : u,
+        ),
+      );
+    }
+  }
+
+  async function handleDeleteUser(target: MemberUser) {
+    const ok = await confirm({
+      title: `Excluir ${target.nickname || target.name}?`,
+      description:
+        'A conta será removida definitivamente, junto com as publicações, curtidas e comentários feitos por essa pessoa. Essa ação não pode ser desfeita.',
+      variant: 'danger',
+    });
+    if (!ok) return;
+
+    try {
+      await api.delete(`/admin/users/${target.id}`);
+      setUsers((prev) => prev.filter((u) => u.id !== target.id));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Não foi possível excluir');
+    }
   }
 
   async function handleUploadCaricature(id: number, blob: Blob) {
@@ -229,6 +290,15 @@ export function AdminUsersPage() {
               />
             </div>
             <div>
+              <label className="text-sm text-text-muted">Apelido (opcional)</label>
+              <input
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="Como a pessoa é chamada"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
               <label className="text-sm text-text-muted">Papel</label>
               <select
                 value={roleId}
@@ -292,7 +362,15 @@ export function AdminUsersPage() {
 
               <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 items-center">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-text-main truncate">{u.name}</p>
+                  {canManageUsers ? (
+                    <input
+                      value={u.name}
+                      onChange={(e) => updateName(u.id, e.target.value)}
+                      className="text-sm font-medium text-text-main bg-transparent outline-none border-b border-transparent hover:border-border focus:border-primary transition w-full truncate -ml-px"
+                    />
+                  ) : (
+                    <p className="text-sm font-medium text-text-main truncate">{u.name}</p>
+                  )}
                   <p className="text-xs text-text-muted truncate">{u.email}</p>
                 </div>
 
@@ -305,7 +383,19 @@ export function AdminUsersPage() {
 
                 {canManageUsers && (
                   <div className="text-xs text-text-muted flex items-center gap-2">
-                    <span>{u.roleLabel}</span>
+                    <select
+                      value={u.roleId}
+                      onChange={(e) => handleRoleChange(u, Number(e.target.value))}
+                      disabled={u.id === authUser?.id}
+                      title={u.id === authUser?.id ? 'Você não pode alterar seu próprio papel' : undefined}
+                      className="rounded-lg border border-border px-1.5 py-1 outline-none focus:border-primary bg-white text-text-main disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {roles.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.label}
+                        </option>
+                      ))}
+                    </select>
                     <span>•</span>
                     {u.mustChangePassword ? (
                       <span className="text-amber-600">aguardando 1º acesso</span>
@@ -331,8 +421,19 @@ export function AdminUsersPage() {
                 )}
               </div>
 
-              <div className="w-24 shrink-0 flex sm:justify-end">
+              <div className="w-24 shrink-0 flex items-center gap-1 sm:justify-end">
                 <SaveStatusBadge status={rowStatus[u.id] ?? 'idle'} compact />
+                {canManageUsers && u.id !== authUser?.id && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteUser(u)}
+                    className="text-text-muted hover:text-red-600 transition p-1.5 shrink-0"
+                    aria-label="Excluir membro"
+                    title="Excluir membro"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
           ))}

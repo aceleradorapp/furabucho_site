@@ -238,7 +238,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onSelect={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-card-subtle outline-none"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-card-subtle outline-none cursor-pointer"
                   >
                     <LogOut size={16} /> Sair
                   </DropdownMenu.Item>

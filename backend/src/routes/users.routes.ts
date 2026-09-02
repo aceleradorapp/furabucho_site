@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { upload } from '../lib/upload';
-import { requireAdmin, requireAnyPermission, requireAuth, requirePermission } from '../middleware/auth';
+import { AuthedRequest, requireAdmin, requireAnyPermission, requireAuth, requirePermission } from '../middleware/auth';
 
 export const usersRouter = Router();
 
@@ -26,6 +26,7 @@ usersRouter.get('/', requireAnyPermission('canManageUsers', 'canManageMemberProf
       nickname: u.nickname,
       username: u.username,
       email: u.email,
+      roleId: u.roleId,
       role: u.role.key,
       roleLabel: u.role.label,
       mustChangePassword: u.mustChangePassword,
@@ -43,12 +44,13 @@ usersRouter.get('/roles', requirePermission('canManageUsers'), async (_req, res)
 });
 
 usersRouter.post('/', requirePermission('canManageUsers'), async (req, res) => {
-  const { name, username, email, roleId, password } = req.body as {
+  const { name, username, email, roleId, password, nickname } = req.body as {
     name?: string;
     username?: string;
     email?: string;
     roleId?: number;
     password?: string;
+    nickname?: string;
   };
 
   if (!name || !username || !email || !roleId) {
@@ -66,7 +68,15 @@ usersRouter.post('/', requirePermission('canManageUsers'), async (req, res) => {
 
   try {
     const user = await prisma.user.create({
-      data: { name, username, email, roleId, passwordHash, mustChangePassword: true },
+      data: {
+        name,
+        username,
+        email,
+        roleId,
+        passwordHash,
+        mustChangePassword: true,
+        ...(nickname?.trim() ? { nickname: nickname.trim() } : {}),
+      },
     });
     res.status(201).json({
       id: user.id,
@@ -94,7 +104,18 @@ usersRouter.patch('/:id', requirePermission('canManageUsers'), async (req, res) 
     include: { role: true },
   });
 
-  res.json({ id: user.id, name: user.name, role: user.role.key });
+  res.json({ id: user.id, name: user.name, roleId: user.roleId, role: user.role.key, roleLabel: user.role.label });
+});
+
+usersRouter.delete('/:id', requirePermission('canManageUsers'), async (req: AuthedRequest, res) => {
+  const id = Number(req.params.id);
+
+  if (id === req.userId) {
+    return res.status(400).json({ error: 'Você não pode excluir sua própria conta' });
+  }
+
+  await prisma.user.delete({ where: { id } });
+  res.status(204).end();
 });
 
 usersRouter.patch(

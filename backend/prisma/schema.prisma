@@ -86,7 +86,7 @@ model Announcement {
   scheduledAt DateTime @default(now())
   createdAt   DateTime @default(now())
   authorId    Int
-  author      User     @relation(fields: [authorId], references: [id])
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   views       AnnouncementView[]
 }
@@ -96,7 +96,7 @@ model AnnouncementView {
   announcementId Int
   announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   userId         Int
-  user           User         @relation(fields: [userId], references: [id])
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   viewedAt       DateTime     @default(now())
 
   @@unique([announcementId, userId])
@@ -105,7 +105,7 @@ model AnnouncementView {
 model Post {
   id        Int       @id @default(autoincrement())
   authorId  Int
-  author    User      @relation(fields: [authorId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   mediaType String    @default("image")
   imageUrl  String?
   caption   String?   @db.Text
@@ -123,7 +123,7 @@ model Like {
   createdAt DateTime @default(now())
 
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
 }
@@ -136,7 +136,7 @@ model Comment {
   createdAt DateTime @default(now())
 
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Gallery {
