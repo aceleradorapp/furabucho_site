@@ -93,12 +93,11 @@ usersRouter.post('/', requirePermission('canManageUsers'), async (req, res) => {
 
 usersRouter.patch('/:id', requirePermission('canManageUsers'), async (req, res) => {
   const id = Number(req.params.id);
-  const { name, roleId } = req.body as { name?: string; roleId?: number };
+  const { roleId } = req.body as { roleId?: number };
 
   const user = await prisma.user.update({
     where: { id },
     data: {
-      ...(name ? { name } : {}),
       ...(roleId ? { roleId } : {}),
     },
     include: { role: true },
@@ -107,11 +106,18 @@ usersRouter.patch('/:id', requirePermission('canManageUsers'), async (req, res) 
   res.json({ id: user.id, name: user.name, roleId: user.roleId, role: user.role.key, roleLabel: user.role.label });
 });
 
-usersRouter.delete('/:id', requirePermission('canManageUsers'), async (req: AuthedRequest, res) => {
+usersRouter.delete('/:id', requireAnyPermission('canManageUsers', 'canManageMemberProfiles'), async (req: AuthedRequest, res) => {
   const id = Number(req.params.id);
 
   if (id === req.userId) {
     return res.status(400).json({ error: 'Você não pode excluir sua própria conta' });
+  }
+
+  if (req.userRole?.key !== 'admin') {
+    const target = await prisma.user.findUnique({ where: { id }, include: { role: true } });
+    if (target?.role.key === 'admin') {
+      return res.status(403).json({ error: 'Apenas administradores podem excluir a conta de outro administrador' });
+    }
   }
 
   await prisma.user.delete({ where: { id } });
@@ -123,17 +129,22 @@ usersRouter.patch(
   requireAnyPermission('canManageUsers', 'canManageMemberProfiles'),
   async (req, res) => {
     const id = Number(req.params.id);
-    const { nickname, caricatureUrl } = req.body as { nickname?: string | null; caricatureUrl?: string | null };
+    const { name, nickname, caricatureUrl } = req.body as {
+      name?: string;
+      nickname?: string | null;
+      caricatureUrl?: string | null;
+    };
 
     const user = await prisma.user.update({
       where: { id },
       data: {
+        ...(name?.trim() ? { name: name.trim() } : {}),
         ...(nickname !== undefined ? { nickname } : {}),
         ...(caricatureUrl !== undefined ? { caricatureUrl } : {}),
       },
     });
 
-    res.json({ id: user.id, nickname: user.nickname, caricatureUrl: user.caricatureUrl });
+    res.json({ id: user.id, name: user.name, nickname: user.nickname, caricatureUrl: user.caricatureUrl });
   },
 );
 

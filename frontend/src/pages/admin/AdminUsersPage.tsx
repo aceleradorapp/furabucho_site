@@ -37,6 +37,7 @@ export function AdminUsersPage() {
   const { user: authUser } = useAuth();
   const confirm = useConfirm();
   const canManageUsers = authUser?.permissions.canManageUsers ?? false;
+  const canManageMemberProfiles = authUser?.permissions.canManageMemberProfiles ?? false;
   const isAdmin = authUser?.role === 'admin';
 
   const [users, setUsers] = useState<MemberUser[]>([]);
@@ -153,7 +154,7 @@ export function AdminUsersPage() {
     if (existing) clearTimeout(existing);
     const timeout = setTimeout(() => {
       persistRowAction(id, async () => {
-        await api.patch<{ name: string }>(`/admin/users/${id}`, { name: value });
+        await api.patch<{ name: string }>(`/admin/users/${id}/profile-extras`, { name: value });
       });
     }, AUTOSAVE_DELAY);
     nameTimeoutsRef.current.set(id, timeout);
@@ -242,8 +243,8 @@ export function AdminUsersPage() {
         <h1 className="font-display uppercase tracking-wider text-2xl text-text-main mb-2">Membros</h1>
         <p className="text-sm text-text-muted mb-6">
           {canManageUsers
-            ? 'Cadastre novos membros e gerencie apelido, caricatura e o título de Ponta Firme.'
-            : 'Edite o apelido e a caricatura dos membros.'}
+            ? 'Cadastre novos membros e gerencie apelido, caricatura, papel e o título de Ponta Firme.'
+            : 'Edite nome, apelido e caricatura dos membros, ou exclua uma conta.'}
         </p>
 
         {canManageUsers && (
@@ -362,15 +363,11 @@ export function AdminUsersPage() {
 
               <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 items-center">
                 <div className="min-w-0">
-                  {canManageUsers ? (
-                    <input
-                      value={u.name}
-                      onChange={(e) => updateName(u.id, e.target.value)}
-                      className="text-sm font-medium text-text-main bg-transparent outline-none border-b border-transparent hover:border-border focus:border-primary transition w-full truncate -ml-px"
-                    />
-                  ) : (
-                    <p className="text-sm font-medium text-text-main truncate">{u.name}</p>
-                  )}
+                  <input
+                    value={u.name}
+                    onChange={(e) => updateName(u.id, e.target.value)}
+                    className="text-sm font-medium text-text-main bg-transparent outline-none border-b border-transparent hover:border-border focus:border-primary transition w-full truncate -ml-px"
+                  />
                   <p className="text-xs text-text-muted truncate">{u.email}</p>
                 </div>
 
@@ -423,7 +420,9 @@ export function AdminUsersPage() {
 
               <div className="w-24 shrink-0 flex items-center gap-1 sm:justify-end">
                 <SaveStatusBadge status={rowStatus[u.id] ?? 'idle'} compact />
-                {canManageUsers && u.id !== authUser?.id && (
+                {(canManageUsers || canManageMemberProfiles) &&
+                  u.id !== authUser?.id &&
+                  !(u.role === 'admin' && !isAdmin) && (
                   <button
                     type="button"
                     onClick={() => handleDeleteUser(u)}
