@@ -24,6 +24,7 @@ usersRouter.get('/', requireAnyPermission('canManageUsers', 'canManageMemberProf
       id: u.id,
       name: u.name,
       nickname: u.nickname,
+      whatsapp: u.whatsapp,
       username: u.username,
       email: u.email,
       roleId: u.roleId,
@@ -44,13 +45,14 @@ usersRouter.get('/roles', requirePermission('canManageUsers'), async (_req, res)
 });
 
 usersRouter.post('/', requirePermission('canManageUsers'), async (req, res) => {
-  const { name, username, email, roleId, password, nickname } = req.body as {
+  const { name, username, email, roleId, password, nickname, whatsapp } = req.body as {
     name?: string;
     username?: string;
     email?: string;
     roleId?: number;
     password?: string;
     nickname?: string;
+    whatsapp?: string;
   };
 
   if (!name || !username || !email || !roleId) {
@@ -76,6 +78,7 @@ usersRouter.post('/', requirePermission('canManageUsers'), async (req, res) => {
         passwordHash,
         mustChangePassword: true,
         ...(nickname?.trim() ? { nickname: nickname.trim() } : {}),
+        ...(whatsapp?.trim() ? { whatsapp: whatsapp.trim() } : {}),
       },
     });
     res.status(201).json({
@@ -129,9 +132,10 @@ usersRouter.patch(
   requireAnyPermission('canManageUsers', 'canManageMemberProfiles'),
   async (req, res) => {
     const id = Number(req.params.id);
-    const { name, nickname, caricatureUrl } = req.body as {
+    const { name, nickname, whatsapp, caricatureUrl } = req.body as {
       name?: string;
       nickname?: string | null;
+      whatsapp?: string | null;
       caricatureUrl?: string | null;
     };
 
@@ -140,11 +144,18 @@ usersRouter.patch(
       data: {
         ...(name?.trim() ? { name: name.trim() } : {}),
         ...(nickname !== undefined ? { nickname } : {}),
+        ...(whatsapp !== undefined ? { whatsapp } : {}),
         ...(caricatureUrl !== undefined ? { caricatureUrl } : {}),
       },
     });
 
-    res.json({ id: user.id, name: user.name, nickname: user.nickname, caricatureUrl: user.caricatureUrl });
+    res.json({
+      id: user.id,
+      name: user.name,
+      nickname: user.nickname,
+      whatsapp: user.whatsapp,
+      caricatureUrl: user.caricatureUrl,
+    });
   },
 );
 

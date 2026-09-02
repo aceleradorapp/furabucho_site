@@ -1,4 +1,4 @@
-import { BadgeCheck, ImagePlus, Search, Trash2, X } from 'lucide-react';
+import { BadgeCheck, ImagePlus, Pencil, Search, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
@@ -19,6 +19,7 @@ interface MemberUser {
   id: number;
   name: string;
   nickname: string | null;
+  whatsapp: string | null;
   username: string;
   email: string;
   roleId: number;
@@ -50,6 +51,7 @@ export function AdminUsersPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [roleId, setRoleId] = useState<number | ''>('');
   const [error, setError] = useState<string | null>(null);
   const [lastCreated, setLastCreated] = useState<{ email: string; tempPassword: string } | null>(null);
@@ -57,6 +59,7 @@ export function AdminUsersPage() {
 
   const nicknameTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const nameTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const whatsappTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   async function load() {
     const u = await api.get<MemberUser[]>('/admin/users');
@@ -73,6 +76,7 @@ export function AdminUsersPage() {
     return () => {
       nicknameTimeoutsRef.current.forEach(clearTimeout);
       nameTimeoutsRef.current.forEach(clearTimeout);
+      whatsappTimeoutsRef.current.forEach(clearTimeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -84,7 +88,8 @@ export function AdminUsersPage() {
       (u) =>
         u.name.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
-        (u.nickname ?? '').toLowerCase().includes(q),
+        (u.nickname ?? '').toLowerCase().includes(q) ||
+        (u.whatsapp ?? '').toLowerCase().includes(q),
     );
   }, [users, search]);
 
@@ -102,6 +107,7 @@ export function AdminUsersPage() {
         roleId,
         ...(password ? { password } : {}),
         ...(nickname.trim() ? { nickname: nickname.trim() } : {}),
+        ...(whatsapp.trim() ? { whatsapp: whatsapp.trim() } : {}),
       });
       setLastCreated({ email: created.email, tempPassword: created.tempPassword });
       setName('');
@@ -109,6 +115,7 @@ export function AdminUsersPage() {
       setEmail('');
       setPassword('');
       setNickname('');
+      setWhatsapp('');
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível cadastrar');
@@ -158,6 +165,22 @@ export function AdminUsersPage() {
       });
     }, AUTOSAVE_DELAY);
     nameTimeoutsRef.current.set(id, timeout);
+  }
+
+  function updateWhatsapp(id: number, value: string) {
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, whatsapp: value } : u)));
+
+    const existing = whatsappTimeoutsRef.current.get(id);
+    if (existing) clearTimeout(existing);
+    const timeout = setTimeout(() => {
+      persistRowAction(id, async () => {
+        const updated = await api.patch<{ whatsapp: string | null }>(`/admin/users/${id}/profile-extras`, {
+          whatsapp: value || null,
+        });
+        setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, whatsapp: updated.whatsapp } : u)));
+      });
+    }, AUTOSAVE_DELAY);
+    whatsappTimeoutsRef.current.set(id, timeout);
   }
 
   async function handleRoleChange(target: MemberUser, newRoleId: number) {
@@ -300,6 +323,16 @@ export function AdminUsersPage() {
               />
             </div>
             <div>
+              <label className="text-sm text-text-muted">WhatsApp (opcional)</label>
+              <input
+                type="tel"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                placeholder="(11) 91234-5678"
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary"
+              />
+            </div>
+            <div>
               <label className="text-sm text-text-muted">Papel</label>
               <select
                 value={roleId}
@@ -363,11 +396,18 @@ export function AdminUsersPage() {
 
               <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 items-center">
                 <div className="min-w-0">
-                  <input
-                    value={u.name}
-                    onChange={(e) => updateName(u.id, e.target.value)}
-                    className="text-sm font-medium text-text-main bg-transparent outline-none border-b border-transparent hover:border-border focus:border-primary transition w-full truncate -ml-px"
-                  />
+                  <div className="relative">
+                    <input
+                      value={u.name}
+                      onChange={(e) => updateName(u.id, e.target.value)}
+                      title="Clique para editar o nome"
+                      className="text-sm font-medium text-text-main bg-transparent outline-none border-b border-transparent hover:border-border focus:border-primary transition w-full truncate -ml-px pr-4"
+                    />
+                    <Pencil
+                      size={11}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-text-muted/50 pointer-events-none"
+                    />
+                  </div>
                   <p className="text-xs text-text-muted truncate">{u.email}</p>
                 </div>
 
@@ -375,6 +415,14 @@ export function AdminUsersPage() {
                   value={u.nickname ?? ''}
                   onChange={(e) => updateNickname(u.id, e.target.value)}
                   placeholder="Apelido"
+                  className="text-sm rounded-lg border border-border px-2.5 py-1.5 outline-none focus:border-primary transition"
+                />
+
+                <input
+                  type="tel"
+                  value={u.whatsapp ?? ''}
+                  onChange={(e) => updateWhatsapp(u.id, e.target.value)}
+                  placeholder="WhatsApp"
                   className="text-sm rounded-lg border border-border px-2.5 py-1.5 outline-none focus:border-primary transition"
                 />
 
