@@ -6,12 +6,14 @@ import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { AnnouncementBellButton, AnnouncementFullscreenViewer, type AnnouncementItem } from './AnnouncementsBell';
 import { Avatar } from './Avatar';
+import { useConfirm } from './ConfirmDialogProvider';
 
 const ANNOUNCEMENT_AUTO_SHOW_DELAY = 3000;
 const ANNOUNCEMENT_POLL_INTERVAL = 20000;
 
 export function PrivateLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
   const [siteName, setSiteName] = useState('Fura-Bucho');
@@ -77,7 +79,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
   }
 
   async function handleDeleteAnnouncement(id: number) {
-    if (!window.confirm('Excluir esta novidade?')) return;
+    if (!(await confirm({ title: 'Excluir esta novidade?', variant: 'danger' }))) return;
     await api.delete(`/announcements/${id}`);
     setAnnouncements((prev) => prev.filter((a) => a.id !== id));
   }

@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Eye, EyeOff, ImagePlus, Plus, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { api } from '../../api/client';
+import { useConfirm } from '../../components/ConfirmDialogProvider';
 import { ImageUploadButton } from '../../components/ImageUploadButton';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { SaveStatusBadge, type SaveStatus } from '../../components/SaveStatusBadge';
@@ -33,6 +34,7 @@ const inputClass =
   'w-full rounded-lg border border-border px-3 py-2 outline-none focus:border-primary transition text-sm';
 
 export function AdminSettingsPage() {
+  const confirm = useConfirm();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [status, setStatus] = useState<SaveStatus>('idle');
@@ -94,7 +96,8 @@ export function AdminSettingsPage() {
   }
 
   async function handleRemoveLogo() {
-    if (!settings || !window.confirm('Remover o logo do site?')) return;
+    if (!settings) return;
+    if (!(await confirm({ title: 'Remover o logo do site?', variant: 'danger' }))) return;
     const updated = await api.put<SiteSettings>('/settings', { logoUrl: null });
     setSettings(updated);
     window.dispatchEvent(new Event('site-settings-updated'));
@@ -109,7 +112,8 @@ export function AdminSettingsPage() {
   }
 
   async function handleRemoveHero() {
-    if (!settings || !window.confirm('Remover a imagem do Hero?')) return;
+    if (!settings) return;
+    if (!(await confirm({ title: 'Remover a imagem do Hero?', variant: 'danger' }))) return;
     const updated = await api.put<SiteSettings>('/settings', { heroImageUrl: null });
     setSettings(updated);
     window.dispatchEvent(new Event('site-settings-updated'));
@@ -178,7 +182,8 @@ export function AdminSettingsPage() {
   }
 
   async function handleDeleteBanner(id: number) {
-    if (!window.confirm('Excluir este banner? Essa ação não pode ser desfeita.')) return;
+    if (!(await confirm({ title: 'Excluir este banner?', description: 'Essa ação não pode ser desfeita.', variant: 'danger' })))
+      return;
     await api.delete(`/banners/${id}`);
     setBanners((prev) => prev.filter((b) => b.id !== id));
   }

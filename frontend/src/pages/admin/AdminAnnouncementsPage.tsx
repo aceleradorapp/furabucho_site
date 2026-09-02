@@ -1,6 +1,7 @@
 import { Link2, Loader2, Send, Trash2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../api/client';
+import { useConfirm } from '../../components/ConfirmDialogProvider';
 import { ImageUploadButton } from '../../components/ImageUploadButton';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
@@ -22,6 +23,7 @@ function toDateTimeLocalValue(date: Date) {
 }
 
 export function AdminAnnouncementsPage() {
+  const confirm = useConfirm();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -90,7 +92,7 @@ export function AdminAnnouncementsPage() {
   }
 
   async function handleDelete(id: number) {
-    if (!window.confirm('Excluir esta novidade?')) return;
+    if (!(await confirm({ title: 'Excluir esta novidade?', variant: 'danger' }))) return;
     await api.delete(`/announcements/${id}`);
     await load();
   }

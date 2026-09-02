@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { useConfirm } from '../components/ConfirmDialogProvider';
 import { PostComposerModal } from '../components/PostComposerModal';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { UPLOADS_BASE } from '../lib/config';
@@ -79,6 +80,7 @@ function PostSkeleton() {
 
 export function FeedPage() {
   const { user } = useAuth();
+  const confirm = useConfirm();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -119,7 +121,7 @@ export function FeedPage() {
   }
 
   async function handleDeletePost(postId: number) {
-    if (!window.confirm('Excluir esta postagem definitivamente?')) return;
+    if (!(await confirm({ title: 'Excluir esta postagem definitivamente?', variant: 'danger' }))) return;
     await api.delete(`/posts/${postId}`);
     await load();
   }

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { Avatar } from '../../components/Avatar';
+import { useConfirm } from '../../components/ConfirmDialogProvider';
 import { ImageUploadButton } from '../../components/ImageUploadButton';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { SaveStatusBadge, type SaveStatus } from '../../components/SaveStatusBadge';
@@ -33,6 +34,7 @@ const AUTOSAVE_DELAY = 900;
 
 export function AdminUsersPage() {
   const { user: authUser } = useAuth();
+  const confirm = useConfirm();
   const canManageUsers = authUser?.permissions.canManageUsers ?? false;
   const isAdmin = authUser?.role === 'admin';
 
@@ -148,7 +150,7 @@ export function AdminUsersPage() {
   }
 
   async function handleRemoveCaricature(id: number) {
-    if (!window.confirm('Remover a caricatura deste membro?')) return;
+    if (!(await confirm({ title: 'Remover a caricatura deste membro?', variant: 'danger' }))) return;
     await persistRowAction(id, async () => {
       const updated = await api.patch<{ caricatureUrl: string | null }>(`/admin/users/${id}/profile-extras`, {
         caricatureUrl: null,
