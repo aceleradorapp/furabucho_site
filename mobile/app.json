@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "Fura-Bucho",
+    "slug": "furabucho",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "furabucho",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0A0A0C",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0A0A0C"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.furabucho.app",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSExceptionDomains": {
+            "192.95.13.27": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSIncludesSubdomains": false
+            }
+          }
+        }
+      }
+    },
+    "android": {
+      "package": "com.furabucho.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0A0A0C"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-video",
+      "expo-asset",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
