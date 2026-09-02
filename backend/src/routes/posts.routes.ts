@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthedRequest, requireAdmin, requireAuth, requirePermission } from '../middleware/auth';
-import { upload } from '../lib/upload';
+import { isVideoFile, postUpload } from '../lib/upload';
 
 export const postsRouter = Router();
 
@@ -14,7 +14,7 @@ postsRouter.get('/', async (req: AuthedRequest, res) => {
     where: isAdmin ? {} : { blocked: false },
     orderBy: { createdAt: 'desc' },
     include: {
-      author: { select: { id: true, name: true, avatarUrl: true } },
+      author: { select: { id: true, name: true, avatarUrl: true, nickname: true, isPontaFirme: true } },
       likes: true,
       comments: {
         orderBy: { createdAt: 'asc' },
@@ -26,6 +26,7 @@ postsRouter.get('/', async (req: AuthedRequest, res) => {
   res.json(
     posts.map((p) => ({
       id: p.id,
+      mediaType: p.mediaType,
       imageUrl: p.imageUrl,
       caption: p.caption,
       blocked: p.blocked,
@@ -38,20 +39,42 @@ postsRouter.get('/', async (req: AuthedRequest, res) => {
   );
 });
 
-postsRouter.post('/', requirePermission('canManagePosts'), upload.single('image'), async (req: AuthedRequest, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Envie uma imagem para o post' });
-  const { caption } = req.body as { caption?: string };
+postsRouter.post(
+  '/',
+  requirePermission('canManagePosts'),
+  postUpload.single('media'),
+  async (req: AuthedRequest, res) => {
+    const { caption } = req.body as { caption?: string };
+    const trimmedCaption = caption?.trim() || null;
 
-  const post = await prisma.post.create({
-    data: {
-      authorId: req.userId as number,
-      imageUrl: `/uploads/${req.file.filename}`,
-      caption,
-    },
-  });
+    if (!req.file && !trimmedCaption) {
+      return res.status(400).json({ error: 'Escreva algo ou anexe uma foto/vídeo' });
+    }
 
-  res.status(201).json(post);
-});
+    const post = await prisma.post.create({
+      data: {
+        authorId: req.userId as number,
+        mediaType: req.file ? (isVideoFile(req.file.filename) ? 'video' : 'image') : 'text',
+        imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+        caption: trimmedCaption,
+      },
+      include: { author: { select: { id: true, name: true, avatarUrl: true, nickname: true, isPontaFirme: true } } },
+    });
+
+    res.status(201).json({
+      id: post.id,
+      mediaType: post.mediaType,
+      imageUrl: post.imageUrl,
+      caption: post.caption,
+      blocked: post.blocked,
+      createdAt: post.createdAt,
+      author: post.author,
+      likeCount: 0,
+      likedByMe: false,
+      comments: [],
+    });
+  },
+);
 
 postsRouter.post('/:id/like', async (req: AuthedRequest, res) => {
   const postId = Number(req.params.id);

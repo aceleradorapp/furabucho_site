@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Home, Images, LogOut, Settings, ShieldCheck, Users, UserRound } from 'lucide-react';
+import { Home, Images, LogOut, Settings, ShieldCheck, Sparkles, Users, UserRound } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
@@ -22,6 +22,12 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
   }, []);
 
   if (!user) return null;
+
+  const missingProfileParts = [
+    !user.avatarUrl && 'uma foto de perfil',
+    !user.birthDate && 'sua data de nascimento',
+  ].filter(Boolean) as string[];
+  const isProfileComplete = missingProfileParts.length === 0;
 
   const hasSettingsMenu =
     user.permissions.canManageSettings ||
@@ -159,6 +165,25 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </header>
+
+      {!isProfileComplete && location.pathname !== '/perfil' && (
+        <div className="bg-primary/10 border-b border-primary/20">
+          <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
+            <div className="flex items-start sm:items-center gap-2 text-sm text-text-main min-w-0">
+              <Sparkles size={16} className="text-primary shrink-0 mt-0.5 sm:mt-0" />
+              <span>
+                <strong className="font-medium">Complete seu perfil</strong> — falta {missingProfileParts.join(' e ')}.
+              </span>
+            </div>
+            <Link
+              to="/perfil"
+              className="self-start sm:self-auto shrink-0 text-xs font-semibold text-white bg-primary hover:bg-primary-hover rounded-full px-3 py-1.5 transition"
+            >
+              Completar agora
+            </Link>
+          </div>
+        </div>
+      )}
 
       <main className="pb-20 md:pb-8">{children}</main>
 

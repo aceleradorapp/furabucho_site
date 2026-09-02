@@ -25,3 +25,21 @@ export const upload = multer({
     cb(null, true);
   },
 });
+
+const videoExt = new Set(['.mp4', '.webm', '.mov']);
+
+export function isVideoFile(filename: string) {
+  return videoExt.has(path.extname(filename).toLowerCase());
+}
+
+export const postUpload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!allowedExt.has(ext) && !videoExt.has(ext)) {
+      return cb(new Error('Formato não suportado. Use imagem (jpg, png, webp, gif) ou vídeo (mp4, webm, mov) de até 25MB.'));
+    }
+    cb(null, true);
+  },
+});

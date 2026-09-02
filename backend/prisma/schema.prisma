@@ -86,7 +86,8 @@ model Post {
   id        Int       @id @default(autoincrement())
   authorId  Int
   author    User      @relation(fields: [authorId], references: [id])
-  imageUrl  String
+  mediaType String    @default("image")
+  imageUrl  String?
   caption   String?   @db.Text
   blocked   Boolean   @default(false)
   createdAt DateTime  @default(now())

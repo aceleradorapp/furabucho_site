@@ -34,6 +34,12 @@ app.use((err: { code?: string; message?: string }, _req: Request, res: Response,
   if (err.code === 'P2025') {
     return res.status(404).json({ error: 'Registro não encontrado' });
   }
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ error: 'Arquivo muito grande' });
+  }
+  if (err.message?.startsWith('Formato não suportado') || err.message === 'Formato de imagem não suportado') {
+    return res.status(400).json({ error: err.message });
+  }
   console.error(err);
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
