@@ -1,5 +1,17 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Home, Images, KeyRound, LogOut, Megaphone, Settings, ShieldCheck, Sparkles, Users, UserRound } from 'lucide-react';
+import {
+  Home,
+  Images,
+  KeyRound,
+  LogOut,
+  Megaphone,
+  Settings,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  Users,
+  UserRound,
+} from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
@@ -142,6 +154,14 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
               canManage={user.permissions['announcements.manage']}
               className="p-2 rounded-full hover:bg-card-subtle transition text-text-main"
             />
+
+            <Link
+              to="/app"
+              className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/app') ? 'text-primary' : 'text-text-main'}`}
+              aria-label="Baixar o app"
+            >
+              <Smartphone size={22} />
+            </Link>
 
             {hasSettingsMenu && (
               <DropdownMenu.Root>
@@ -300,6 +320,9 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           className="p-2 text-text-muted"
           iconSize={24}
         />
+        <Link to="/app" className={`p-2 ${isActive('/app') ? 'text-primary' : 'text-text-muted'}`} aria-label="Baixar o app">
+          <Smartphone size={24} />
+        </Link>
         <Link to="/perfil" className={isActive('/perfil') ? 'text-primary' : 'text-text-muted'} aria-label="Perfil">
           <Avatar name={user.name} avatarUrl={user.avatarUrl} size={28} />
         </Link>

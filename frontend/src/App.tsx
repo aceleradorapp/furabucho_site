@@ -8,6 +8,7 @@ import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { AdminUserPermissionsPage } from './pages/admin/AdminUserPermissionsPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
+import { DownloadAppPage } from './pages/DownloadAppPage'
 import { FeedPage } from './pages/FeedPage'
 import { GalleryDetailPage } from './pages/GalleryDetailPage'
 import { GalleryListPage } from './pages/GalleryListPage'
@@ -48,6 +49,14 @@ function App() {
         element={
           <ProtectedRoute>
             <GalleryDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/app"
+        element={
+          <ProtectedRoute>
+            <DownloadAppPage />
           </ProtectedRoute>
         }
       />

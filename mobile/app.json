@@ -9,9 +9,6 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0A0A0C",
     "newArchEnabled": true,
-    "splash": {
-      "backgroundColor": "#0A0A0C"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.furabucho.app",
@@ -44,6 +41,15 @@
       "expo-font",
       "expo-video",
       "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splashscreen_logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0A0A0C"
+        }
+      ],
       [
         "expo-build-properties",
         {
