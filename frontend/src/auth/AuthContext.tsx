@@ -11,6 +11,8 @@ export interface AuthUser {
   mustChangePassword: boolean;
   role: string;
   roleLabel: string;
+  isPontaFirme: boolean;
+  isVeterano: boolean;
   permissions: Record<string, boolean>;
 }
 

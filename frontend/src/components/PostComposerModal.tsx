@@ -97,7 +97,7 @@ export function PostComposerModal({
 
           <div className="px-5 py-4 overflow-y-auto flex-1">
             <div className="flex items-center gap-2.5 mb-3">
-              <Avatar name={user?.name ?? ''} avatarUrl={user?.avatarUrl} size={36} />
+              <Avatar name={user?.name ?? ''} avatarUrl={user?.avatarUrl} size={36} role={user?.role} isPontaFirme={user?.isPontaFirme} isVeterano={user?.isVeterano} />
               <p className="text-sm font-medium text-text-main">{user?.name}</p>
             </div>
 

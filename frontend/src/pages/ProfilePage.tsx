@@ -50,7 +50,7 @@ export function ProfilePage() {
         <h1 className="font-display uppercase tracking-wider text-2xl text-text-main mb-6">Meu Perfil</h1>
 
         <div className="flex items-center gap-4 mb-8">
-          <Avatar name={user.name} avatarUrl={user.avatarUrl} size={80} />
+          <Avatar name={user.name} avatarUrl={user.avatarUrl} size={80} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
           <div>
             <ImageUploadButton spec={IMAGE_SPECS.avatar} buttonLabel="Trocar foto" onUpload={handleAvatarUpload} />
             <p className="text-xs text-text-muted mt-2">{IMAGE_SPECS.avatar.helpText}</p>

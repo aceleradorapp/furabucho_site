@@ -23,6 +23,8 @@ interface MemberUser {
   avatarUrl: string | null;
   roleLabel: string;
   role: string;
+  isPontaFirme: boolean;
+  isVeterano: boolean;
 }
 
 interface PermissionState {
@@ -123,7 +125,7 @@ export function AdminUserPermissionsPage() {
                     selectedId === u.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-card-subtle border border-transparent'
                   }`}
                 >
-                  <Avatar name={u.nickname || u.name} avatarUrl={u.avatarUrl} size={30} />
+                  <Avatar name={u.nickname || u.name} avatarUrl={u.avatarUrl} size={30} role={u.role} isPontaFirme={u.isPontaFirme} isVeterano={u.isVeterano} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-text-main truncate">{u.nickname || u.name}</p>
                     <p className="text-xs text-text-muted truncate">{u.roleLabel}</p>
@@ -149,7 +151,7 @@ export function AdminUserPermissionsPage() {
             {selectedUser && detail && !loadingDetail && (
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <Avatar name={selectedUser.nickname || selectedUser.name} avatarUrl={selectedUser.avatarUrl} size={40} />
+                  <Avatar name={selectedUser.nickname || selectedUser.name} avatarUrl={selectedUser.avatarUrl} size={40} role={selectedUser.role} isPontaFirme={selectedUser.isPontaFirme} isVeterano={selectedUser.isVeterano} />
                   <div>
                     <p className="font-medium text-text-main">{selectedUser.nickname || selectedUser.name}</p>
                     <p className="text-xs text-text-muted">

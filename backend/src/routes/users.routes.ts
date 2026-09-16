@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { upload } from '../lib/upload';
-import { AuthedRequest, requireAdmin, requireAnyPermission, requireAuth, requirePermission } from '../middleware/auth';
+import { AuthedRequest, requireAnyPermission, requireAuth, requirePermission } from '../middleware/auth';
 
 export const usersRouter = Router();
 
@@ -35,6 +35,7 @@ usersRouter.get('/', requirePermission('members.view'), async (_req, res) => {
       avatarUrl: u.avatarUrl,
       caricatureUrl: u.caricatureUrl,
       isPontaFirme: u.isPontaFirme,
+      isVeterano: u.isVeterano,
     })),
   );
 });
@@ -207,14 +208,20 @@ usersRouter.post(
   },
 );
 
-usersRouter.patch('/:id/ponta-firme', requireAdmin, async (req, res) => {
+usersRouter.patch('/:id/patentes', requirePermission('members.editProfile'), async (req, res) => {
   const id = Number(req.params.id);
-  const { isPontaFirme } = req.body as { isPontaFirme?: boolean };
+  const { isPontaFirme, isVeterano } = req.body as { isPontaFirme?: boolean; isVeterano?: boolean };
 
-  if (typeof isPontaFirme !== 'boolean') {
-    return res.status(400).json({ error: 'Valor inválido' });
+  if (isPontaFirme === undefined && isVeterano === undefined) {
+    return res.status(400).json({ error: 'Nada pra atualizar' });
   }
 
-  const user = await prisma.user.update({ where: { id }, data: { isPontaFirme } });
-  res.json({ id: user.id, isPontaFirme: user.isPontaFirme });
+  const user = await prisma.user.update({
+    where: { id },
+    data: {
+      ...(isPontaFirme !== undefined ? { isPontaFirme } : {}),
+      ...(isVeterano !== undefined ? { isVeterano } : {}),
+    },
+  });
+  res.json({ id: user.id, isPontaFirme: user.isPontaFirme, isVeterano: user.isVeterano });
 });
