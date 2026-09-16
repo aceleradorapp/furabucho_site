@@ -5,6 +5,23 @@ import { AuthedRequest, requireAuth, requirePermission } from '../middleware/aut
 
 export const galleryRouter = Router();
 
+galleryRouter.get('/featured', async (_req, res) => {
+  const images = await prisma.galleryImage.findMany({
+    where: { featured: true, active: true },
+    orderBy: { featuredOrder: 'asc' },
+    include: { gallery: { select: { title: true, year: true } } },
+  });
+
+  res.json(
+    images.map((img) => ({
+      id: img.id,
+      imageUrl: img.imageUrl,
+      galleryTitle: img.gallery.title,
+      galleryYear: img.gallery.year,
+    })),
+  );
+});
+
 galleryRouter.use(requireAuth);
 
 galleryRouter.get('/', async (req: AuthedRequest, res) => {
@@ -54,6 +71,28 @@ galleryRouter.get('/:id', async (req: AuthedRequest, res) => {
 
   if (!gallery) return res.status(404).json({ error: 'Galeria não encontrada' });
   res.json(gallery);
+});
+
+galleryRouter.put('/featured', requirePermission('gallery.manage'), async (req, res) => {
+  const { imageIds } = req.body as { imageIds?: number[] };
+  if (!Array.isArray(imageIds)) return res.status(400).json({ error: 'Envie a lista de fotos selecionadas' });
+
+  const ids = [...new Set(imageIds.map(Number).filter((id) => Number.isInteger(id)))];
+
+  await prisma.$transaction([
+    prisma.galleryImage.updateMany({
+      where: { featured: true },
+      data: { featured: false, featuredOrder: null },
+    }),
+    ...ids.map((id, index) =>
+      prisma.galleryImage.update({
+        where: { id },
+        data: { featured: true, featuredOrder: index },
+      }),
+    ),
+  ]);
+
+  res.json({ ok: true, count: ids.length });
 });
 
 galleryRouter.post('/', requirePermission('gallery.manage'), async (req, res) => {

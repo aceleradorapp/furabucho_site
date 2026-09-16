@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AdminAnnouncementsPage } from './pages/admin/AdminAnnouncementsPage'
 import { AdminGalleryDetailPage } from './pages/admin/AdminGalleryDetailPage'
+import { AdminGalleryHighlightsPage } from './pages/admin/AdminGalleryHighlightsPage'
 import { AdminGalleryPage } from './pages/admin/AdminGalleryPage'
 import { AdminPioneiroCommentsPage } from './pages/admin/AdminPioneiroCommentsPage'
 import { AdminPioneiroPhotosPage } from './pages/admin/AdminPioneiroPhotosPage'
@@ -135,6 +136,14 @@ function App() {
         element={
           <ProtectedRoute requirePermission="gallery.manage">
             <AdminPioneiroCommentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/carrossel-inicial"
+        element={
+          <ProtectedRoute requirePermission="gallery.manage">
+            <AdminGalleryHighlightsPage />
           </ProtectedRoute>
         }
       />
