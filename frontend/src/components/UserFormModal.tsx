@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { BadgeCheck, ImageIcon, ImagePlus, Send, X } from 'lucide-react';
+import { ImageIcon, ImagePlus, Medal, Send, Target, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api/client';
 import { IMAGE_SPECS } from '../lib/imageSpecs';
@@ -17,6 +17,7 @@ export interface EditableMember {
   avatarUrl: string | null;
   caricatureUrl: string | null;
   isPontaFirme: boolean;
+  isVeterano: boolean;
 }
 
 interface Role {
@@ -83,7 +84,7 @@ export function UserFormModal({
   initialUser,
   roles,
   canChangeRole,
-  isAdminViewer,
+  canSetPatentes,
   onSaved,
 }: {
   open: boolean;
@@ -92,7 +93,7 @@ export function UserFormModal({
   initialUser?: EditableMember;
   roles: Role[];
   canChangeRole: boolean;
-  isAdminViewer: boolean;
+  canSetPatentes: boolean;
   onSaved: (created?: { email: string; tempPassword: string }) => void;
 }) {
   const [name, setName] = useState('');
@@ -103,6 +104,7 @@ export function UserFormModal({
   const [whatsapp, setWhatsapp] = useState('');
   const [roleId, setRoleId] = useState<number | ''>('');
   const [isPontaFirme, setIsPontaFirme] = useState(false);
+  const [isVeterano, setIsVeterano] = useState(false);
 
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -124,6 +126,7 @@ export function UserFormModal({
       setWhatsapp(initialUser.whatsapp ?? '');
       setRoleId(initialUser.roleId);
       setIsPontaFirme(initialUser.isPontaFirme);
+      setIsVeterano(initialUser.isVeterano);
       setAvatarPreview(initialUser.avatarUrl ? `${UPLOADS_BASE}${initialUser.avatarUrl}` : null);
       setCaricaturePreview(initialUser.caricatureUrl ? `${UPLOADS_BASE}${initialUser.caricatureUrl}` : null);
     } else {
@@ -135,6 +138,7 @@ export function UserFormModal({
       setWhatsapp('');
       setRoleId(roles.find((r) => r.key === 'membro')?.id ?? roles[0]?.id ?? '');
       setIsPontaFirme(false);
+      setIsVeterano(false);
       setAvatarPreview(null);
       setCaricaturePreview(null);
     }
@@ -220,8 +224,13 @@ export function UserFormModal({
         if (canChangeRole && roleId && roleId !== initialUser.roleId) {
           tasks.push(api.patch(`/admin/users/${initialUser.id}`, { roleId }));
         }
-        if (isAdminViewer && isPontaFirme !== initialUser.isPontaFirme) {
-          tasks.push(api.patch(`/admin/users/${initialUser.id}/ponta-firme`, { isPontaFirme }));
+        if (canSetPatentes) {
+          const patentesPatch: { isPontaFirme?: boolean; isVeterano?: boolean } = {};
+          if (isPontaFirme !== initialUser.isPontaFirme) patentesPatch.isPontaFirme = isPontaFirme;
+          if (isVeterano !== initialUser.isVeterano) patentesPatch.isVeterano = isVeterano;
+          if (Object.keys(patentesPatch).length > 0) {
+            tasks.push(api.patch(`/admin/users/${initialUser.id}/patentes`, patentesPatch));
+          }
         }
 
         await Promise.all(tasks);
@@ -338,19 +347,33 @@ export function UserFormModal({
               )}
             </div>
 
-            {isAdminViewer && (
-              <label className="inline-flex items-center gap-2 text-sm text-text-main cursor-pointer w-fit">
-                <input
-                  type="checkbox"
-                  checked={isPontaFirme}
-                  onChange={(e) => setIsPontaFirme(e.target.checked)}
-                  className="accent-primary"
-                />
-                <span className="inline-flex items-center gap-1.5 font-medium">
-                  <BadgeCheck size={15} className={isPontaFirme ? 'text-primary' : 'text-text-muted'} />
-                  Ponta Firme
-                </span>
-              </label>
+            {canSetPatentes && (
+              <div className="flex flex-wrap gap-4">
+                <label className="inline-flex items-center gap-2 text-sm text-text-main cursor-pointer w-fit">
+                  <input
+                    type="checkbox"
+                    checked={isPontaFirme}
+                    onChange={(e) => setIsPontaFirme(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  <span className="inline-flex items-center gap-1.5 font-medium">
+                    <Target size={15} className={isPontaFirme ? 'text-amber-500' : 'text-text-muted'} />
+                    Ponta Firme
+                  </span>
+                </label>
+                <label className="inline-flex items-center gap-2 text-sm text-text-main cursor-pointer w-fit">
+                  <input
+                    type="checkbox"
+                    checked={isVeterano}
+                    onChange={(e) => setIsVeterano(e.target.checked)}
+                    className="accent-primary"
+                  />
+                  <span className="inline-flex items-center gap-1.5 font-medium">
+                    <Medal size={15} className={isVeterano ? 'text-purple-500' : 'text-text-muted'} />
+                    Veterano <span className="text-xs text-text-muted font-normal">(+3 encontros)</span>
+                  </span>
+                </label>
+              </div>
             )}
 
             {error && <p className="text-sm text-red-600">{error}</p>}

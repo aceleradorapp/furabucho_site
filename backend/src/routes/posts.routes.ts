@@ -14,7 +14,17 @@ postsRouter.get('/', async (req: AuthedRequest, res) => {
     where: isAdmin ? {} : { blocked: false },
     orderBy: { createdAt: 'desc' },
     include: {
-      author: { select: { id: true, name: true, avatarUrl: true, nickname: true, isPontaFirme: true } },
+      author: {
+        select: {
+          id: true,
+          name: true,
+          avatarUrl: true,
+          nickname: true,
+          isPontaFirme: true,
+          isVeterano: true,
+          role: { select: { key: true } },
+        },
+      },
       likes: true,
       comments: {
         orderBy: { createdAt: 'asc' },
@@ -31,7 +41,7 @@ postsRouter.get('/', async (req: AuthedRequest, res) => {
       caption: p.caption,
       blocked: p.blocked,
       createdAt: p.createdAt,
-      author: p.author,
+      author: { ...p.author, role: p.author.role.key },
       likeCount: p.likes.length,
       likedByMe: p.likes.some((l) => l.userId === req.userId),
       comments: p.comments.map((c) => ({ id: c.id, text: c.text, user: c.user, createdAt: c.createdAt })),
@@ -58,7 +68,19 @@ postsRouter.post(
         imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
         caption: trimmedCaption,
       },
-      include: { author: { select: { id: true, name: true, avatarUrl: true, nickname: true, isPontaFirme: true } } },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            nickname: true,
+            isPontaFirme: true,
+            isVeterano: true,
+            role: { select: { key: true } },
+          },
+        },
+      },
     });
 
     res.status(201).json({
@@ -68,7 +90,7 @@ postsRouter.post(
       caption: post.caption,
       blocked: post.blocked,
       createdAt: post.createdAt,
-      author: post.author,
+      author: { ...post.author, role: post.author.role.key },
       likeCount: 0,
       likedByMe: false,
       comments: [],

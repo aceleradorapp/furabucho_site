@@ -150,7 +150,14 @@ export function AdminUsersPage() {
             >
               <div className="flex items-center gap-3 shrink-0">
                 <div className="flex flex-col items-center gap-1">
-                  <Avatar name={u.name} avatarUrl={u.avatarUrl} size={42} />
+                  <Avatar
+                    name={u.name}
+                    avatarUrl={u.avatarUrl}
+                    size={42}
+                    role={u.role}
+                    isPontaFirme={u.isPontaFirme}
+                    isVeterano={u.isVeterano}
+                  />
                   <span className="text-[9px] text-text-muted uppercase tracking-wide">Foto</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
@@ -223,7 +230,7 @@ export function AdminUsersPage() {
         initialUser={editingUser ?? undefined}
         roles={roles}
         canChangeRole={canChangeRole}
-        isAdminViewer={isAdmin}
+        canSetPatentes={canEditProfile}
         onSaved={handleSaved}
       />
     </PrivateLayout>

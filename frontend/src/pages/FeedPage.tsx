@@ -33,7 +33,15 @@ interface FeedPost {
   caption: string | null;
   blocked: boolean;
   createdAt: string;
-  author: { id: number; name: string; avatarUrl: string | null; nickname: string | null; isPontaFirme: boolean };
+  author: {
+    id: number;
+    name: string;
+    avatarUrl: string | null;
+    nickname: string | null;
+    isPontaFirme: boolean;
+    isVeterano: boolean;
+    role: string;
+  };
   likeCount: number;
   likedByMe: boolean;
   comments: PostComment[];
@@ -134,7 +142,7 @@ export function FeedPage() {
             onClick={() => setComposerOpen(true)}
             className="w-full flex items-center gap-3 bg-white rounded-2xl border border-border px-4 py-3 mb-5 text-left hover:border-primary/40 hover:shadow-sm transition"
           >
-            <Avatar name={user.name} avatarUrl={user.avatarUrl} size={38} />
+            <Avatar name={user.name} avatarUrl={user.avatarUrl} size={38} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
             <span className="text-sm text-text-muted flex-1">No que você está pensando?</span>
             <ImageIcon size={19} className="text-green-600 shrink-0" />
             <Video size={19} className="text-purple-600 shrink-0" />
@@ -157,7 +165,7 @@ export function FeedPage() {
                 >
                   <header className="flex items-center justify-between gap-2 px-4 py-3">
                     <div className="flex items-center gap-2 min-w-0">
-                      <Avatar name={post.author.name} avatarUrl={post.author.avatarUrl} size={32} />
+                      <Avatar name={post.author.name} avatarUrl={post.author.avatarUrl} size={32} role={post.author.role} isPontaFirme={post.author.isPontaFirme} isVeterano={post.author.isVeterano} />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-text-main truncate">
                           <AuthorName author={post.author} />
