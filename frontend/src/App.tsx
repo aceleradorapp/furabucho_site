@@ -3,6 +3,8 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { AdminAnnouncementsPage } from './pages/admin/AdminAnnouncementsPage'
 import { AdminGalleryDetailPage } from './pages/admin/AdminGalleryDetailPage'
 import { AdminGalleryPage } from './pages/admin/AdminGalleryPage'
+import { AdminPioneiroCommentsPage } from './pages/admin/AdminPioneiroCommentsPage'
+import { AdminPioneiroPhotosPage } from './pages/admin/AdminPioneiroPhotosPage'
 import { AdminRolesPage } from './pages/admin/AdminRolesPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { AdminUserPermissionsPage } from './pages/admin/AdminUserPermissionsPage'
@@ -13,12 +15,16 @@ import { FeedPage } from './pages/FeedPage'
 import { GalleryDetailPage } from './pages/GalleryDetailPage'
 import { GalleryListPage } from './pages/GalleryListPage'
 import { LandingPage } from './pages/LandingPage'
+import { PioneirosPage } from './pages/PioneirosPage'
+import { PioneirosPainelPage } from './pages/PioneirosPainelPage'
 import { ProfilePage } from './pages/ProfilePage'
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/pioneiros" element={<PioneirosPage />} />
+      <Route path="/pioneiros/painel" element={<PioneirosPainelPage />} />
       <Route path="/trocar-senha" element={<ChangePasswordPage />} />
       <Route
         path="/feed"
@@ -113,6 +119,22 @@ function App() {
         element={
           <ProtectedRoute requirePermission="gallery.manage">
             <AdminGalleryDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/pioneiros-fotos"
+        element={
+          <ProtectedRoute requirePermission="gallery.manage">
+            <AdminPioneiroPhotosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/pioneiros-comentarios"
+        element={
+          <ProtectedRoute requirePermission="gallery.manage">
+            <AdminPioneiroCommentsPage />
           </ProtectedRoute>
         }
       />

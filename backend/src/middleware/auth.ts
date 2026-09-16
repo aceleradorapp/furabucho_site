@@ -61,3 +61,33 @@ export function requireAdmin(req: AuthedRequest, res: Response, next: NextFuncti
   }
   next();
 }
+
+export interface PioneiroRequest extends Request {
+  pioneiroId?: number;
+}
+
+export async function requirePioneiroAuth(req: PioneiroRequest, res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token ausente' });
+  }
+
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as { pioneiroId?: number };
+    if (!payload.pioneiroId) {
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    const pioneiro = await prisma.pioneiro.findUnique({ where: { id: payload.pioneiroId } });
+    if (!pioneiro) {
+      return res.status(401).json({ error: 'Cadastro não encontrado' });
+    }
+
+    req.pioneiroId = pioneiro.id;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Token inválido ou expirado' });
+  }
+}

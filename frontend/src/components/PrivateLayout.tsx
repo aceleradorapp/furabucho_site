@@ -5,10 +5,13 @@ import {
   KeyRound,
   LogOut,
   Megaphone,
+  MessageSquare,
+  Rocket,
   Settings,
   ShieldCheck,
   Smartphone,
   Sparkles,
+  Trophy,
   Users,
   UserRound,
 } from 'lucide-react';
@@ -213,6 +216,36 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
                         >
                           <Images size={16} /> Gerenciar galeria
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions['gallery.manage'] && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin/pioneiros-fotos"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <Rocket size={16} /> Fotos dos Pioneiros
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions['gallery.manage'] && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin/pioneiros-comentarios"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <MessageSquare size={16} /> Comentários dos Pioneiros
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions['gallery.manage'] && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/pioneiros/painel"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <Trophy size={16} /> Painel dos Pioneiros
                         </Link>
                       </DropdownMenu.Item>
                     )}

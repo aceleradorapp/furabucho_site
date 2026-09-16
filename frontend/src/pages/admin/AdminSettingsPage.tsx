@@ -17,6 +17,7 @@ interface SiteSettings {
   heroTitle: string | null;
   heroImageUrl: string | null;
   aboutText: string | null;
+  pioneirosCampaignActive: boolean;
 }
 
 interface Banner {
@@ -67,6 +68,7 @@ export function AdminSettingsPage() {
         foundingYear: next.foundingYear,
         heroTitle: next.heroTitle,
         aboutText: next.aboutText,
+        pioneirosCampaignActive: next.pioneirosCampaignActive,
       });
       setSettings(updated);
       window.dispatchEvent(new Event('site-settings-updated'));
@@ -283,6 +285,27 @@ export function AdminSettingsPage() {
               className={inputClass}
             />
           </Field>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Programa Pioneiros"
+          description="Aviso de pré-lançamento que aparece pra quem visita o site (ainda deslogado), convidando a ajudar e ganhar pontos. Você pode desligar quando o site for lançado oficialmente."
+        >
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <span className="text-sm text-text-main">
+              {settings.pioneirosCampaignActive ? 'Ativo — aparece pra visitantes' : 'Desativado — página e aviso ocultos'}
+            </span>
+            <span className="relative inline-flex shrink-0">
+              <input
+                type="checkbox"
+                checked={settings.pioneirosCampaignActive}
+                onChange={(e) => updateField({ pioneirosCampaignActive: e.target.checked })}
+                className="sr-only peer"
+              />
+              <span className="w-11 h-6 rounded-full bg-border peer-checked:bg-primary transition-colors" />
+              <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+            </span>
+          </label>
         </SettingsSection>
 
         <SettingsSection

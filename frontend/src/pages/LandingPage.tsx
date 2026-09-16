@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { LoginModal } from '../components/LoginModal';
+import { PioneirosPrompt } from '../components/PioneirosPrompt';
 import { UPLOADS_BASE } from '../lib/config';
 
 interface SiteSettings {
@@ -24,6 +25,7 @@ interface SiteSettings {
   heroTitle: string | null;
   heroImageUrl: string | null;
   aboutText: string | null;
+  pioneirosCampaignActive: boolean;
 }
 
 interface Banner {
@@ -262,6 +264,7 @@ export function LandingPage() {
       </footer>
 
       <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
+      {settings && <PioneirosPrompt active={settings.pioneirosCampaignActive} />}
     </div>
   );
 }

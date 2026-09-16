@@ -62,15 +62,51 @@ model User {
 }
 
 model SiteSettings {
-  id           Int      @id @default(autoincrement())
-  siteName     String   @default("Amigos Fura-Bucho")
-  subtitle     String?
-  foundingYear Int?
-  logoUrl      String?
-  heroTitle    String?
-  heroImageUrl String?
-  aboutText    String?  @db.Text
-  updatedAt    DateTime @updatedAt
+  id                       Int      @id @default(autoincrement())
+  siteName                 String   @default("Amigos Fura-Bucho")
+  subtitle                 String?
+  foundingYear             Int?
+  logoUrl                  String?
+  heroTitle                String?
+  heroImageUrl             String?
+  aboutText                String?  @db.Text
+  pioneirosCampaignActive  Boolean  @default(true)
+  updatedAt                DateTime @updatedAt
+}
+
+model Pioneiro {
+  id              Int      @id @default(autoincrement())
+  name            String
+  email           String?  @unique
+  phone           String?  @unique
+  passwordHash    String
+  avatarUrl       String?
+  points          Float    @default(0)
+  status          String   @default("pending")
+  convertedUserId Int?     @unique
+  lastVisitAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  photos          PioneiroPhoto[]
+  comments        PioneiroComment[]
+}
+
+model PioneiroPhoto {
+  id         Int       @id @default(autoincrement())
+  pioneiroId Int
+  pioneiro   Pioneiro  @relation(fields: [pioneiroId], references: [id], onDelete: Cascade)
+  title      String
+  imageUrl   String
+  sentAt     DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model PioneiroComment {
+  id         Int      @id @default(autoincrement())
+  pioneiroId Int
+  pioneiro   Pioneiro @relation(fields: [pioneiroId], references: [id], onDelete: Cascade)
+  text       String   @db.Text
+  createdAt  DateTime @default(now())
 }
 
 model Banner {
