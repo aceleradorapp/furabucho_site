@@ -405,7 +405,7 @@ function HighlightsCarousel({ images }: { images: HighlightImage[] }) {
   return (
     <div className="space-y-6">
       <div
-        className="relative overflow-hidden rounded-2xl shadow-2xl bg-[#141418] border border-white/10 aspect-[16/9] md:aspect-[21/9]"
+        className="relative overflow-hidden rounded-2xl shadow-2xl bg-[#141418] border border-white/10 aspect-[4/3] sm:aspect-[16/10] md:aspect-[16/9]"
         onMouseEnter={() => (hoveringRef.current = true)}
         onMouseLeave={() => (hoveringRef.current = false)}
       >
