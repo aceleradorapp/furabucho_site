@@ -1,6 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Smartphone } from 'lucide-react';
+import { Download, Rocket, Smartphone } from 'lucide-react';
 import { UPLOADS_BASE } from '../lib/config';
+import { InstallAppButton } from '../components/InstallAppButton';
 import { PrivateLayout } from '../components/PrivateLayout';
 
 const APK_URL = `${UPLOADS_BASE}/uploads/fura-bucho.apk`;
@@ -19,7 +20,20 @@ export function DownloadAppPage() {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 mt-8 flex flex-col sm:flex-row items-center gap-8">
+        <InstallAppButton className="w-full flex items-center gap-4 bg-card border border-border rounded-2xl p-5 mt-8 text-left hover:border-primary/40 transition">
+          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Rocket size={20} className="text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-text-main">Instalar direto do navegador</p>
+            <p className="text-xs text-text-muted">
+              Mais rápido — sem baixar arquivo nenhum, e funciona também no iPhone.
+            </p>
+          </div>
+          <Download size={18} className="text-text-muted shrink-0" />
+        </InstallAppButton>
+
+        <div className="bg-card border border-border rounded-2xl p-6 mt-4 flex flex-col sm:flex-row items-center gap-8">
           <div className="bg-white p-4 rounded-2xl shrink-0">
             <QRCodeSVG value={APK_URL} size={168} />
           </div>
