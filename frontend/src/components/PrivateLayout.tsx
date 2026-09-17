@@ -130,8 +130,10 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 bg-card/90 backdrop-blur-md border-b border-border">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/feed" className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-primary" />
-            <span className="font-display uppercase tracking-wider text-sm text-text-main">{siteName}</span>
+            <img src="/ico-ff.jpeg" alt={siteName} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+            <span className="hidden sm:inline font-display uppercase tracking-wider text-sm text-text-main">
+              {siteName}
+            </span>
           </Link>
 
           <nav className="flex items-center gap-1">
