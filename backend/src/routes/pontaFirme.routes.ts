@@ -174,3 +174,84 @@ pontaFirmeRouter.delete('/payments/:id', requirePermission('pontaFirme.manage'),
   await prisma.pontaFirmePayment.delete({ where: { id } });
   res.status(204).end();
 });
+
+pontaFirmeRouter.get('/seasons/:id/expenses', async (req, res) => {
+  const seasonId = Number(req.params.id);
+
+  const cards = await prisma.pontaFirmeExpenseCard.findMany({
+    where: { seasonId },
+    include: { items: { orderBy: { createdAt: 'asc' } } },
+    orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+  });
+
+  const enriched = cards.map((c) => ({
+    id: c.id,
+    title: c.title,
+    items: c.items.map((i) => ({ id: i.id, label: i.label, amount: toNumber(i.amount) })),
+    total: c.items.reduce((sum, i) => sum + toNumber(i.amount), 0),
+  }));
+
+  res.json({
+    cards: enriched,
+    totalGastos: enriched.reduce((sum, c) => sum + c.total, 0),
+  });
+});
+
+pontaFirmeRouter.post('/seasons/:id/expenses', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const seasonId = Number(req.params.id);
+  const { title } = req.body as { title?: string };
+  if (!title?.trim()) return res.status(400).json({ error: 'Informe um título' });
+
+  const lastCard = await prisma.pontaFirmeExpenseCard.findFirst({ where: { seasonId }, orderBy: { order: 'desc' } });
+
+  const card = await prisma.pontaFirmeExpenseCard.create({
+    data: { seasonId, title: title.trim(), order: (lastCard?.order ?? -1) + 1 },
+  });
+  res.status(201).json(card);
+});
+
+pontaFirmeRouter.patch('/expenses/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { title } = req.body as { title?: string };
+  if (!title?.trim()) return res.status(400).json({ error: 'Informe um título' });
+
+  const card = await prisma.pontaFirmeExpenseCard.update({ where: { id }, data: { title: title.trim() } });
+  res.json(card);
+});
+
+pontaFirmeRouter.delete('/expenses/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pontaFirmeExpenseCard.delete({ where: { id } });
+  res.status(204).end();
+});
+
+pontaFirmeRouter.post('/expenses/:id/items', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const cardId = Number(req.params.id);
+  const { label, amount } = req.body as { label?: string; amount?: number };
+  if (!label?.trim() || amount === undefined) {
+    return res.status(400).json({ error: 'Informe a descrição e o valor do gasto' });
+  }
+
+  const item = await prisma.pontaFirmeExpenseItem.create({ data: { cardId, label: label.trim(), amount } });
+  res.status(201).json(item);
+});
+
+pontaFirmeRouter.patch('/expense-items/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { label, amount } = req.body as { label?: string; amount?: number };
+
+  const item = await prisma.pontaFirmeExpenseItem.update({
+    where: { id },
+    data: {
+      ...(label !== undefined ? { label: label.trim() } : {}),
+      ...(amount !== undefined ? { amount } : {}),
+    },
+  });
+  res.json(item);
+});
+
+pontaFirmeRouter.delete('/expense-items/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pontaFirmeExpenseItem.delete({ where: { id } });
+  res.status(204).end();
+});

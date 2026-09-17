@@ -222,7 +222,8 @@ model PontaFirmeSeason {
   endDate   DateTime @db.Date
   createdAt DateTime @default(now())
 
-  payers PontaFirmePayer[]
+  payers       PontaFirmePayer[]
+  expenseCards PontaFirmeExpenseCard[]
 }
 
 model PontaFirmePayer {
@@ -250,4 +251,24 @@ model PontaFirmePayment {
   createdAt DateTime        @default(now())
 
   @@unique([payerId, monthDate])
+}
+
+model PontaFirmeExpenseCard {
+  id        Int              @id @default(autoincrement())
+  seasonId  Int
+  season    PontaFirmeSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  title     String
+  order     Int              @default(0)
+  createdAt DateTime         @default(now())
+
+  items PontaFirmeExpenseItem[]
+}
+
+model PontaFirmeExpenseItem {
+  id        Int                   @id @default(autoincrement())
+  cardId    Int
+  card      PontaFirmeExpenseCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label     String
+  amount    Decimal               @db.Decimal(10, 2)
+  createdAt DateTime              @default(now())
 }
