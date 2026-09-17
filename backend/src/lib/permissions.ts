@@ -49,6 +49,13 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     label: 'Pagamentos Ponta Firme',
     actions: [{ key: 'pontaFirme.manage', label: 'Gerenciar integrantes e registrar pagamentos da Ponta Firme' }],
   },
+  {
+    key: 'pioneiros',
+    label: 'Pioneiros (pré-cadastro)',
+    actions: [
+      { key: 'pioneiros.manage', label: 'Ver pré-cadastros de Pioneiros e enviá-los para o cadastro de membros' },
+    ],
+  },
 ];
 
 export const ALL_PERMISSION_KEYS = PERMISSION_CATEGORIES.flatMap((c) => c.actions.map((a) => a.key));

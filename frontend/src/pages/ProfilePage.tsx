@@ -84,7 +84,7 @@ export function ProfilePage() {
           <div>
             <label className="text-sm text-text-muted">E-mail</label>
             <input
-              value={user.email}
+              value={user.email ?? 'Não cadastrado'}
               disabled
               className="mt-1 w-full rounded-lg border border-border px-3 py-2 bg-card-subtle text-text-muted"
             />

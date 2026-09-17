@@ -5,7 +5,7 @@ export interface AuthUser {
   id: number;
   name: string;
   username: string;
-  email: string;
+  email: string | null;
   avatarUrl: string | null;
   birthDate: string | null;
   mustChangePassword: boolean;

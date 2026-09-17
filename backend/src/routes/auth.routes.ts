@@ -11,7 +11,7 @@ function serializeUser(user: {
   id: number;
   name: string;
   username: string;
-  email: string;
+  email: string | null;
   avatarUrl: string | null;
   birthDate: Date | null;
   mustChangePassword: boolean;
@@ -46,11 +46,12 @@ authRouter.post('/login', async (req, res) => {
   const { identifier, password } = req.body as { identifier?: string; password?: string };
 
   if (!identifier || !password) {
-    return res.status(400).json({ error: 'Informe usuário/e-mail e senha' });
+    return res.status(400).json({ error: 'Informe usuário, e-mail ou WhatsApp e senha' });
   }
 
+  const trimmed = identifier.trim();
   const user = await prisma.user.findFirst({
-    where: { OR: [{ email: identifier }, { username: identifier }] },
+    where: { OR: [{ email: trimmed.toLowerCase() }, { username: trimmed }, { whatsapp: trimmed }] },
     include: userInclude,
   });
 
