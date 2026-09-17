@@ -222,6 +222,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                     {user.permissions['gallery.manage'] && (
                       <DropdownMenu.Item asChild>
                         <Link
+                          to="/admin/carrossel-inicial"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <Sparkles size={16} /> Carrossel da página inicial
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions['gallery.manage'] && (
+                      <DropdownMenu.Item asChild>
+                        <Link
                           to="/admin/pioneiros-fotos"
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
                         >

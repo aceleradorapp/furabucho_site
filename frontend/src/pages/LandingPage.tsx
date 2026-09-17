@@ -1,5 +1,5 @@
 import useEmblaCarousel from 'embla-carousel-react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Calendar,
   ChevronRight,
@@ -36,11 +36,19 @@ interface Banner {
   active: boolean;
 }
 
+interface HighlightImage {
+  id: number;
+  imageUrl: string;
+  galleryTitle: string;
+  galleryYear: number;
+}
+
 export function LandingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loginOpen, setLoginOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [highlights, setHighlights] = useState<HighlightImage[]>([]);
 
   useEffect(() => {
     if (searchParams.get('login')) {
@@ -53,6 +61,7 @@ export function LandingPage() {
   useEffect(() => {
     api.get<SiteSettings>('/settings').then(setSettings);
     api.get<Banner[]>('/banners').then((data) => setBanners(data.filter((b) => b.active)));
+    api.get<HighlightImage[]>('/galleries/featured').then(setHighlights);
   }, []);
 
   const siteName = settings?.siteName ?? 'Amigos Fura-Bucho';
@@ -194,6 +203,29 @@ export function LandingPage() {
           <EventsCarousel banners={banners} />
         </div>
       </section>
+
+      {/* ================= SEÇÃO MOMENTOS (GALERIA EM DESTAQUE) ================= */}
+      {highlights.length > 0 && (
+        <section className="w-full py-24 bg-[#0A0A0C] border-t border-white/5">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+              <div>
+                <span className="text-[#FF5E14] font-black tracking-widest text-xs uppercase mb-2 block">
+                  Nossos Momentos
+                </span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+                  Direto da Galeria
+                </h2>
+              </div>
+              <p className="text-zinc-400 text-sm max-w-md">
+                Um gostinho das nossas confraternizações — a galeria completa é exclusiva pra quem é da família.
+              </p>
+            </div>
+
+            <HighlightsCarousel images={highlights} />
+          </div>
+        </section>
+      )}
 
       {/* ================= SEÇÃO SOBRE NÓS ================= */}
       <section id="sobre" className="w-full py-24 bg-[#0A0A0C] border-t border-white/5 scroll-mt-10">
@@ -348,6 +380,72 @@ function EventsCarousel({ banners }: { banners: Banner[] }) {
                 i === selectedIndex ? 'w-8 bg-[#FF5E14]' : 'w-2 bg-zinc-700 hover:bg-zinc-600'
               }`}
               aria-label={`Slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HighlightsCarousel({ images }: { images: HighlightImage[] }) {
+  const [index, setIndex] = useState(0);
+  const hoveringRef = useRef(false);
+
+  useEffect(() => {
+    if (images.length < 2) return;
+    const timer = setInterval(() => {
+      if (!hoveringRef.current) setIndex((i) => (i + 1) % images.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  const current = images[index];
+
+  return (
+    <div className="space-y-6">
+      <div
+        className="relative overflow-hidden rounded-2xl shadow-2xl bg-[#141418] border border-white/10 aspect-[16/9] md:aspect-[21/9]"
+        onMouseEnter={() => (hoveringRef.current = true)}
+        onMouseLeave={() => (hoveringRef.current = false)}
+      >
+        <AnimatePresence mode="sync">
+          <motion.div
+            key={current.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1, ease: 'easeInOut' }}
+            className="absolute inset-0"
+          >
+            <motion.img
+              src={`${UPLOADS_BASE}${current.imageUrl}`}
+              alt={current.galleryTitle}
+              initial={{ scale: 1 }}
+              animate={{ scale: 1.08 }}
+              transition={{ duration: 4.5, ease: 'linear' }}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
+            <div className="absolute bottom-0 left-0 p-6 sm:p-10 md:p-12">
+              <p className="text-zinc-300 text-xs sm:text-sm font-semibold uppercase tracking-wider">
+                {current.galleryTitle} · {current.galleryYear}
+              </p>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {images.length > 1 && (
+        <div className="flex justify-center items-center gap-2">
+          {images.map((img, i) => (
+            <button
+              key={img.id}
+              onClick={() => setIndex(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === index ? 'w-8 bg-[#FF5E14]' : 'w-2 bg-zinc-700 hover:bg-zinc-600'
+              }`}
+              aria-label={`Foto ${i + 1}`}
             />
           ))}
         </div>

@@ -204,10 +204,12 @@ model Gallery {
 }
 
 model GalleryImage {
-  id        Int      @id @default(autoincrement())
-  galleryId Int
-  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
-  imageUrl  String
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  galleryId     Int
+  gallery       Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  imageUrl      String
+  active        Boolean  @default(true)
+  featured      Boolean  @default(false)
+  featuredOrder Int?
+  createdAt     DateTime @default(now())
 }
