@@ -4,6 +4,7 @@ import { api, ApiError } from '../../api/client';
 import { Avatar } from '../Avatar';
 import { useConfirm } from '../ConfirmDialogProvider';
 import { PontaFirmeEventPayerModal, type EventPayer } from './PontaFirmeEventPayerModal';
+import { PaymentTypeSelector, type PaymentType } from './PaymentTypeSelector';
 
 interface ClaimableUser {
   id: number;
@@ -136,8 +137,11 @@ export function PontaFirmeEventPayersTab({
   const [formOpen, setFormOpen] = useState(false);
   const [nameText, setNameText] = useState('');
   const [newValue, setNewValue] = useState('30');
+  const [payerPaymentType, setPayerPaymentType] = useState<PaymentType>('inteiro');
   const [pickedUser, setPickedUser] = useState<ClaimableUser | null>(null);
-  const [guestNames, setGuestNames] = useState<string[]>(['']);
+  const [guestRows, setGuestRows] = useState<{ name: string; paymentType: PaymentType }[]>([
+    { name: '', paymentType: 'inteiro' },
+  ]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -145,7 +149,8 @@ export function PontaFirmeEventPayersTab({
 
   function openAddForm() {
     setFormOpen(true);
-    setGuestNames(['']);
+    setGuestRows([{ name: '', paymentType: 'inteiro' }]);
+    setPayerPaymentType('inteiro');
     setFormError(null);
   }
 
@@ -154,7 +159,8 @@ export function PontaFirmeEventPayersTab({
     setPickedUser(null);
     setNameText('');
     setNewValue('30');
-    setGuestNames(['']);
+    setPayerPaymentType('inteiro');
+    setGuestRows([{ name: '', paymentType: 'inteiro' }]);
     setFormError(null);
   }
 
@@ -169,16 +175,16 @@ export function PontaFirmeEventPayersTab({
     setNameText('');
   }
 
-  function updateGuestName(index: number, value: string) {
-    setGuestNames((prev) => prev.map((n, i) => (i === index ? value : n)));
+  function updateGuestRow(index: number, patch: Partial<{ name: string; paymentType: PaymentType }>) {
+    setGuestRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
-  function addGuestNameField() {
-    setGuestNames((prev) => [...prev, '']);
+  function addGuestRow() {
+    setGuestRows((prev) => [...prev, { name: '', paymentType: 'inteiro' }]);
   }
 
-  function removeGuestNameField(index: number) {
-    setGuestNames((prev) => (prev.length === 1 ? [''] : prev.filter((_, i) => i !== index)));
+  function removeGuestRow(index: number) {
+    setGuestRows((prev) => (prev.length === 1 ? [{ name: '', paymentType: 'inteiro' }] : prev.filter((_, i) => i !== index)));
   }
 
   async function createPayer() {
@@ -199,7 +205,10 @@ export function PontaFirmeEventPayersTab({
       await api.post(`/ponta-firme/seasons/${seasonId}/event-payers`, {
         ...(pickedUser ? { userId: pickedUser.id } : { displayName: nameText.trim() }),
         valuePerPerson: value,
-        guestNames: guestNames.map((n) => n.trim()).filter(Boolean),
+        paymentType: payerPaymentType,
+        guests: guestRows
+          .filter((g) => g.name.trim())
+          .map((g) => ({ name: g.name.trim(), paymentType: g.paymentType })),
       });
       closeAddForm();
       onChanged();
@@ -277,7 +286,7 @@ export function PontaFirmeEventPayersTab({
           ) : (
             <div className="flex flex-col gap-3">
               <div>
-                <p className="text-xs font-medium text-text-muted mb-1.5">Nome da pessoa</p>
+                <p className="text-xs font-medium text-text-muted mb-1.5">Nome da pessoa (responsável)</p>
                 <PersonNameField
                   seasonId={seasonId}
                   pickedUser={pickedUser}
@@ -286,26 +295,36 @@ export function PontaFirmeEventPayersTab({
                   onTextChange={setNameText}
                   onClearPicked={clearPickedUser}
                 />
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-[11px] text-text-muted">Pagamento do responsável</span>
+                  <PaymentTypeSelector value={payerPaymentType} onChange={setPayerPaymentType} />
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="text-xs text-text-muted shrink-0">Valor por pessoa</label>
+                <label className="text-xs text-text-muted shrink-0">Valor por pessoa (inteiro)</label>
                 <MoneyInput value={newValue} onChange={setNewValue} />
               </div>
 
               <div>
-                <p className="text-xs font-medium text-text-muted mb-1.5">Quem vai (opcional agora, pode completar depois)</p>
+                <p className="text-xs font-medium text-text-muted mb-1.5">
+                  Quem mais vai (opcional agora, pode completar depois)
+                </p>
                 <div className="flex flex-col gap-1.5">
-                  {guestNames.map((name, index) => (
+                  {guestRows.map((row, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <input
-                        value={name}
-                        onChange={(e) => updateGuestName(index, e.target.value)}
+                        value={row.name}
+                        onChange={(e) => updateGuestRow(index, { name: e.target.value })}
                         placeholder={`Pessoa ${index + 1}`}
-                        className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-primary"
+                        className="flex-1 min-w-0 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-primary"
+                      />
+                      <PaymentTypeSelector
+                        value={row.paymentType}
+                        onChange={(paymentType) => updateGuestRow(index, { paymentType })}
                       />
                       <button
-                        onClick={() => removeGuestNameField(index)}
+                        onClick={() => removeGuestRow(index)}
                         className="text-text-faint hover:text-red-600 transition p-1 shrink-0"
                         aria-label="Remover campo"
                       >
@@ -315,7 +334,7 @@ export function PontaFirmeEventPayersTab({
                   ))}
                 </div>
                 <button
-                  onClick={addGuestNameField}
+                  onClick={addGuestRow}
                   className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition"
                 >
                   <Plus size={13} /> Adicionar mais uma pessoa

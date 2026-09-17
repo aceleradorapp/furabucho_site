@@ -4,10 +4,13 @@ import { useState } from 'react';
 import { api, ApiError } from '../../api/client';
 import { Avatar } from '../Avatar';
 import { useConfirm } from '../ConfirmDialogProvider';
+import { PaymentTypeSelector, type PaymentType } from './PaymentTypeSelector';
 
 export interface EventGuest {
   id: number;
   name: string;
+  paymentType: PaymentType;
+  amount: number;
 }
 
 export interface EventPayer {
@@ -17,6 +20,8 @@ export interface EventPayer {
   avatarUrl: string | null;
   isClaimed: boolean;
   valuePerPerson: number;
+  paymentType: PaymentType;
+  payerAmount: number;
   guests: EventGuest[];
   quantity: number;
   total: number;
@@ -49,6 +54,26 @@ export function PontaFirmeEventPayerModal({
 
   function reportError(err: unknown, fallback: string) {
     setError(err instanceof ApiError ? err.message : fallback);
+  }
+
+  async function setPayerPaymentType(type: PaymentType) {
+    setError(null);
+    try {
+      await api.patch(`/ponta-firme/event-payers/${payer.id}`, { paymentType: type });
+      onChanged();
+    } catch (err) {
+      reportError(err, 'Não foi possível salvar. Tente de novo.');
+    }
+  }
+
+  async function setGuestPaymentType(guestId: number, type: PaymentType) {
+    setError(null);
+    try {
+      await api.patch(`/ponta-firme/event-guests/${guestId}`, { paymentType: type });
+      onChanged();
+    } catch (err) {
+      reportError(err, 'Não foi possível salvar. Tente de novo.');
+    }
   }
 
   async function addGuest() {
@@ -181,6 +206,21 @@ export function PontaFirmeEventPayerModal({
 
           <div className="overflow-y-auto p-4 flex flex-col gap-1.5">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-1">Quem vai</h3>
+
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+              <div className="min-w-0">
+                <span className="text-sm text-text-main font-medium truncate block">{payer.name}</span>
+                <span className="text-[10px] text-text-muted">responsável · {formatMoney(payer.payerAmount)}</span>
+              </div>
+              {canManage ? (
+                <PaymentTypeSelector value={payer.paymentType} onChange={setPayerPaymentType} />
+              ) : (
+                <span className="text-xs text-text-muted shrink-0">
+                  {payer.paymentType === 'inteiro' ? 'Inteiro' : payer.paymentType === 'meio' ? 'Meio' : 'Não paga'}
+                </span>
+              )}
+            </div>
+
             {payer.guests.map((guest) => (
               <div key={guest.id} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
                 {editingGuestId === guest.id ? (
@@ -200,31 +240,42 @@ export function PontaFirmeEventPayerModal({
                   </>
                 ) : (
                   <>
-                    <span className="text-sm text-text-main">{guest.name}</span>
-                    {canManage && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => startEditGuest(guest)}
-                          className="text-text-faint hover:text-primary transition p-1"
-                          aria-label="Editar nome"
-                        >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          onClick={() => deleteGuest(guest.id)}
-                          className="text-text-faint hover:text-red-600 transition p-1"
-                          aria-label="Remover"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm text-text-main block truncate">{guest.name}</span>
+                      <span className="text-[10px] text-text-muted">{formatMoney(guest.amount)}</span>
+                    </div>
+                    {canManage ? (
+                      <>
+                        <PaymentTypeSelector
+                          value={guest.paymentType}
+                          onChange={(type) => setGuestPaymentType(guest.id, type)}
+                        />
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => startEditGuest(guest)}
+                            className="text-text-faint hover:text-primary transition p-1"
+                            aria-label="Editar nome"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            onClick={() => deleteGuest(guest.id)}
+                            className="text-text-faint hover:text-red-600 transition p-1"
+                            aria-label="Remover"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-xs text-text-muted shrink-0">
+                        {guest.paymentType === 'inteiro' ? 'Inteiro' : guest.paymentType === 'meio' ? 'Meio' : 'Não paga'}
+                      </span>
                     )}
                   </>
                 )}
               </div>
             ))}
-
-            {payer.guests.length === 0 && <p className="text-xs text-text-faint py-2">Ninguém adicionado ainda.</p>}
 
             {error && (
               <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-1">{error}</p>

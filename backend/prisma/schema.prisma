@@ -283,6 +283,7 @@ model PontaFirmeEventPayer {
   user           User?            @relation(fields: [userId], references: [id])
   displayName    String?
   valuePerPerson Decimal          @db.Decimal(10, 2)
+  paymentType    String           @default("inteiro")
   createdAt      DateTime         @default(now())
 
   guests PontaFirmeEventGuest[]
@@ -291,9 +292,10 @@ model PontaFirmeEventPayer {
 }
 
 model PontaFirmeEventGuest {
-  id        Int                  @id @default(autoincrement())
-  payerId   Int
-  payer     PontaFirmeEventPayer @relation(fields: [payerId], references: [id], onDelete: Cascade)
-  name      String
-  createdAt DateTime             @default(now())
+  id          Int                  @id @default(autoincrement())
+  payerId     Int
+  payer       PontaFirmeEventPayer @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  name        String
+  paymentType String               @default("inteiro")
+  createdAt   DateTime             @default(now())
 }

@@ -11,6 +11,19 @@ function toNumber(value: unknown): number {
   return typeof value === 'object' && value !== null ? Number(value.toString()) : Number(value);
 }
 
+const PAYMENT_TYPES = ['inteiro', 'meio', 'nao_paga'] as const;
+type PaymentType = (typeof PAYMENT_TYPES)[number];
+
+function isPaymentType(value: unknown): value is PaymentType {
+  return typeof value === 'string' && (PAYMENT_TYPES as readonly string[]).includes(value);
+}
+
+function paymentMultiplier(type: string): number {
+  if (type === 'meio') return 0.5;
+  if (type === 'nao_paga') return 0;
+  return 1;
+}
+
 pontaFirmeRouter.get('/seasons', async (_req, res) => {
   await getOrCreateCurrentSeason();
   const seasons = await prisma.pontaFirmeSeason.findMany({ orderBy: { startDate: 'desc' } });
@@ -284,17 +297,31 @@ pontaFirmeRouter.get('/seasons/:id/event-payers', async (req, res) => {
     orderBy: { createdAt: 'asc' },
   });
 
-  const enriched = payers.map((p) => ({
-    id: p.id,
-    userId: p.userId,
-    name: p.user?.nickname || p.user?.name || p.displayName || 'Sem nome',
-    avatarUrl: p.user?.avatarUrl ?? null,
-    isClaimed: !!p.userId,
-    valuePerPerson: toNumber(p.valuePerPerson),
-    guests: p.guests.map((g) => ({ id: g.id, name: g.name })),
-    quantity: p.guests.length,
-    total: toNumber(p.valuePerPerson) * p.guests.length,
-  }));
+  const enriched = payers.map((p) => {
+    const value = toNumber(p.valuePerPerson);
+    const payerAmount = value * paymentMultiplier(p.paymentType);
+    const guests = p.guests.map((g) => ({
+      id: g.id,
+      name: g.name,
+      paymentType: g.paymentType,
+      amount: value * paymentMultiplier(g.paymentType),
+    }));
+    const total = payerAmount + guests.reduce((sum, g) => sum + g.amount, 0);
+
+    return {
+      id: p.id,
+      userId: p.userId,
+      name: p.user?.nickname || p.user?.name || p.displayName || 'Sem nome',
+      avatarUrl: p.user?.avatarUrl ?? null,
+      isClaimed: !!p.userId,
+      valuePerPerson: value,
+      paymentType: p.paymentType,
+      payerAmount,
+      guests,
+      quantity: 1 + guests.length,
+      total,
+    };
+  });
 
   res.json({
     payers: enriched,
@@ -304,11 +331,12 @@ pontaFirmeRouter.get('/seasons/:id/event-payers', async (req, res) => {
 
 pontaFirmeRouter.post('/seasons/:id/event-payers', requirePermission('pontaFirme.manage'), async (req, res) => {
   const seasonId = Number(req.params.id);
-  const { userId, displayName, valuePerPerson, guestNames } = req.body as {
+  const { userId, displayName, valuePerPerson, paymentType, guests } = req.body as {
     userId?: number;
     displayName?: string;
     valuePerPerson?: number;
-    guestNames?: string[];
+    paymentType?: string;
+    guests?: { name: string; paymentType?: string }[];
   };
 
   if (!userId && !displayName?.trim()) {
@@ -317,18 +345,22 @@ pontaFirmeRouter.post('/seasons/:id/event-payers', requirePermission('pontaFirme
   if (valuePerPerson === undefined || valuePerPerson <= 0) {
     return res.status(400).json({ error: 'Informe o valor por pessoa' });
   }
+  if (paymentType !== undefined && !isPaymentType(paymentType)) {
+    return res.status(400).json({ error: 'Tipo de pagamento inválido' });
+  }
 
-  const cleanGuestNames = (guestNames ?? []).map((n) => n.trim()).filter(Boolean);
+  const cleanGuests = (guests ?? [])
+    .map((g) => ({ name: g.name?.trim() ?? '', paymentType: isPaymentType(g.paymentType) ? g.paymentType : 'inteiro' }))
+    .filter((g) => g.name);
 
   try {
     const payer = await prisma.pontaFirmeEventPayer.create({
       data: {
         seasonId,
         valuePerPerson,
+        ...(paymentType ? { paymentType } : {}),
         ...(userId ? { userId } : { displayName: displayName?.trim() }),
-        ...(cleanGuestNames.length > 0
-          ? { guests: { create: cleanGuestNames.map((name) => ({ name })) } }
-          : {}),
+        ...(cleanGuests.length > 0 ? { guests: { create: cleanGuests } } : {}),
       },
       include: { guests: true },
     });
@@ -340,11 +372,16 @@ pontaFirmeRouter.post('/seasons/:id/event-payers', requirePermission('pontaFirme
 
 pontaFirmeRouter.patch('/event-payers/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
   const id = Number(req.params.id);
-  const { userId, displayName, valuePerPerson } = req.body as {
+  const { userId, displayName, valuePerPerson, paymentType } = req.body as {
     userId?: number;
     displayName?: string;
     valuePerPerson?: number;
+    paymentType?: string;
   };
+
+  if (paymentType !== undefined && !isPaymentType(paymentType)) {
+    return res.status(400).json({ error: 'Tipo de pagamento inválido' });
+  }
 
   const payer = await prisma.pontaFirmeEventPayer.update({
     where: { id },
@@ -352,6 +389,7 @@ pontaFirmeRouter.patch('/event-payers/:id', requirePermission('pontaFirme.manage
       ...(userId !== undefined ? { userId, displayName: null } : {}),
       ...(displayName !== undefined ? { displayName } : {}),
       ...(valuePerPerson !== undefined ? { valuePerPerson } : {}),
+      ...(paymentType !== undefined ? { paymentType } : {}),
     },
   });
   res.json(payer);
@@ -365,19 +403,33 @@ pontaFirmeRouter.delete('/event-payers/:id', requirePermission('pontaFirme.manag
 
 pontaFirmeRouter.post('/event-payers/:id/guests', requirePermission('pontaFirme.manage'), async (req, res) => {
   const payerId = Number(req.params.id);
-  const { name } = req.body as { name?: string };
+  const { name, paymentType } = req.body as { name?: string; paymentType?: string };
   if (!name?.trim()) return res.status(400).json({ error: 'Informe o nome da pessoa' });
+  if (paymentType !== undefined && !isPaymentType(paymentType)) {
+    return res.status(400).json({ error: 'Tipo de pagamento inválido' });
+  }
 
-  const guest = await prisma.pontaFirmeEventGuest.create({ data: { payerId, name: name.trim() } });
+  const guest = await prisma.pontaFirmeEventGuest.create({
+    data: { payerId, name: name.trim(), ...(paymentType ? { paymentType } : {}) },
+  });
   res.status(201).json(guest);
 });
 
 pontaFirmeRouter.patch('/event-guests/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
   const id = Number(req.params.id);
-  const { name } = req.body as { name?: string };
-  if (!name?.trim()) return res.status(400).json({ error: 'Informe o nome da pessoa' });
+  const { name, paymentType } = req.body as { name?: string; paymentType?: string };
+  if (name !== undefined && !name.trim()) return res.status(400).json({ error: 'Informe o nome da pessoa' });
+  if (paymentType !== undefined && !isPaymentType(paymentType)) {
+    return res.status(400).json({ error: 'Tipo de pagamento inválido' });
+  }
 
-  const guest = await prisma.pontaFirmeEventGuest.update({ where: { id }, data: { name: name.trim() } });
+  const guest = await prisma.pontaFirmeEventGuest.update({
+    where: { id },
+    data: {
+      ...(name !== undefined ? { name: name.trim() } : {}),
+      ...(paymentType !== undefined ? { paymentType } : {}),
+    },
+  });
   res.json(guest);
 });
 
