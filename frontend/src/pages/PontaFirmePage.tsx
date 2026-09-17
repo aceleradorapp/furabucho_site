@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { PrivateLayout } from '../components/PrivateLayout';
+import { PontaFirmeBalancoTab } from '../components/pontaFirme/PontaFirmeBalancoTab';
 import { PontaFirmeExpensesTab, type ExpenseCard } from '../components/pontaFirme/PontaFirmeExpensesTab';
 import { PontaFirmeFullTableModal } from '../components/pontaFirme/PontaFirmeFullTableModal';
 import { PontaFirmeManagePanel } from '../components/pontaFirme/PontaFirmeManagePanel';
@@ -45,7 +46,7 @@ export function PontaFirmePage() {
 
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [activeSeasonId, setActiveSeasonId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'pagamentos' | 'gastos'>('pagamentos');
+  const [activeTab, setActiveTab] = useState<'pagamentos' | 'gastos' | 'balanco'>('pagamentos');
   const [data, setData] = useState<SeasonData | null>(null);
   const [expensesData, setExpensesData] = useState<ExpensesData | null>(null);
   const [selectedPayer, setSelectedPayer] = useState<Payer | null>(null);
@@ -162,9 +163,23 @@ export function PontaFirmePage() {
               >
                 Gastos
               </button>
+              <button
+                onClick={() => setActiveTab('balanco')}
+                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                  activeTab === 'balanco' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                }`}
+              >
+                Balanço
+              </button>
             </div>
 
-            {activeTab === 'gastos' ? (
+            {activeTab === 'balanco' ? (
+              <PontaFirmeBalancoTab
+                totalArrecadado={data.totalArrecadado}
+                totalGastos={expensesData?.totalGastos ?? 0}
+                expenseCards={expensesData?.cards ?? []}
+              />
+            ) : activeTab === 'gastos' ? (
               <PontaFirmeExpensesTab
                 seasonId={data.season.id}
                 cards={expensesData?.cards ?? []}

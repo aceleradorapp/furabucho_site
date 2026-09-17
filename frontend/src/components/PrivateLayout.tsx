@@ -1,5 +1,6 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
+  Anchor,
   Home,
   Images,
   KeyRound,
@@ -11,7 +12,6 @@ import {
   ShieldCheck,
   Smartphone,
   Sparkles,
-  Target,
   Trophy,
   Users,
   UserRound,
@@ -182,7 +182,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                 aria-label="Ponta Firme"
                 title="Área Ponta Firme"
               >
-                <Target size={22} />
+                <Anchor size={22} />
               </Link>
             )}
 
@@ -392,7 +392,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
             className={`p-2 rounded-full ${isActive('/ponta-firme') ? 'bg-[#F59E0B] text-white' : 'text-[#F59E0B]'}`}
             aria-label="Ponta Firme"
           >
-            <Target size={24} />
+            <Anchor size={24} />
           </Link>
         )}
         <Link to="/perfil" className={isActive('/perfil') ? 'text-primary' : 'text-text-muted'} aria-label="Perfil">
