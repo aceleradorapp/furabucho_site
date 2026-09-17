@@ -11,6 +11,19 @@ function toNumber(value: unknown): number {
   return typeof value === 'object' && value !== null ? Number(value.toString()) : Number(value);
 }
 
+const PAYMENT_TYPES = ['inteiro', 'meio', 'nao_paga'] as const;
+type PaymentType = (typeof PAYMENT_TYPES)[number];
+
+function isPaymentType(value: unknown): value is PaymentType {
+  return typeof value === 'string' && (PAYMENT_TYPES as readonly string[]).includes(value);
+}
+
+function paymentMultiplier(type: string): number {
+  if (type === 'meio') return 0.5;
+  if (type === 'nao_paga') return 0;
+  return 1;
+}
+
 pontaFirmeRouter.get('/seasons', async (_req, res) => {
   await getOrCreateCurrentSeason();
   const seasons = await prisma.pontaFirmeSeason.findMany({ orderBy: { startDate: 'desc' } });
@@ -82,6 +95,22 @@ pontaFirmeRouter.get('/seasons/:id/data', async (req, res) => {
 pontaFirmeRouter.get('/claimable-users', requirePermission('pontaFirme.manage'), async (req, res) => {
   const seasonId = Number(req.query.seasonId);
   const alreadyLinked = await prisma.pontaFirmePayer.findMany({
+    where: { seasonId, userId: { not: null } },
+    select: { userId: true },
+  });
+  const excludeIds = alreadyLinked.map((p) => p.userId as number);
+
+  const users = await prisma.user.findMany({
+    where: { id: { notIn: excludeIds } },
+    select: { id: true, name: true, nickname: true, avatarUrl: true, email: true },
+    orderBy: { name: 'asc' },
+  });
+  res.json(users);
+});
+
+pontaFirmeRouter.get('/event-claimable-users', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const seasonId = Number(req.query.seasonId);
+  const alreadyLinked = await prisma.pontaFirmeEventPayer.findMany({
     where: { seasonId, userId: { not: null } },
     select: { userId: true },
   });
@@ -172,5 +201,240 @@ pontaFirmeRouter.patch('/payments/:id', requirePermission('pontaFirme.manage'), 
 pontaFirmeRouter.delete('/payments/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
   const id = Number(req.params.id);
   await prisma.pontaFirmePayment.delete({ where: { id } });
+  res.status(204).end();
+});
+
+pontaFirmeRouter.get('/seasons/:id/expenses', async (req, res) => {
+  const seasonId = Number(req.params.id);
+
+  const cards = await prisma.pontaFirmeExpenseCard.findMany({
+    where: { seasonId },
+    include: { items: { orderBy: { createdAt: 'asc' } } },
+    orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+  });
+
+  const enriched = cards.map((c) => ({
+    id: c.id,
+    title: c.title,
+    items: c.items.map((i) => ({ id: i.id, label: i.label, amount: toNumber(i.amount) })),
+    total: c.items.reduce((sum, i) => sum + toNumber(i.amount), 0),
+  }));
+
+  res.json({
+    cards: enriched,
+    totalGastos: enriched.reduce((sum, c) => sum + c.total, 0),
+  });
+});
+
+pontaFirmeRouter.post('/seasons/:id/expenses', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const seasonId = Number(req.params.id);
+  const { title } = req.body as { title?: string };
+  if (!title?.trim()) return res.status(400).json({ error: 'Informe um título' });
+
+  const lastCard = await prisma.pontaFirmeExpenseCard.findFirst({ where: { seasonId }, orderBy: { order: 'desc' } });
+
+  const card = await prisma.pontaFirmeExpenseCard.create({
+    data: { seasonId, title: title.trim(), order: (lastCard?.order ?? -1) + 1 },
+  });
+  res.status(201).json(card);
+});
+
+pontaFirmeRouter.patch('/expenses/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { title } = req.body as { title?: string };
+  if (!title?.trim()) return res.status(400).json({ error: 'Informe um título' });
+
+  const card = await prisma.pontaFirmeExpenseCard.update({ where: { id }, data: { title: title.trim() } });
+  res.json(card);
+});
+
+pontaFirmeRouter.delete('/expenses/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pontaFirmeExpenseCard.delete({ where: { id } });
+  res.status(204).end();
+});
+
+pontaFirmeRouter.post('/expenses/:id/items', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const cardId = Number(req.params.id);
+  const { label, amount } = req.body as { label?: string; amount?: number };
+  if (!label?.trim() || amount === undefined) {
+    return res.status(400).json({ error: 'Informe a descrição e o valor do gasto' });
+  }
+
+  const item = await prisma.pontaFirmeExpenseItem.create({ data: { cardId, label: label.trim(), amount } });
+  res.status(201).json(item);
+});
+
+pontaFirmeRouter.patch('/expense-items/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { label, amount } = req.body as { label?: string; amount?: number };
+
+  const item = await prisma.pontaFirmeExpenseItem.update({
+    where: { id },
+    data: {
+      ...(label !== undefined ? { label: label.trim() } : {}),
+      ...(amount !== undefined ? { amount } : {}),
+    },
+  });
+  res.json(item);
+});
+
+pontaFirmeRouter.delete('/expense-items/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pontaFirmeExpenseItem.delete({ where: { id } });
+  res.status(204).end();
+});
+
+pontaFirmeRouter.get('/seasons/:id/event-payers', async (req, res) => {
+  const seasonId = Number(req.params.id);
+
+  const payers = await prisma.pontaFirmeEventPayer.findMany({
+    where: { seasonId },
+    include: {
+      user: { select: { id: true, name: true, nickname: true, avatarUrl: true } },
+      guests: { orderBy: { createdAt: 'asc' } },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const enriched = payers.map((p) => {
+    const value = toNumber(p.valuePerPerson);
+    const payerAmount = value * paymentMultiplier(p.paymentType);
+    const guests = p.guests.map((g) => ({
+      id: g.id,
+      name: g.name,
+      paymentType: g.paymentType,
+      amount: value * paymentMultiplier(g.paymentType),
+    }));
+    const total = payerAmount + guests.reduce((sum, g) => sum + g.amount, 0);
+
+    return {
+      id: p.id,
+      userId: p.userId,
+      name: p.user?.nickname || p.user?.name || p.displayName || 'Sem nome',
+      avatarUrl: p.user?.avatarUrl ?? null,
+      isClaimed: !!p.userId,
+      valuePerPerson: value,
+      paymentType: p.paymentType,
+      payerAmount,
+      guests,
+      quantity: 1 + guests.length,
+      total,
+    };
+  });
+
+  res.json({
+    payers: enriched,
+    totalArrecadadoEvento: enriched.reduce((sum, p) => sum + p.total, 0),
+  });
+});
+
+pontaFirmeRouter.post('/seasons/:id/event-payers', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const seasonId = Number(req.params.id);
+  const { userId, displayName, valuePerPerson, paymentType, guests } = req.body as {
+    userId?: number;
+    displayName?: string;
+    valuePerPerson?: number;
+    paymentType?: string;
+    guests?: { name: string; paymentType?: string }[];
+  };
+
+  if (!userId && !displayName?.trim()) {
+    return res.status(400).json({ error: 'Informe um usuário ou um nome' });
+  }
+  if (valuePerPerson === undefined || valuePerPerson <= 0) {
+    return res.status(400).json({ error: 'Informe o valor por pessoa' });
+  }
+  if (paymentType !== undefined && !isPaymentType(paymentType)) {
+    return res.status(400).json({ error: 'Tipo de pagamento inválido' });
+  }
+
+  const cleanGuests = (guests ?? [])
+    .map((g) => ({ name: g.name?.trim() ?? '', paymentType: isPaymentType(g.paymentType) ? g.paymentType : 'inteiro' }))
+    .filter((g) => g.name);
+
+  try {
+    const payer = await prisma.pontaFirmeEventPayer.create({
+      data: {
+        seasonId,
+        valuePerPerson,
+        ...(paymentType ? { paymentType } : {}),
+        ...(userId ? { userId } : { displayName: displayName?.trim() }),
+        ...(cleanGuests.length > 0 ? { guests: { create: cleanGuests } } : {}),
+      },
+      include: { guests: true },
+    });
+    res.status(201).json(payer);
+  } catch {
+    res.status(409).json({ error: 'Esse usuário já está cadastrado nessa temporada' });
+  }
+});
+
+pontaFirmeRouter.patch('/event-payers/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { userId, displayName, valuePerPerson, paymentType } = req.body as {
+    userId?: number;
+    displayName?: string;
+    valuePerPerson?: number;
+    paymentType?: string;
+  };
+
+  if (paymentType !== undefined && !isPaymentType(paymentType)) {
+    return res.status(400).json({ error: 'Tipo de pagamento inválido' });
+  }
+
+  const payer = await prisma.pontaFirmeEventPayer.update({
+    where: { id },
+    data: {
+      ...(userId !== undefined ? { userId, displayName: null } : {}),
+      ...(displayName !== undefined ? { displayName } : {}),
+      ...(valuePerPerson !== undefined ? { valuePerPerson } : {}),
+      ...(paymentType !== undefined ? { paymentType } : {}),
+    },
+  });
+  res.json(payer);
+});
+
+pontaFirmeRouter.delete('/event-payers/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pontaFirmeEventPayer.delete({ where: { id } });
+  res.status(204).end();
+});
+
+pontaFirmeRouter.post('/event-payers/:id/guests', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const payerId = Number(req.params.id);
+  const { name, paymentType } = req.body as { name?: string; paymentType?: string };
+  if (!name?.trim()) return res.status(400).json({ error: 'Informe o nome da pessoa' });
+  if (paymentType !== undefined && !isPaymentType(paymentType)) {
+    return res.status(400).json({ error: 'Tipo de pagamento inválido' });
+  }
+
+  const guest = await prisma.pontaFirmeEventGuest.create({
+    data: { payerId, name: name.trim(), ...(paymentType ? { paymentType } : {}) },
+  });
+  res.status(201).json(guest);
+});
+
+pontaFirmeRouter.patch('/event-guests/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { name, paymentType } = req.body as { name?: string; paymentType?: string };
+  if (name !== undefined && !name.trim()) return res.status(400).json({ error: 'Informe o nome da pessoa' });
+  if (paymentType !== undefined && !isPaymentType(paymentType)) {
+    return res.status(400).json({ error: 'Tipo de pagamento inválido' });
+  }
+
+  const guest = await prisma.pontaFirmeEventGuest.update({
+    where: { id },
+    data: {
+      ...(name !== undefined ? { name: name.trim() } : {}),
+      ...(paymentType !== undefined ? { paymentType } : {}),
+    },
+  });
+  res.json(guest);
+});
+
+pontaFirmeRouter.delete('/event-guests/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pontaFirmeEventGuest.delete({ where: { id } });
   res.status(204).end();
 });

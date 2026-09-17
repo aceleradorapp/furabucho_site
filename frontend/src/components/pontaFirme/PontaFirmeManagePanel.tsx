@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { Link2, Plus, RotateCcw, Search, Trash2, UserX, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import { useConfirm } from '../ConfirmDialogProvider';
 import { Avatar } from '../Avatar';
 import type { Payer } from './PontaFirmePayerModal';
@@ -56,6 +56,92 @@ function UserPicker({ seasonId, onPick }: { seasonId: number; onPick: (user: Cla
   );
 }
 
+function PersonNameField({
+  seasonId,
+  pickedUser,
+  freeText,
+  onPick,
+  onTextChange,
+  onClearPicked,
+}: {
+  seasonId: number;
+  pickedUser: ClaimableUser | null;
+  freeText: string;
+  onPick: (user: ClaimableUser) => void;
+  onTextChange: (text: string) => void;
+  onClearPicked: () => void;
+}) {
+  const [users, setUsers] = useState<ClaimableUser[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    api.get<ClaimableUser[]>(`/ponta-firme/claimable-users?seasonId=${seasonId}`).then(setUsers);
+  }, [seasonId]);
+
+  const suggestions = useMemo(() => {
+    const q = freeText.trim().toLowerCase();
+    if (!q) return [];
+    return users
+      .filter((u) => u.name.toLowerCase().includes(q) || (u.nickname ?? '').toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [users, freeText]);
+
+  if (pickedUser) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg bg-card-subtle px-2.5 py-1.5">
+        <Avatar name={pickedUser.nickname || pickedUser.name} avatarUrl={pickedUser.avatarUrl} size={24} />
+        <span className="text-sm text-text-main flex-1">{pickedUser.nickname || pickedUser.name}</span>
+        <span className="text-[10px] text-primary font-medium shrink-0">membro cadastrado</span>
+        <button onClick={onClearPicked} className="text-xs text-text-muted hover:text-text-main shrink-0">
+          trocar
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <input
+        value={freeText}
+        onChange={(e) => {
+          onTextChange(e.target.value);
+          setShowSuggestions(true);
+        }}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+        placeholder="Nome completo"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+      />
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute z-10 mt-1 w-full bg-white border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+          {suggestions.map((u) => (
+            <button
+              key={u.id}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onPick(u);
+                setShowSuggestions(false);
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-card-subtle transition text-left"
+            >
+              <Avatar name={u.nickname || u.name} avatarUrl={u.avatarUrl} size={22} />
+              <span className="text-sm text-text-main truncate flex-1">{u.nickname || u.name}</span>
+              <span className="text-[10px] text-primary shrink-0">membro</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {freeText.trim() && (
+        <p className="text-[11px] text-text-muted mt-1">
+          {suggestions.length > 0
+            ? 'Tem gente cadastrada com nome parecido — clique acima se for a mesma pessoa, ou continue digitando pra cadastrar assim mesmo, sem conta.'
+            : 'Ninguém cadastrado com esse nome — vai ser cadastrado só com o nome, sem conta.'}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function PontaFirmeManagePanel({
   seasonId,
   payers,
@@ -70,22 +156,44 @@ export function PontaFirmeManagePanel({
   onChanged: () => void;
 }) {
   const confirm = useConfirm();
-  const [addMode, setAddMode] = useState<'user' | 'name' | null>(null);
-  const [newName, setNewName] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [nameText, setNameText] = useState('');
+  const [pickedUser, setPickedUser] = useState<ClaimableUser | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [claimingPayerId, setClaimingPayerId] = useState<number | null>(null);
 
-  async function addByUser(user: ClaimableUser) {
-    await api.post(`/ponta-firme/seasons/${seasonId}/payers`, { userId: user.id });
-    setAddMode(null);
-    onChanged();
+  function openAddForm() {
+    setFormOpen(true);
+    setFormError(null);
   }
 
-  async function addByName() {
-    if (!newName.trim()) return;
-    await api.post(`/ponta-firme/seasons/${seasonId}/payers`, { displayName: newName.trim() });
-    setNewName('');
-    setAddMode(null);
-    onChanged();
+  function closeAddForm() {
+    setFormOpen(false);
+    setPickedUser(null);
+    setNameText('');
+    setFormError(null);
+  }
+
+  async function createPayer() {
+    setFormError(null);
+    if (!pickedUser && !nameText.trim()) {
+      setFormError('Digite o nome da pessoa.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await api.post(`/ponta-firme/seasons/${seasonId}/payers`, {
+        ...(pickedUser ? { userId: pickedUser.id } : { displayName: nameText.trim() }),
+      });
+      closeAddForm();
+      onChanged();
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Não foi possível adicionar. Tente de novo.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function claimUser(payerId: number, user: ClaimableUser) {
@@ -173,53 +281,46 @@ export function PontaFirmeManagePanel({
           </div>
 
           <div className="p-4 border-t border-border shrink-0">
-            {addMode === null && (
+            {!formOpen ? (
               <button
-                onClick={() => setAddMode('user')}
+                onClick={openAddForm}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-semibold py-2.5 transition"
               >
                 <Plus size={16} /> Adicionar integrante
               </button>
-            )}
-
-            {addMode === 'user' && (
+            ) : (
               <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-text-muted">Buscar membro cadastrado</p>
-                  <button onClick={() => setAddMode('name')} className="text-xs text-primary hover:text-primary-hover">
-                    ou digitar um nome
-                  </button>
-                </div>
-                <UserPicker seasonId={seasonId} onPick={addByUser} />
-                <button onClick={() => setAddMode(null)} className="text-xs text-text-muted hover:text-text-main self-end">
-                  Cancelar
-                </button>
-              </div>
-            )}
-
-            {addMode === 'name' && (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-text-muted">Nome de quem ainda não tem cadastro</p>
-                  <button onClick={() => setAddMode('user')} className="text-xs text-primary hover:text-primary-hover">
-                    ou buscar membro
-                  </button>
-                </div>
-                <input
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Nome completo"
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+                <p className="text-xs font-medium text-text-muted">Nome da pessoa</p>
+                <PersonNameField
+                  seasonId={seasonId}
+                  pickedUser={pickedUser}
+                  freeText={nameText}
+                  onPick={(u) => {
+                    setPickedUser(u);
+                    setNameText(u.nickname || u.name);
+                    setFormError(null);
+                  }}
+                  onTextChange={setNameText}
+                  onClearPicked={() => {
+                    setPickedUser(null);
+                    setNameText('');
+                  }}
                 />
+
+                {formError && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>
+                )}
+
                 <div className="flex items-center gap-2 justify-end">
-                  <button onClick={() => setAddMode(null)} className="text-xs text-text-muted hover:text-text-main px-2 py-1">
+                  <button onClick={closeAddForm} className="text-xs text-text-muted hover:text-text-main px-2 py-1">
                     Cancelar
                   </button>
                   <button
-                    onClick={addByName}
-                    className="text-xs font-semibold bg-primary hover:bg-primary-hover text-white rounded-full px-4 py-2 transition"
+                    onClick={createPayer}
+                    disabled={saving}
+                    className="text-xs font-semibold bg-primary hover:bg-primary-hover text-white rounded-full px-4 py-2 transition disabled:opacity-60"
                   >
-                    Adicionar
+                    {saving ? 'Salvando...' : 'Adicionar'}
                   </button>
                 </div>
               </div>

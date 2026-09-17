@@ -1,4 +1,4 @@
-import { Crown, Flame, Medal, Shield, Target, type LucideIcon } from 'lucide-react';
+import { Anchor, Crown, Flame, Medal, Shield, type LucideIcon } from 'lucide-react';
 
 export interface RolePatente {
   label: string;
@@ -19,5 +19,5 @@ export function getRolePatente(role?: string | null): RolePatente {
   return ROLE_PATENTES[role] ?? DEFAULT_PATENTE;
 }
 
-export const PONTA_FIRME_BADGE = { label: 'Ponta Firme', color: '#F59E0B', icon: Target };
+export const PONTA_FIRME_BADGE = { label: 'Ponta Firme', color: '#F59E0B', icon: Anchor };
 export const VETERANO_BADGE = { label: 'Veterano (mais de 3 encontros)', color: '#A855F7', icon: Medal };

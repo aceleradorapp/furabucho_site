@@ -4,6 +4,10 @@ import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { PrivateLayout } from '../components/PrivateLayout';
+import { PontaFirmeBalancoTab } from '../components/pontaFirme/PontaFirmeBalancoTab';
+import { PontaFirmeEventPayersTab } from '../components/pontaFirme/PontaFirmeEventPayersTab';
+import type { EventPayer } from '../components/pontaFirme/PontaFirmeEventPayerModal';
+import { PontaFirmeExpensesTab, type ExpenseCard } from '../components/pontaFirme/PontaFirmeExpensesTab';
 import { PontaFirmeFullTableModal } from '../components/pontaFirme/PontaFirmeFullTableModal';
 import { PontaFirmeManagePanel } from '../components/pontaFirme/PontaFirmeManagePanel';
 import { PontaFirmePayerModal, type Payer } from '../components/pontaFirme/PontaFirmePayerModal';
@@ -23,6 +27,16 @@ interface SeasonData {
   totalArrecadado: number;
 }
 
+interface ExpensesData {
+  cards: ExpenseCard[];
+  totalGastos: number;
+}
+
+interface EventPayersData {
+  payers: EventPayer[];
+  totalArrecadadoEvento: number;
+}
+
 function formatMoney(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -39,7 +53,10 @@ export function PontaFirmePage() {
 
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [activeSeasonId, setActiveSeasonId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'pagamentos' | 'gastos' | 'pagantes' | 'balanco'>('pagamentos');
   const [data, setData] = useState<SeasonData | null>(null);
+  const [expensesData, setExpensesData] = useState<ExpensesData | null>(null);
+  const [eventPayersData, setEventPayersData] = useState<EventPayersData | null>(null);
   const [selectedPayer, setSelectedPayer] = useState<Payer | null>(null);
   const [showFullTable, setShowFullTable] = useState(false);
   const [showManage, setShowManage] = useState(false);
@@ -57,13 +74,28 @@ export function PontaFirmePage() {
     api.get<SeasonData>(`/ponta-firme/seasons/${activeSeasonId}/data`).then(setData);
   }, [activeSeasonId]);
 
+  const loadExpenses = useCallback(() => {
+    if (!activeSeasonId) return;
+    api.get<ExpensesData>(`/ponta-firme/seasons/${activeSeasonId}/expenses`).then(setExpensesData);
+  }, [activeSeasonId]);
+
+  const loadEventPayers = useCallback(() => {
+    if (!activeSeasonId) return;
+    api.get<EventPayersData>(`/ponta-firme/seasons/${activeSeasonId}/event-payers`).then(setEventPayersData);
+  }, [activeSeasonId]);
+
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    loadExpenses();
+    loadEventPayers();
+  }, [loadData, loadExpenses, loadEventPayers]);
 
   function handleChanged() {
     loadData();
   }
+
+  const totalArrecadadoGeral = (data?.totalArrecadado ?? 0) + (eventPayersData?.totalArrecadadoEvento ?? 0);
+  const saldo = totalArrecadadoGeral - (expensesData?.totalGastos ?? 0);
 
   return (
     <PrivateLayout>
@@ -98,74 +130,165 @@ export function PontaFirmePage() {
 
         {data && (
           <>
-            <div className="bg-card border border-border rounded-2xl p-5 mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-text-muted uppercase tracking-wide">Total arrecadado</p>
-                <p className="text-2xl font-bold text-text-main">{formatMoney(data.totalArrecadado)}</p>
+            <div className="grid grid-cols-3 gap-2 sm:gap-2.5 mb-5">
+              <div className="bg-card border border-border rounded-2xl p-2.5 sm:p-3.5 min-w-0">
+                <p className="text-[9px] sm:text-[10px] text-text-muted uppercase tracking-wide truncate">Arrecadado</p>
+                <p className="text-xs sm:text-lg font-bold text-text-main leading-tight break-words">
+                  {formatMoney(totalArrecadadoGeral)}
+                </p>
               </div>
-              <button
-                onClick={() => setShowFullTable(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-primary transition rounded-full border border-border px-3 py-2"
+              <div className="bg-card border border-border rounded-2xl p-2.5 sm:p-3.5 min-w-0">
+                <p className="text-[9px] sm:text-[10px] text-text-muted uppercase tracking-wide truncate">Gastos</p>
+                <p className="text-xs sm:text-lg font-bold text-text-main leading-tight break-words">
+                  {formatMoney(expensesData?.totalGastos ?? 0)}
+                </p>
+              </div>
+              <div
+                className={`rounded-2xl p-2.5 sm:p-3.5 border min-w-0 ${
+                  saldo >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                }`}
               >
-                <LayoutGrid size={14} /> Ver tabela completa
-              </button>
+                <p
+                  className={`text-[9px] sm:text-[10px] uppercase tracking-wide truncate ${saldo >= 0 ? 'text-green-700' : 'text-red-600'}`}
+                >
+                  Saldo
+                </p>
+                <p
+                  className={`text-xs sm:text-lg font-bold leading-tight break-words ${saldo >= 0 ? 'text-green-700' : 'text-red-600'}`}
+                >
+                  {formatMoney(saldo)}
+                </p>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-2.5">
-              {data.payers.map((p, index) => {
-                const pct = Math.min(100, (p.monthsPaid / 12) * 100);
-                const rankStyle = RANK_STYLES[index];
+            <div className="overflow-x-auto mb-5 -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex items-center gap-1 bg-card-subtle rounded-full p-1 w-fit">
+                <button
+                  onClick={() => setActiveTab('pagamentos')}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    activeTab === 'pagamentos' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                  }`}
+                >
+                  Pagamentos
+                </button>
+                <button
+                  onClick={() => setActiveTab('gastos')}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    activeTab === 'gastos' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                  }`}
+                >
+                  Gastos
+                </button>
+                <button
+                  onClick={() => setActiveTab('pagantes')}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    activeTab === 'pagantes' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                  }`}
+                >
+                  Pagantes
+                </button>
+                <button
+                  onClick={() => setActiveTab('balanco')}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    activeTab === 'balanco' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                  }`}
+                >
+                  Balanço
+                </button>
+              </div>
+            </div>
 
-                return (
+            {activeTab === 'balanco' ? (
+              <PontaFirmeBalancoTab
+                totalArrecadado={data.totalArrecadado}
+                totalArrecadadoEvento={eventPayersData?.totalArrecadadoEvento ?? 0}
+                totalGastos={expensesData?.totalGastos ?? 0}
+                expenseCards={expensesData?.cards ?? []}
+              />
+            ) : activeTab === 'pagantes' ? (
+              <PontaFirmeEventPayersTab
+                seasonId={data.season.id}
+                payers={eventPayersData?.payers ?? []}
+                canManage={canManage}
+                onChanged={loadEventPayers}
+              />
+            ) : activeTab === 'gastos' ? (
+              <PontaFirmeExpensesTab
+                seasonId={data.season.id}
+                cards={expensesData?.cards ?? []}
+                canManage={canManage}
+                onChanged={loadExpenses}
+              />
+            ) : (
+              <>
+                <div className="flex justify-end mb-3">
                   <button
-                    key={p.id}
-                    onClick={() => setSelectedPayer(p)}
-                    className={`text-left bg-card border border-border rounded-2xl p-4 hover:border-primary/40 transition ${
-                      p.removedAt ? 'opacity-50' : ''
-                    }`}
+                    onClick={() => setShowFullTable(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-primary transition rounded-full border border-border px-3 py-2"
                   >
-                    <div className="flex items-center gap-3 mb-2.5">
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                          rankStyle ? `${rankStyle.bg} ${rankStyle.text}` : 'bg-card-subtle text-text-muted'
+                    <LayoutGrid size={14} /> Ver tabela completa
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-2.5">
+                  {data.payers.map((p, index) => {
+                    const pct = Math.min(100, (p.monthsPaid / 12) * 100);
+                    const rankStyle = RANK_STYLES[index];
+
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedPayer(p)}
+                        className={`text-left bg-card border border-border rounded-2xl p-4 hover:border-primary/40 transition ${
+                          p.removedAt ? 'opacity-50' : ''
                         }`}
                       >
-                        {index === 0 ? <Crown size={13} /> : index + 1}
-                      </div>
-                      <Avatar name={p.name} avatarUrl={p.avatarUrl} size={34} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-text-main truncate">
-                          {p.name}
-                          {p.removedAt && <span className="ml-1.5 text-[10px] text-red-500 font-normal">removido</span>}
-                          {!p.isClaimed && (
-                            <span className="ml-1.5 text-[10px] text-amber-600 font-normal">sem cadastro</span>
-                          )}
-                        </p>
-                        <p className="text-xs text-text-muted">
-                          {p.monthsPaid}/12 meses · {formatMoney(p.totalPaid)}
-                        </p>
-                      </div>
-                    </div>
+                        <div className="flex items-center gap-3 mb-2.5">
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                              rankStyle ? `${rankStyle.bg} ${rankStyle.text}` : 'bg-card-subtle text-text-muted'
+                            }`}
+                          >
+                            {index === 0 ? <Crown size={13} /> : index + 1}
+                          </div>
+                          <Avatar name={p.name} avatarUrl={p.avatarUrl} size={34} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-text-main truncate">
+                              {p.name}
+                              {p.removedAt && (
+                                <span className="ml-1.5 text-[10px] text-red-500 font-normal">removido</span>
+                              )}
+                              {!p.isClaimed && (
+                                <span className="ml-1.5 text-[10px] text-amber-600 font-normal">sem cadastro</span>
+                              )}
+                            </p>
+                            <p className="text-xs text-text-muted">
+                              {p.monthsPaid}/12 meses · {formatMoney(p.totalPaid)}
+                            </p>
+                          </div>
+                        </div>
 
-                    <div className="relative h-2.5 rounded-full bg-card-subtle overflow-visible">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400 transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                      <Flag
-                        size={14}
-                        className="absolute -right-0.5 -top-[3px] text-text-muted"
-                        style={{ transform: 'translateX(50%)' }}
-                      />
-                    </div>
-                  </button>
-                );
-              })}
+                        <div className="relative h-2.5 rounded-full bg-card-subtle overflow-visible">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400 transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                          <Flag
+                            size={14}
+                            className="absolute -right-0.5 -top-[3px] text-text-muted"
+                            style={{ transform: 'translateX(50%)' }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
 
-              {data.payers.length === 0 && (
-                <p className="text-sm text-text-muted text-center py-10">Nenhum integrante ainda.</p>
-              )}
-            </div>
+                  {data.payers.length === 0 && (
+                    <p className="text-sm text-text-muted text-center py-10">Nenhum integrante ainda.</p>
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
