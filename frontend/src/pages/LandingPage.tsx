@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
+import { InstallAppButton } from '../components/InstallAppButton';
 import { LoginModal } from '../components/LoginModal';
 import { PioneirosPrompt } from '../components/PioneirosPrompt';
 import { UPLOADS_BASE } from '../lib/config';
@@ -180,6 +181,11 @@ export function LandingPage() {
               <ChevronRight size={16} />
             </button>
           </motion.div>
+
+          <InstallAppButton
+            dialogTheme="dark"
+            className="mt-5 inline-flex items-center gap-2 text-zinc-400 hover:text-white text-xs sm:text-sm font-medium transition"
+          />
         </div>
       </section>
 
