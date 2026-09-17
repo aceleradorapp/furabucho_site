@@ -33,7 +33,9 @@ export function AdminUsersPage() {
   const [users, setUsers] = useState<MemberUser[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [search, setSearch] = useState('');
-  const [lastCreated, setLastCreated] = useState<{ email: string; tempPassword: string } | null>(null);
+  const [lastCreated, setLastCreated] = useState<{ email: string | null; whatsapp: string | null; tempPassword: string } | null>(
+    null,
+  );
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -59,7 +61,7 @@ export function AdminUsersPage() {
     return users.filter(
       (u) =>
         u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
+        (u.email ?? '').toLowerCase().includes(q) ||
         (u.nickname ?? '').toLowerCase().includes(q) ||
         (u.whatsapp ?? '').toLowerCase().includes(q),
     );
@@ -77,7 +79,7 @@ export function AdminUsersPage() {
     setModalOpen(true);
   }
 
-  function handleSaved(created?: { email: string; tempPassword: string }) {
+  function handleSaved(created?: { email: string | null; whatsapp: string | null; tempPassword: string }) {
     if (created) setLastCreated(created);
     load();
   }
@@ -133,8 +135,8 @@ export function AdminUsersPage() {
           <div className="bg-card-subtle rounded-xl p-4 mb-4 text-sm">
             <p className="text-text-main font-medium mb-1">Membro cadastrado com sucesso!</p>
             <p className="text-text-muted">
-              Repasse essa senha temporária para <strong>{lastCreated.email}</strong>. No primeiro acesso ele será
-              obrigado a trocá-la.
+              Repasse essa senha temporária para <strong>{lastCreated.email || lastCreated.whatsapp}</strong>. No
+              primeiro acesso ele será obrigado a trocá-la.
             </p>
             <p className="mt-2 font-mono bg-white border border-border rounded-lg px-3 py-1.5 inline-block">
               {lastCreated.tempPassword}
@@ -178,7 +180,7 @@ export function AdminUsersPage() {
                   {u.isPontaFirme && <BadgeCheck size={14} className="text-primary shrink-0" />}
                   {u.nickname && <span className="text-xs text-text-muted truncate">({u.name})</span>}
                 </div>
-                <p className="text-xs text-text-muted truncate">{u.email}</p>
+                {u.email && <p className="text-xs text-text-muted truncate">{u.email}</p>}
                 {u.whatsapp && <p className="text-xs text-text-muted truncate">{u.whatsapp}</p>}
                 <div className="flex items-center gap-2 mt-1 text-xs text-text-muted">
                   <span className="rounded-full bg-card-subtle px-2 py-0.5">{u.roleLabel}</span>

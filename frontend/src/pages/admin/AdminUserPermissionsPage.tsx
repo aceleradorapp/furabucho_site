@@ -19,7 +19,7 @@ interface MemberUser {
   id: number;
   name: string;
   nickname: string | null;
-  email: string;
+  email: string | null;
   avatarUrl: string | null;
   roleLabel: string;
   role: string;
@@ -66,7 +66,7 @@ export function AdminUserPermissionsPage() {
     return nonAdmin.filter(
       (u) =>
         u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
+        (u.email ?? '').toLowerCase().includes(q) ||
         (u.nickname ?? '').toLowerCase().includes(q),
     );
   }, [users, search]);

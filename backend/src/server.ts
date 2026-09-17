@@ -15,6 +15,7 @@ import { announcementsRouter } from './routes/announcements.routes';
 import { userPermissionsRouter } from './routes/userPermissions.routes';
 import { pioneirosRouter } from './routes/pioneiros.routes';
 import { adminPioneirosRouter } from './routes/adminPioneiros.routes';
+import { pioneiroConversionRouter } from './routes/pioneiroConversion.routes';
 import { pontaFirmeRouter } from './routes/pontaFirme.routes';
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.use('/api/announcements', announcementsRouter);
 app.use('/api/admin/user-permissions', userPermissionsRouter);
 app.use('/api/pioneiros', pioneirosRouter);
 app.use('/api/admin/pioneiros', adminPioneirosRouter);
+app.use('/api/admin/pioneiro-conversao', pioneiroConversionRouter);
 app.use('/api/ponta-firme', pontaFirmeRouter);
 
 app.use((err: { code?: string; message?: string }, _req: Request, res: Response, _next: NextFunction) => {

@@ -5,6 +5,7 @@ import { AdminGalleryDetailPage } from './pages/admin/AdminGalleryDetailPage'
 import { AdminGalleryHighlightsPage } from './pages/admin/AdminGalleryHighlightsPage'
 import { AdminGalleryPage } from './pages/admin/AdminGalleryPage'
 import { AdminPioneiroCommentsPage } from './pages/admin/AdminPioneiroCommentsPage'
+import { AdminPioneiroConversionPage } from './pages/admin/AdminPioneiroConversionPage'
 import { AdminPioneiroPhotosPage } from './pages/admin/AdminPioneiroPhotosPage'
 import { AdminRolesPage } from './pages/admin/AdminRolesPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
@@ -137,6 +138,14 @@ function App() {
         element={
           <ProtectedRoute requirePermission="gallery.manage">
             <AdminPioneiroCommentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/pioneiros-conversao"
+        element={
+          <ProtectedRoute requirePermission="pioneiros.manage">
+            <AdminPioneiroConversionPage />
           </ProtectedRoute>
         }
       />

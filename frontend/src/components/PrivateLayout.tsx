@@ -13,6 +13,7 @@ import {
   Smartphone,
   Sparkles,
   Trophy,
+  UserPlus,
   Users,
   UserRound,
 } from 'lucide-react';
@@ -112,6 +113,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
     user.permissions['settings.edit'] ||
     user.permissions['members.view'] ||
     user.permissions['gallery.manage'] ||
+    user.permissions['pioneiros.manage'] ||
     user.role === 'admin';
 
   const hasPontaFirmeAccess = user.isPontaFirme || user.role === 'admin' || user.permissions['pontaFirme.manage'];
@@ -266,6 +268,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
                         >
                           <MessageSquare size={16} /> Comentários dos Pioneiros
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions['pioneiros.manage'] && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin/pioneiros-conversao"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <UserPlus size={16} /> Pioneiros → Membros
                         </Link>
                       </DropdownMenu.Item>
                     )}
