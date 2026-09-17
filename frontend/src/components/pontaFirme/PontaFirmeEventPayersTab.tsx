@@ -1,4 +1,4 @@
-import { Plus, Search, Trash2, Users, X } from 'lucide-react';
+import { Plus, Trash2, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../../api/client';
 import { Avatar } from '../Avatar';
@@ -33,49 +33,88 @@ function MoneyInput({ value, onChange }: { value: string; onChange: (value: stri
   );
 }
 
-function UserPicker({ seasonId, onPick }: { seasonId: number; onPick: (user: ClaimableUser) => void }) {
+function PersonNameField({
+  seasonId,
+  pickedUser,
+  freeText,
+  onPick,
+  onTextChange,
+  onClearPicked,
+}: {
+  seasonId: number;
+  pickedUser: ClaimableUser | null;
+  freeText: string;
+  onPick: (user: ClaimableUser) => void;
+  onTextChange: (text: string) => void;
+  onClearPicked: () => void;
+}) {
   const [users, setUsers] = useState<ClaimableUser[]>([]);
-  const [search, setSearch] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     api.get<ClaimableUser[]>(`/ponta-firme/event-claimable-users?seasonId=${seasonId}`).then(setUsers);
   }, [seasonId]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter((u) => u.name.toLowerCase().includes(q) || (u.nickname ?? '').toLowerCase().includes(q));
-  }, [users, search]);
+  const suggestions = useMemo(() => {
+    const q = freeText.trim().toLowerCase();
+    if (!q) return [];
+    return users
+      .filter((u) => u.name.toLowerCase().includes(q) || (u.nickname ?? '').toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [users, freeText]);
+
+  if (pickedUser) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg bg-card-subtle px-2.5 py-1.5">
+        <Avatar name={pickedUser.nickname || pickedUser.name} avatarUrl={pickedUser.avatarUrl} size={24} />
+        <span className="text-sm text-text-main flex-1">{pickedUser.nickname || pickedUser.name}</span>
+        <span className="text-[10px] text-primary font-medium shrink-0">membro cadastrado</span>
+        <button onClick={onClearPicked} className="text-xs text-text-muted hover:text-text-main shrink-0">
+          trocar
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="relative">
-        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar membro cadastrado..."
-          className="w-full rounded-lg border border-border pl-8 pr-3 py-1.5 text-sm outline-none focus:border-primary"
-        />
-      </div>
-      <div className="max-h-40 overflow-y-auto flex flex-col gap-1">
-        {filtered.map((u) => (
-          <button
-            key={u.id}
-            onClick={() => onPick(u)}
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-card-subtle transition text-left"
-          >
-            <Avatar name={u.nickname || u.name} avatarUrl={u.avatarUrl} size={26} />
-            <span className="text-sm text-text-main truncate">{u.nickname || u.name}</span>
-          </button>
-        ))}
-        {filtered.length === 0 && (
-          <p className="text-xs text-text-muted py-3 text-center px-2">
-            Nenhum membro encontrado. Se a pessoa ainda não tem cadastro, clique em{' '}
-            <strong>"ou digitar um nome"</strong> ali em cima.
-          </p>
-        )}
-      </div>
+    <div className="relative">
+      <input
+        value={freeText}
+        onChange={(e) => {
+          onTextChange(e.target.value);
+          setShowSuggestions(true);
+        }}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+        placeholder="Nome da pessoa"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+      />
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute z-10 mt-1 w-full bg-white border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+          {suggestions.map((u) => (
+            <button
+              key={u.id}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onPick(u);
+                setShowSuggestions(false);
+              }}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-card-subtle transition text-left"
+            >
+              <Avatar name={u.nickname || u.name} avatarUrl={u.avatarUrl} size={22} />
+              <span className="text-sm text-text-main truncate flex-1">{u.nickname || u.name}</span>
+              <span className="text-[10px] text-primary shrink-0">membro</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {freeText.trim() && (
+        <p className="text-[11px] text-text-muted mt-1">
+          {suggestions.length > 0
+            ? 'Tem gente cadastrada com nome parecido — clique acima se for a mesma pessoa, ou continue digitando pra cadastrar assim mesmo, sem conta.'
+            : 'Ninguém cadastrado com esse nome — vai ser cadastrado só com o nome, sem conta.'}
+        </p>
+      )}
     </div>
   );
 }
@@ -94,8 +133,8 @@ export function PontaFirmeEventPayersTab({
   const confirm = useConfirm();
   const [selectedPayerId, setSelectedPayerId] = useState<number | null>(null);
   const selectedPayer = payers.find((p) => p.id === selectedPayerId) ?? null;
-  const [addMode, setAddMode] = useState<'closed' | 'user' | 'name'>('closed');
-  const [newName, setNewName] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [nameText, setNameText] = useState('');
   const [newValue, setNewValue] = useState('30');
   const [pickedUser, setPickedUser] = useState<ClaimableUser | null>(null);
   const [guestNames, setGuestNames] = useState<string[]>(['']);
@@ -105,23 +144,29 @@ export function PontaFirmeEventPayersTab({
   const totalArrecadadoEvento = payers.reduce((sum, p) => sum + p.total, 0);
 
   function openAddForm() {
-    setAddMode('user');
+    setFormOpen(true);
     setGuestNames(['']);
     setFormError(null);
   }
 
   function closeAddForm() {
-    setAddMode('closed');
+    setFormOpen(false);
     setPickedUser(null);
-    setNewName('');
+    setNameText('');
     setNewValue('30');
     setGuestNames(['']);
     setFormError(null);
   }
 
-  function switchAddMode(mode: 'user' | 'name') {
-    setAddMode(mode);
+  function pickUser(user: ClaimableUser) {
+    setPickedUser(user);
+    setNameText(user.nickname || user.name);
     setFormError(null);
+  }
+
+  function clearPickedUser() {
+    setPickedUser(null);
+    setNameText('');
   }
 
   function updateGuestName(index: number, value: string) {
@@ -139,11 +184,7 @@ export function PontaFirmeEventPayersTab({
   async function createPayer() {
     setFormError(null);
 
-    if (addMode === 'user' && !pickedUser) {
-      setFormError('Selecione um membro na busca, ou clique em "ou digitar um nome" pra cadastrar alguém sem conta.');
-      return;
-    }
-    if (addMode === 'name' && !newName.trim()) {
+    if (!pickedUser && !nameText.trim()) {
       setFormError('Digite o nome da pessoa.');
       return;
     }
@@ -156,7 +197,7 @@ export function PontaFirmeEventPayersTab({
     setSaving(true);
     try {
       await api.post(`/ponta-firme/seasons/${seasonId}/event-payers`, {
-        ...(addMode === 'user' ? { userId: pickedUser!.id } : { displayName: newName.trim() }),
+        ...(pickedUser ? { userId: pickedUser.id } : { displayName: nameText.trim() }),
         valuePerPerson: value,
         guestNames: guestNames.map((n) => n.trim()).filter(Boolean),
       });
@@ -220,55 +261,32 @@ export function PontaFirmeEventPayersTab({
         </div>
       ))}
 
-      {payers.length === 0 && addMode === 'closed' && (
+      {payers.length === 0 && !formOpen && (
         <p className="text-sm text-text-muted text-center py-10">Nenhum pagante do evento ainda.</p>
       )}
 
       {canManage && (
         <div className="bg-card border border-dashed border-border rounded-2xl p-4">
-          {addMode === 'closed' && (
+          {!formOpen ? (
             <button
               onClick={openAddForm}
               className="w-full inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:text-primary-hover transition"
             >
               <Plus size={16} /> Adicionar pagante
             </button>
-          )}
-
-          {addMode !== 'closed' && (
+          ) : (
             <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-text-muted">
-                  {addMode === 'user' ? 'Buscar membro cadastrado' : 'Nome de quem ainda não tem cadastro'}
-                </p>
-                <button
-                  onClick={() => switchAddMode(addMode === 'user' ? 'name' : 'user')}
-                  className="text-xs text-primary hover:text-primary-hover"
-                >
-                  {addMode === 'user' ? 'ou digitar um nome' : 'ou buscar membro'}
-                </button>
-              </div>
-
-              {addMode === 'user' ? (
-                pickedUser ? (
-                  <div className="flex items-center gap-2 rounded-lg bg-card-subtle px-2.5 py-1.5">
-                    <Avatar name={pickedUser.nickname || pickedUser.name} avatarUrl={pickedUser.avatarUrl} size={24} />
-                    <span className="text-sm text-text-main flex-1">{pickedUser.nickname || pickedUser.name}</span>
-                    <button onClick={() => setPickedUser(null)} className="text-xs text-text-muted hover:text-text-main">
-                      trocar
-                    </button>
-                  </div>
-                ) : (
-                  <UserPicker seasonId={seasonId} onPick={setPickedUser} />
-                )
-              ) : (
-                <input
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Nome completo"
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+              <div>
+                <p className="text-xs font-medium text-text-muted mb-1.5">Nome da pessoa</p>
+                <PersonNameField
+                  seasonId={seasonId}
+                  pickedUser={pickedUser}
+                  freeText={nameText}
+                  onPick={pickUser}
+                  onTextChange={setNameText}
+                  onClearPicked={clearPickedUser}
                 />
-              )}
+              </div>
 
               <div className="flex items-center gap-2">
                 <label className="text-xs text-text-muted shrink-0">Valor por pessoa</label>
