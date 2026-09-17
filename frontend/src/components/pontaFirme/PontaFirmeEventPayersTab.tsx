@@ -1,6 +1,6 @@
 import { Plus, Search, Trash2, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import { Avatar } from '../Avatar';
 import { useConfirm } from '../ConfirmDialogProvider';
 import { PontaFirmeEventPayerModal, type EventPayer } from './PontaFirmeEventPayerModal';
@@ -69,7 +69,12 @@ function UserPicker({ seasonId, onPick }: { seasonId: number; onPick: (user: Cla
             <span className="text-sm text-text-main truncate">{u.nickname || u.name}</span>
           </button>
         ))}
-        {filtered.length === 0 && <p className="text-xs text-text-muted py-3 text-center">Nenhum membro encontrado.</p>}
+        {filtered.length === 0 && (
+          <p className="text-xs text-text-muted py-3 text-center px-2">
+            Nenhum membro encontrado. Se a pessoa ainda não tem cadastro, clique em{' '}
+            <strong>"ou digitar um nome"</strong> ali em cima.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -95,12 +100,14 @@ export function PontaFirmeEventPayersTab({
   const [pickedUser, setPickedUser] = useState<ClaimableUser | null>(null);
   const [guestNames, setGuestNames] = useState<string[]>(['']);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const totalArrecadadoEvento = payers.reduce((sum, p) => sum + p.total, 0);
 
   function openAddForm() {
     setAddMode('user');
     setGuestNames(['']);
+    setFormError(null);
   }
 
   function closeAddForm() {
@@ -109,6 +116,12 @@ export function PontaFirmeEventPayersTab({
     setNewName('');
     setNewValue('30');
     setGuestNames(['']);
+    setFormError(null);
+  }
+
+  function switchAddMode(mode: 'user' | 'name') {
+    setAddMode(mode);
+    setFormError(null);
   }
 
   function updateGuestName(index: number, value: string) {
@@ -124,10 +137,21 @@ export function PontaFirmeEventPayersTab({
   }
 
   async function createPayer() {
+    setFormError(null);
+
+    if (addMode === 'user' && !pickedUser) {
+      setFormError('Selecione um membro na busca, ou clique em "ou digitar um nome" pra cadastrar alguém sem conta.');
+      return;
+    }
+    if (addMode === 'name' && !newName.trim()) {
+      setFormError('Digite o nome da pessoa.');
+      return;
+    }
     const value = Number(newValue.replace(',', '.'));
-    if (!value || value <= 0) return;
-    if (addMode === 'user' && !pickedUser) return;
-    if (addMode === 'name' && !newName.trim()) return;
+    if (!value || value <= 0) {
+      setFormError('Informe um valor por pessoa maior que zero.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -138,6 +162,8 @@ export function PontaFirmeEventPayersTab({
       });
       closeAddForm();
       onChanged();
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Não foi possível adicionar. Tente de novo.');
     } finally {
       setSaving(false);
     }
@@ -216,7 +242,7 @@ export function PontaFirmeEventPayersTab({
                   {addMode === 'user' ? 'Buscar membro cadastrado' : 'Nome de quem ainda não tem cadastro'}
                 </p>
                 <button
-                  onClick={() => setAddMode(addMode === 'user' ? 'name' : 'user')}
+                  onClick={() => switchAddMode(addMode === 'user' ? 'name' : 'user')}
                   className="text-xs text-primary hover:text-primary-hover"
                 >
                   {addMode === 'user' ? 'ou digitar um nome' : 'ou buscar membro'}
@@ -277,6 +303,10 @@ export function PontaFirmeEventPayersTab({
                   <Plus size={13} /> Adicionar mais uma pessoa
                 </button>
               </div>
+
+              {formError && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>
+              )}
 
               <div className="flex items-center gap-2 justify-end">
                 <button onClick={closeAddForm} className="text-xs text-text-muted hover:text-text-main px-2 py-1">

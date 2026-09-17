@@ -1,7 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import { Avatar } from '../Avatar';
 import { useConfirm } from '../ConfirmDialogProvider';
 
@@ -45,39 +45,74 @@ export function PontaFirmeEventPayerModal({
   const [editingGuestName, setEditingGuestName] = useState('');
   const [editingValue, setEditingValue] = useState(false);
   const [valueInput, setValueInput] = useState(String(payer.valuePerPerson));
+  const [error, setError] = useState<string | null>(null);
+
+  function reportError(err: unknown, fallback: string) {
+    setError(err instanceof ApiError ? err.message : fallback);
+  }
 
   async function addGuest() {
-    if (!newGuestName.trim()) return;
-    await api.post(`/ponta-firme/event-payers/${payer.id}/guests`, { name: newGuestName.trim() });
-    setNewGuestName('');
-    onChanged();
+    if (!newGuestName.trim()) {
+      setError('Digite o nome da pessoa antes de adicionar.');
+      return;
+    }
+    setError(null);
+    try {
+      await api.post(`/ponta-firme/event-payers/${payer.id}/guests`, { name: newGuestName.trim() });
+      setNewGuestName('');
+      onChanged();
+    } catch (err) {
+      reportError(err, 'Não foi possível adicionar essa pessoa. Tente de novo.');
+    }
   }
 
   function startEditGuest(guest: EventGuest) {
     setEditingGuestId(guest.id);
     setEditingGuestName(guest.name);
+    setError(null);
   }
 
   async function saveGuest(guestId: number) {
-    if (!editingGuestName.trim()) return;
-    await api.patch(`/ponta-firme/event-guests/${guestId}`, { name: editingGuestName.trim() });
-    setEditingGuestId(null);
-    onChanged();
+    if (!editingGuestName.trim()) {
+      setError('Digite o nome da pessoa.');
+      return;
+    }
+    setError(null);
+    try {
+      await api.patch(`/ponta-firme/event-guests/${guestId}`, { name: editingGuestName.trim() });
+      setEditingGuestId(null);
+      onChanged();
+    } catch (err) {
+      reportError(err, 'Não foi possível salvar. Tente de novo.');
+    }
   }
 
   async function deleteGuest(guestId: number) {
     const ok = await confirm({ title: 'Remover essa pessoa da lista?', variant: 'danger' });
     if (!ok) return;
-    await api.delete(`/ponta-firme/event-guests/${guestId}`);
-    onChanged();
+    setError(null);
+    try {
+      await api.delete(`/ponta-firme/event-guests/${guestId}`);
+      onChanged();
+    } catch (err) {
+      reportError(err, 'Não foi possível remover. Tente de novo.');
+    }
   }
 
   async function saveValue() {
     const value = Number(valueInput.replace(',', '.'));
-    if (!value || value <= 0) return;
-    await api.patch(`/ponta-firme/event-payers/${payer.id}`, { valuePerPerson: value });
-    setEditingValue(false);
-    onChanged();
+    if (!value || value <= 0) {
+      setError('Informe um valor válido maior que zero.');
+      return;
+    }
+    setError(null);
+    try {
+      await api.patch(`/ponta-firme/event-payers/${payer.id}`, { valuePerPerson: value });
+      setEditingValue(false);
+      onChanged();
+    } catch (err) {
+      reportError(err, 'Não foi possível salvar. Tente de novo.');
+    }
   }
 
   return (
@@ -190,6 +225,10 @@ export function PontaFirmeEventPayerModal({
             ))}
 
             {payer.guests.length === 0 && <p className="text-xs text-text-faint py-2">Ninguém adicionado ainda.</p>}
+
+            {error && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-1">{error}</p>
+            )}
 
             {canManage && (
               <div className="flex items-center gap-2 mt-2">
