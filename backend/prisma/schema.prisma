@@ -60,6 +60,7 @@ model User {
   announcements     Announcement[]
   announcementViews AnnouncementView[]
   permissionOverrides UserPermissionOverride[]
+  pontaFirmePayers  PontaFirmePayer[]
 }
 
 model SiteSettings {
@@ -212,4 +213,41 @@ model GalleryImage {
   featured      Boolean  @default(false)
   featuredOrder Int?
   createdAt     DateTime @default(now())
+}
+
+model PontaFirmeSeason {
+  id        Int      @id @default(autoincrement())
+  label     String   @unique
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  payers PontaFirmePayer[]
+}
+
+model PontaFirmePayer {
+  id          Int              @id @default(autoincrement())
+  seasonId    Int
+  season      PontaFirmeSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  userId      Int?
+  user        User?            @relation(fields: [userId], references: [id])
+  displayName String?
+  removedAt   DateTime?
+  createdAt   DateTime         @default(now())
+
+  payments PontaFirmePayment[]
+
+  @@unique([seasonId, userId])
+}
+
+model PontaFirmePayment {
+  id        Int             @id @default(autoincrement())
+  payerId   Int
+  payer     PontaFirmePayer @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  monthDate DateTime        @db.Date
+  amount    Decimal         @db.Decimal(10, 2)
+  paidAt    DateTime
+  createdAt DateTime        @default(now())
+
+  @@unique([payerId, monthDate])
 }

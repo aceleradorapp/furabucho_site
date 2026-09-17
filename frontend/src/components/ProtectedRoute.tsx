@@ -7,10 +7,12 @@ export function ProtectedRoute({
   children,
   requirePermission,
   requireAdmin,
+  allowIfPontaFirme,
 }: {
   children: ReactNode;
   requirePermission?: PermissionKey | PermissionKey[];
   requireAdmin?: boolean;
+  allowIfPontaFirme?: boolean;
 }) {
   const { user, loading } = useAuth();
 
@@ -32,7 +34,7 @@ export function ProtectedRoute({
 
   if (requirePermission) {
     const required = Array.isArray(requirePermission) ? requirePermission : [requirePermission];
-    const allowed = required.some((permission) => user.permissions[permission]);
+    const allowed = required.some((permission) => user.permissions[permission]) || (allowIfPontaFirme && user.isPontaFirme);
     if (!allowed) {
       return (
         <div className="min-h-svh flex items-center justify-center text-text-muted">

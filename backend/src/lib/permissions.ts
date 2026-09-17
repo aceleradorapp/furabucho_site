@@ -44,6 +44,11 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     label: 'Novidades',
     actions: [{ key: 'announcements.manage', label: 'Criar e excluir novidades em tela cheia' }],
   },
+  {
+    key: 'pontaFirme',
+    label: 'Pagamentos Ponta Firme',
+    actions: [{ key: 'pontaFirme.manage', label: 'Gerenciar integrantes e registrar pagamentos da Ponta Firme' }],
+  },
 ];
 
 export const ALL_PERMISSION_KEYS = PERMISSION_CATEGORIES.flatMap((c) => c.actions.map((a) => a.key));
