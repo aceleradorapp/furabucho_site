@@ -8,4 +8,5 @@ export type PermissionKey =
   | 'gallery.manage'
   | 'feed.create'
   | 'feed.moderate'
-  | 'announcements.manage';
+  | 'announcements.manage'
+  | 'pontaFirme.manage';

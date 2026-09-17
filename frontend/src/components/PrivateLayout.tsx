@@ -1,5 +1,6 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
+  Anchor,
   Home,
   Images,
   KeyRound,
@@ -113,6 +114,8 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
     user.permissions['gallery.manage'] ||
     user.role === 'admin';
 
+  const hasPontaFirmeAccess = user.isPontaFirme || user.role === 'admin' || user.permissions['pontaFirme.manage'];
+
   function isActive(path: string) {
     return location.pathname === path;
   }
@@ -127,8 +130,10 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 bg-card/90 backdrop-blur-md border-b border-border">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/feed" className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-primary" />
-            <span className="font-display uppercase tracking-wider text-sm text-text-main">{siteName}</span>
+            <img src="/ico-ff.jpeg" alt={siteName} className="w-8 h-8 rounded-lg object-cover shrink-0" />
+            <span className="hidden sm:inline font-display uppercase tracking-wider text-sm text-text-main">
+              {siteName}
+            </span>
           </Link>
 
           <nav className="flex items-center gap-1">
@@ -165,6 +170,21 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
             >
               <Smartphone size={22} />
             </Link>
+
+            {hasPontaFirmeAccess && (
+              <Link
+                to="/ponta-firme"
+                className={`p-2 rounded-full transition shadow-sm ${
+                  isActive('/ponta-firme')
+                    ? 'bg-[#F59E0B] text-white'
+                    : 'bg-[#F59E0B]/15 text-[#F59E0B] hover:bg-[#F59E0B]/25'
+                }`}
+                aria-label="Ponta Firme"
+                title="Área Ponta Firme"
+              >
+                <Anchor size={22} />
+              </Link>
+            )}
 
             {hasSettingsMenu && (
               <DropdownMenu.Root>
@@ -366,6 +386,15 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
         <Link to="/app" className={`p-2 ${isActive('/app') ? 'text-primary' : 'text-text-muted'}`} aria-label="Baixar o app">
           <Smartphone size={24} />
         </Link>
+        {hasPontaFirmeAccess && (
+          <Link
+            to="/ponta-firme"
+            className={`p-2 rounded-full ${isActive('/ponta-firme') ? 'bg-[#F59E0B] text-white' : 'text-[#F59E0B]'}`}
+            aria-label="Ponta Firme"
+          >
+            <Anchor size={24} />
+          </Link>
+        )}
         <Link to="/perfil" className={isActive('/perfil') ? 'text-primary' : 'text-text-muted'} aria-label="Perfil">
           <Avatar name={user.name} avatarUrl={user.avatarUrl} size={28} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
         </Link>

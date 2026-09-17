@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fura-Bucho</string>
+    <string name="title_activity_main">Fura-Bucho</string>
+    <string name="package_name">com.furabucho.webapp</string>
+    <string name="custom_url_scheme">com.furabucho.webapp</string>
+</resources>

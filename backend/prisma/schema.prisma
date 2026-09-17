@@ -60,6 +60,8 @@ model User {
   announcements     Announcement[]
   announcementViews AnnouncementView[]
   permissionOverrides UserPermissionOverride[]
+  pontaFirmePayers  PontaFirmePayer[]
+  pontaFirmeEventPayers PontaFirmeEventPayer[]
 }
 
 model SiteSettings {
@@ -212,4 +214,88 @@ model GalleryImage {
   featured      Boolean  @default(false)
   featuredOrder Int?
   createdAt     DateTime @default(now())
+}
+
+model PontaFirmeSeason {
+  id        Int      @id @default(autoincrement())
+  label     String   @unique
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  payers       PontaFirmePayer[]
+  expenseCards PontaFirmeExpenseCard[]
+  eventPayers  PontaFirmeEventPayer[]
+}
+
+model PontaFirmePayer {
+  id          Int              @id @default(autoincrement())
+  seasonId    Int
+  season      PontaFirmeSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  userId      Int?
+  user        User?            @relation(fields: [userId], references: [id])
+  displayName String?
+  removedAt   DateTime?
+  createdAt   DateTime         @default(now())
+
+  payments PontaFirmePayment[]
+
+  @@unique([seasonId, userId])
+}
+
+model PontaFirmePayment {
+  id        Int             @id @default(autoincrement())
+  payerId   Int
+  payer     PontaFirmePayer @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  monthDate DateTime        @db.Date
+  amount    Decimal         @db.Decimal(10, 2)
+  paidAt    DateTime
+  createdAt DateTime        @default(now())
+
+  @@unique([payerId, monthDate])
+}
+
+model PontaFirmeExpenseCard {
+  id        Int              @id @default(autoincrement())
+  seasonId  Int
+  season    PontaFirmeSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  title     String
+  order     Int              @default(0)
+  createdAt DateTime         @default(now())
+
+  items PontaFirmeExpenseItem[]
+}
+
+model PontaFirmeExpenseItem {
+  id        Int                   @id @default(autoincrement())
+  cardId    Int
+  card      PontaFirmeExpenseCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label     String
+  amount    Decimal               @db.Decimal(10, 2)
+  createdAt DateTime              @default(now())
+}
+
+model PontaFirmeEventPayer {
+  id             Int              @id @default(autoincrement())
+  seasonId       Int
+  season         PontaFirmeSeason @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  userId         Int?
+  user           User?            @relation(fields: [userId], references: [id])
+  displayName    String?
+  valuePerPerson Decimal          @db.Decimal(10, 2)
+  paymentType    String           @default("inteiro")
+  createdAt      DateTime         @default(now())
+
+  guests PontaFirmeEventGuest[]
+
+  @@unique([seasonId, userId])
+}
+
+model PontaFirmeEventGuest {
+  id          Int                  @id @default(autoincrement())
+  payerId     Int
+  payer       PontaFirmeEventPayer @relation(fields: [payerId], references: [id], onDelete: Cascade)
+  name        String
+  paymentType String               @default("inteiro")
+  createdAt   DateTime             @default(now())
 }

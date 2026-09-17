@@ -7,6 +7,7 @@ export interface AuthedRequest extends Request {
   userId?: number;
   userRoleKey?: string;
   effectivePermissions?: Record<string, boolean>;
+  isPontaFirme?: boolean;
 }
 
 export async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
@@ -31,6 +32,7 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
     req.userId = user.id;
     req.userRoleKey = user.role.key;
     req.effectivePermissions = computeEffectivePermissions(user.role.key, user.role.permissions, user.permissionOverrides);
+    req.isPontaFirme = user.isPontaFirme;
     next();
   } catch {
     return res.status(401).json({ error: 'Token inválido ou expirado' });
@@ -53,6 +55,13 @@ export function requireAnyPermission(...keys: string[]) {
     }
     next();
   };
+}
+
+export function requirePontaFirmeAccess(req: AuthedRequest, res: Response, next: NextFunction) {
+  if (req.isPontaFirme || req.userRoleKey === 'admin' || req.effectivePermissions?.['pontaFirme.manage']) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Sem acesso a essa área' });
 }
 
 export function requireAdmin(req: AuthedRequest, res: Response, next: NextFunction) {
