@@ -12,7 +12,7 @@ export interface EditableMember {
   nickname: string | null;
   whatsapp: string | null;
   username: string;
-  email: string;
+  email: string | null;
   roleId: number;
   avatarUrl: string | null;
   caricatureUrl: string | null;
@@ -94,7 +94,7 @@ export function UserFormModal({
   roles: Role[];
   canChangeRole: boolean;
   canSetPatentes: boolean;
-  onSaved: (created?: { email: string; tempPassword: string }) => void;
+  onSaved: (created?: { email: string | null; whatsapp: string | null; tempPassword: string }) => void;
 }) {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -121,7 +121,7 @@ export function UserFormModal({
     if (mode === 'edit' && initialUser) {
       setName(initialUser.name);
       setUsername(initialUser.username);
-      setEmail(initialUser.email);
+      setEmail(initialUser.email ?? '');
       setNickname(initialUser.nickname ?? '');
       setWhatsapp(initialUser.whatsapp ?? '');
       setRoleId(initialUser.roleId);
@@ -179,7 +179,8 @@ export function UserFormModal({
     setError(null);
 
     if (!name.trim()) return setError('Escreva um nome');
-    if (mode === 'create' && (!username.trim() || !email.trim())) return setError('Preencha usuário e e-mail');
+    if (mode === 'create' && !username.trim()) return setError('Preencha o usuário');
+    if (mode === 'create' && !email.trim() && !whatsapp.trim()) return setError('Informe ao menos um e-mail ou WhatsApp');
 
     setSaving(true);
     try {
@@ -195,9 +196,12 @@ export function UserFormModal({
         if (avatarBlob) form.append('avatar', avatarBlob, 'avatar.jpg');
         if (caricatureBlob) form.append('caricature', caricatureBlob, 'caricature.jpg');
 
-        const created = await api.post<{ email: string; tempPassword: string }>('/admin/users', form);
+        const created = await api.post<{ email: string | null; whatsapp: string | null; tempPassword: string }>(
+          '/admin/users',
+          form,
+        );
         onOpenChange(false);
-        onSaved({ email: created.email, tempPassword: created.tempPassword });
+        onSaved({ email: created.email, whatsapp: created.whatsapp, tempPassword: created.tempPassword });
       } else if (initialUser) {
         const tasks: Promise<unknown>[] = [];
 
@@ -297,12 +301,11 @@ export function UserFormModal({
                 />
               </div>
               <div>
-                <label className="text-sm text-text-muted">E-mail</label>
+                <label className="text-sm text-text-muted">E-mail {mode === 'create' && '(ou WhatsApp)'}</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required
                   disabled={mode === 'edit'}
                   className={`${inputClass} disabled:bg-card-subtle disabled:text-text-muted`}
                 />

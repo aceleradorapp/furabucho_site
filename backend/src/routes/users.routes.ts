@@ -64,8 +64,14 @@ usersRouter.post(
     };
     let { roleId } = req.body as { roleId?: string | number };
 
-    if (!name || !username || !email) {
-      return res.status(400).json({ error: 'Preencha nome, usuário e e-mail' });
+    const trimmedEmail = email?.trim().toLowerCase() || null;
+    const trimmedWhatsapp = whatsapp?.trim() || null;
+
+    if (!name || !username) {
+      return res.status(400).json({ error: 'Preencha nome e usuário' });
+    }
+    if (!trimmedEmail && !trimmedWhatsapp) {
+      return res.status(400).json({ error: 'Informe ao menos um e-mail ou WhatsApp' });
     }
     if (password && password.length < 6) {
       return res.status(400).json({ error: 'A senha temporária deve ter ao menos 6 caracteres' });
@@ -92,12 +98,12 @@ usersRouter.post(
         data: {
           name,
           username,
-          email,
+          email: trimmedEmail,
+          whatsapp: trimmedWhatsapp,
           roleId: role.id,
           passwordHash,
           mustChangePassword: true,
           ...(nickname?.trim() ? { nickname: nickname.trim() } : {}),
-          ...(whatsapp?.trim() ? { whatsapp: whatsapp.trim() } : {}),
           ...(avatarFile ? { avatarUrl: `/uploads/${avatarFile.filename}` } : {}),
           ...(caricatureFile ? { caricatureUrl: `/uploads/${caricatureFile.filename}` } : {}),
         },
@@ -107,11 +113,12 @@ usersRouter.post(
         name: user.name,
         username: user.username,
         email: user.email,
+        whatsapp: user.whatsapp,
         role: role.key,
         tempPassword,
       });
     } catch {
-      res.status(409).json({ error: 'E-mail ou usuário já cadastrado' });
+      res.status(409).json({ error: 'E-mail, WhatsApp ou usuário já cadastrado' });
     }
   },
 );

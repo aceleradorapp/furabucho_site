@@ -46,7 +46,7 @@ export function LoginModal({ open, onOpenChange }: { open: boolean; onOpenChange
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
               <label className="text-sm text-zinc-400" htmlFor="identifier">
-                E-mail ou usuário
+                E-mail, usuário ou WhatsApp
               </label>
               <input
                 id="identifier"
