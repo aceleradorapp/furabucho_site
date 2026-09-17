@@ -15,6 +15,8 @@ function serializeUser(user: {
   avatarUrl: string | null;
   birthDate: Date | null;
   mustChangePassword: boolean;
+  isPontaFirme: boolean;
+  isVeterano: boolean;
   role: {
     key: string;
     label: string;
@@ -30,6 +32,8 @@ function serializeUser(user: {
     avatarUrl: user.avatarUrl,
     birthDate: user.birthDate,
     mustChangePassword: user.mustChangePassword,
+    isPontaFirme: user.isPontaFirme,
+    isVeterano: user.isVeterano,
     role: user.role.key,
     roleLabel: user.role.label,
     permissions: computeEffectivePermissions(user.role.key, user.role.permissions, user.permissionOverrides),

@@ -277,7 +277,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
                 <button className="p-1.5 rounded-full hover:bg-card-subtle transition ml-1" aria-label="Perfil">
-                  <Avatar name={user.name} avatarUrl={user.avatarUrl} size={30} />
+                  <Avatar name={user.name} avatarUrl={user.avatarUrl} size={30} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
                 </button>
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
@@ -357,7 +357,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           <Smartphone size={24} />
         </Link>
         <Link to="/perfil" className={isActive('/perfil') ? 'text-primary' : 'text-text-muted'} aria-label="Perfil">
-          <Avatar name={user.name} avatarUrl={user.avatarUrl} size={28} />
+          <Avatar name={user.name} avatarUrl={user.avatarUrl} size={28} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
         </Link>
       </nav>
 
