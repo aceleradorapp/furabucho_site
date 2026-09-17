@@ -1,4 +1,4 @@
-import { Anchor, Clock, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { Anchor, TrendingDown, TrendingUp, Users, Wallet } from 'lucide-react';
 import type { ExpenseCard } from './PontaFirmeExpensesTab';
 
 function formatMoney(value: number) {
@@ -7,14 +7,17 @@ function formatMoney(value: number) {
 
 export function PontaFirmeBalancoTab({
   totalArrecadado,
+  totalArrecadadoEvento,
   totalGastos,
   expenseCards,
 }: {
   totalArrecadado: number;
+  totalArrecadadoEvento: number;
   totalGastos: number;
   expenseCards: ExpenseCard[];
 }) {
-  const saldoGeral = totalArrecadado - totalGastos;
+  const totalGeralArrecadado = totalArrecadado + totalArrecadadoEvento;
+  const saldoGeral = totalGeralArrecadado - totalGastos;
 
   return (
     <div className="flex flex-col gap-4">
@@ -45,12 +48,12 @@ export function PontaFirmeBalancoTab({
           <span className="text-sm font-semibold text-green-700">+{formatMoney(totalArrecadado)}</span>
         </div>
 
-        <div className="flex items-center justify-between py-2.5 border-b border-border opacity-60">
+        <div className="flex items-center justify-between py-2.5 border-b border-border">
           <div className="flex items-center gap-2">
-            <Clock size={15} className="text-text-muted" />
+            <Users size={15} className="text-primary" />
             <span className="text-sm text-text-main">Arrecadado com pagamentos do evento</span>
           </div>
-          <span className="text-xs font-medium text-text-muted">em breve</span>
+          <span className="text-sm font-semibold text-green-700">+{formatMoney(totalArrecadadoEvento)}</span>
         </div>
 
         <div className="flex items-center justify-between py-2.5">
@@ -58,7 +61,7 @@ export function PontaFirmeBalancoTab({
             <TrendingUp size={15} className="text-green-700" />
             <span className="text-sm font-semibold text-text-main">Total arrecadado</span>
           </div>
-          <span className="text-sm font-bold text-green-700">{formatMoney(totalArrecadado)}</span>
+          <span className="text-sm font-bold text-green-700">{formatMoney(totalGeralArrecadado)}</span>
         </div>
       </div>
 
@@ -87,10 +90,6 @@ export function PontaFirmeBalancoTab({
         </div>
       </div>
 
-      <p className="text-xs text-text-faint text-center px-4">
-        A lista de usuários (cadastrados e não cadastrados) pagando para participar do evento ainda vai ser
-        implementada — quando estiver pronta, essa arrecadação também vai entrar aqui.
-      </p>
     </div>
   );
 }

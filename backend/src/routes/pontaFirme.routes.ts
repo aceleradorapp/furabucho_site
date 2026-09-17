@@ -95,6 +95,22 @@ pontaFirmeRouter.get('/claimable-users', requirePermission('pontaFirme.manage'),
   res.json(users);
 });
 
+pontaFirmeRouter.get('/event-claimable-users', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const seasonId = Number(req.query.seasonId);
+  const alreadyLinked = await prisma.pontaFirmeEventPayer.findMany({
+    where: { seasonId, userId: { not: null } },
+    select: { userId: true },
+  });
+  const excludeIds = alreadyLinked.map((p) => p.userId as number);
+
+  const users = await prisma.user.findMany({
+    where: { id: { notIn: excludeIds } },
+    select: { id: true, name: true, nickname: true, avatarUrl: true, email: true },
+    orderBy: { name: 'asc' },
+  });
+  res.json(users);
+});
+
 pontaFirmeRouter.post('/seasons/:id/payers', requirePermission('pontaFirme.manage'), async (req, res) => {
   const seasonId = Number(req.params.id);
   const { userId, displayName } = req.body as { userId?: number; displayName?: string };
@@ -253,5 +269,113 @@ pontaFirmeRouter.patch('/expense-items/:id', requirePermission('pontaFirme.manag
 pontaFirmeRouter.delete('/expense-items/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
   const id = Number(req.params.id);
   await prisma.pontaFirmeExpenseItem.delete({ where: { id } });
+  res.status(204).end();
+});
+
+pontaFirmeRouter.get('/seasons/:id/event-payers', async (req, res) => {
+  const seasonId = Number(req.params.id);
+
+  const payers = await prisma.pontaFirmeEventPayer.findMany({
+    where: { seasonId },
+    include: {
+      user: { select: { id: true, name: true, nickname: true, avatarUrl: true } },
+      guests: { orderBy: { createdAt: 'asc' } },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const enriched = payers.map((p) => ({
+    id: p.id,
+    userId: p.userId,
+    name: p.user?.nickname || p.user?.name || p.displayName || 'Sem nome',
+    avatarUrl: p.user?.avatarUrl ?? null,
+    isClaimed: !!p.userId,
+    valuePerPerson: toNumber(p.valuePerPerson),
+    guests: p.guests.map((g) => ({ id: g.id, name: g.name })),
+    quantity: p.guests.length,
+    total: toNumber(p.valuePerPerson) * p.guests.length,
+  }));
+
+  res.json({
+    payers: enriched,
+    totalArrecadadoEvento: enriched.reduce((sum, p) => sum + p.total, 0),
+  });
+});
+
+pontaFirmeRouter.post('/seasons/:id/event-payers', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const seasonId = Number(req.params.id);
+  const { userId, displayName, valuePerPerson } = req.body as {
+    userId?: number;
+    displayName?: string;
+    valuePerPerson?: number;
+  };
+
+  if (!userId && !displayName?.trim()) {
+    return res.status(400).json({ error: 'Informe um usuário ou um nome' });
+  }
+  if (valuePerPerson === undefined || valuePerPerson <= 0) {
+    return res.status(400).json({ error: 'Informe o valor por pessoa' });
+  }
+
+  try {
+    const payer = await prisma.pontaFirmeEventPayer.create({
+      data: {
+        seasonId,
+        valuePerPerson,
+        ...(userId ? { userId } : { displayName: displayName?.trim() }),
+      },
+    });
+    res.status(201).json(payer);
+  } catch {
+    res.status(409).json({ error: 'Esse usuário já está cadastrado nessa temporada' });
+  }
+});
+
+pontaFirmeRouter.patch('/event-payers/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { userId, displayName, valuePerPerson } = req.body as {
+    userId?: number;
+    displayName?: string;
+    valuePerPerson?: number;
+  };
+
+  const payer = await prisma.pontaFirmeEventPayer.update({
+    where: { id },
+    data: {
+      ...(userId !== undefined ? { userId, displayName: null } : {}),
+      ...(displayName !== undefined ? { displayName } : {}),
+      ...(valuePerPerson !== undefined ? { valuePerPerson } : {}),
+    },
+  });
+  res.json(payer);
+});
+
+pontaFirmeRouter.delete('/event-payers/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pontaFirmeEventPayer.delete({ where: { id } });
+  res.status(204).end();
+});
+
+pontaFirmeRouter.post('/event-payers/:id/guests', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const payerId = Number(req.params.id);
+  const { name } = req.body as { name?: string };
+  if (!name?.trim()) return res.status(400).json({ error: 'Informe o nome da pessoa' });
+
+  const guest = await prisma.pontaFirmeEventGuest.create({ data: { payerId, name: name.trim() } });
+  res.status(201).json(guest);
+});
+
+pontaFirmeRouter.patch('/event-guests/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  const { name } = req.body as { name?: string };
+  if (!name?.trim()) return res.status(400).json({ error: 'Informe o nome da pessoa' });
+
+  const guest = await prisma.pontaFirmeEventGuest.update({ where: { id }, data: { name: name.trim() } });
+  res.json(guest);
+});
+
+pontaFirmeRouter.delete('/event-guests/:id', requirePermission('pontaFirme.manage'), async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pontaFirmeEventGuest.delete({ where: { id } });
   res.status(204).end();
 });

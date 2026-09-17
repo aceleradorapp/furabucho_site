@@ -5,6 +5,8 @@ import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { PontaFirmeBalancoTab } from '../components/pontaFirme/PontaFirmeBalancoTab';
+import { PontaFirmeEventPayersTab } from '../components/pontaFirme/PontaFirmeEventPayersTab';
+import type { EventPayer } from '../components/pontaFirme/PontaFirmeEventPayerModal';
 import { PontaFirmeExpensesTab, type ExpenseCard } from '../components/pontaFirme/PontaFirmeExpensesTab';
 import { PontaFirmeFullTableModal } from '../components/pontaFirme/PontaFirmeFullTableModal';
 import { PontaFirmeManagePanel } from '../components/pontaFirme/PontaFirmeManagePanel';
@@ -30,6 +32,11 @@ interface ExpensesData {
   totalGastos: number;
 }
 
+interface EventPayersData {
+  payers: EventPayer[];
+  totalArrecadadoEvento: number;
+}
+
 function formatMoney(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
@@ -46,9 +53,10 @@ export function PontaFirmePage() {
 
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [activeSeasonId, setActiveSeasonId] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'pagamentos' | 'gastos' | 'balanco'>('pagamentos');
+  const [activeTab, setActiveTab] = useState<'pagamentos' | 'gastos' | 'pagantes' | 'balanco'>('pagamentos');
   const [data, setData] = useState<SeasonData | null>(null);
   const [expensesData, setExpensesData] = useState<ExpensesData | null>(null);
+  const [eventPayersData, setEventPayersData] = useState<EventPayersData | null>(null);
   const [selectedPayer, setSelectedPayer] = useState<Payer | null>(null);
   const [showFullTable, setShowFullTable] = useState(false);
   const [showManage, setShowManage] = useState(false);
@@ -71,16 +79,23 @@ export function PontaFirmePage() {
     api.get<ExpensesData>(`/ponta-firme/seasons/${activeSeasonId}/expenses`).then(setExpensesData);
   }, [activeSeasonId]);
 
+  const loadEventPayers = useCallback(() => {
+    if (!activeSeasonId) return;
+    api.get<EventPayersData>(`/ponta-firme/seasons/${activeSeasonId}/event-payers`).then(setEventPayersData);
+  }, [activeSeasonId]);
+
   useEffect(() => {
     loadData();
     loadExpenses();
-  }, [loadData, loadExpenses]);
+    loadEventPayers();
+  }, [loadData, loadExpenses, loadEventPayers]);
 
   function handleChanged() {
     loadData();
   }
 
-  const saldo = (data?.totalArrecadado ?? 0) - (expensesData?.totalGastos ?? 0);
+  const totalArrecadadoGeral = (data?.totalArrecadado ?? 0) + (eventPayersData?.totalArrecadadoEvento ?? 0);
+  const saldo = totalArrecadadoGeral - (expensesData?.totalGastos ?? 0);
 
   return (
     <PrivateLayout>
@@ -119,7 +134,7 @@ export function PontaFirmePage() {
               <div className="bg-card border border-border rounded-2xl p-2.5 sm:p-3.5 min-w-0">
                 <p className="text-[9px] sm:text-[10px] text-text-muted uppercase tracking-wide truncate">Arrecadado</p>
                 <p className="text-xs sm:text-lg font-bold text-text-main leading-tight break-words">
-                  {formatMoney(data.totalArrecadado)}
+                  {formatMoney(totalArrecadadoGeral)}
                 </p>
               </div>
               <div className="bg-card border border-border rounded-2xl p-2.5 sm:p-3.5 min-w-0">
@@ -146,38 +161,56 @@ export function PontaFirmePage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1 mb-5 bg-card-subtle rounded-full p-1 w-fit">
-              <button
-                onClick={() => setActiveTab('pagamentos')}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                  activeTab === 'pagamentos' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
-                }`}
-              >
-                Pagamentos
-              </button>
-              <button
-                onClick={() => setActiveTab('gastos')}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                  activeTab === 'gastos' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
-                }`}
-              >
-                Gastos
-              </button>
-              <button
-                onClick={() => setActiveTab('balanco')}
-                className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                  activeTab === 'balanco' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
-                }`}
-              >
-                Balanço
-              </button>
+            <div className="overflow-x-auto mb-5 -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex items-center gap-1 bg-card-subtle rounded-full p-1 w-fit">
+                <button
+                  onClick={() => setActiveTab('pagamentos')}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    activeTab === 'pagamentos' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                  }`}
+                >
+                  Pagamentos
+                </button>
+                <button
+                  onClick={() => setActiveTab('gastos')}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    activeTab === 'gastos' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                  }`}
+                >
+                  Gastos
+                </button>
+                <button
+                  onClick={() => setActiveTab('pagantes')}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    activeTab === 'pagantes' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                  }`}
+                >
+                  Pagantes
+                </button>
+                <button
+                  onClick={() => setActiveTab('balanco')}
+                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    activeTab === 'balanco' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                  }`}
+                >
+                  Balanço
+                </button>
+              </div>
             </div>
 
             {activeTab === 'balanco' ? (
               <PontaFirmeBalancoTab
                 totalArrecadado={data.totalArrecadado}
+                totalArrecadadoEvento={eventPayersData?.totalArrecadadoEvento ?? 0}
                 totalGastos={expensesData?.totalGastos ?? 0}
                 expenseCards={expensesData?.cards ?? []}
+              />
+            ) : activeTab === 'pagantes' ? (
+              <PontaFirmeEventPayersTab
+                seasonId={data.season.id}
+                payers={eventPayersData?.payers ?? []}
+                canManage={canManage}
+                onChanged={loadEventPayers}
               />
             ) : activeTab === 'gastos' ? (
               <PontaFirmeExpensesTab
