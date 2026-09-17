@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Smartphone,
   Sparkles,
+  Target,
   Trophy,
   Users,
   UserRound,
@@ -113,6 +114,8 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
     user.permissions['gallery.manage'] ||
     user.role === 'admin';
 
+  const hasPontaFirmeAccess = user.isPontaFirme || user.role === 'admin' || user.permissions['pontaFirme.manage'];
+
   function isActive(path: string) {
     return location.pathname === path;
   }
@@ -167,6 +170,21 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
             >
               <Smartphone size={22} />
             </Link>
+
+            {hasPontaFirmeAccess && (
+              <Link
+                to="/ponta-firme"
+                className={`p-2 rounded-full transition shadow-sm ${
+                  isActive('/ponta-firme')
+                    ? 'bg-[#F59E0B] text-white'
+                    : 'bg-[#F59E0B]/15 text-[#F59E0B] hover:bg-[#F59E0B]/25'
+                }`}
+                aria-label="Ponta Firme"
+                title="Área Ponta Firme"
+              >
+                <Target size={22} />
+              </Link>
+            )}
 
             {hasSettingsMenu && (
               <DropdownMenu.Root>
@@ -368,6 +386,15 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
         <Link to="/app" className={`p-2 ${isActive('/app') ? 'text-primary' : 'text-text-muted'}`} aria-label="Baixar o app">
           <Smartphone size={24} />
         </Link>
+        {hasPontaFirmeAccess && (
+          <Link
+            to="/ponta-firme"
+            className={`p-2 rounded-full ${isActive('/ponta-firme') ? 'bg-[#F59E0B] text-white' : 'text-[#F59E0B]'}`}
+            aria-label="Ponta Firme"
+          >
+            <Target size={24} />
+          </Link>
+        )}
         <Link to="/perfil" className={isActive('/perfil') ? 'text-primary' : 'text-text-muted'} aria-label="Perfil">
           <Avatar name={user.name} avatarUrl={user.avatarUrl} size={28} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
         </Link>

@@ -4,6 +4,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { upload } from '../lib/upload';
 import { AuthedRequest, requireAnyPermission, requireAuth, requirePermission } from '../middleware/auth';
+import { ensurePayerForUser, handlePontaFirmeRemoval } from '../lib/pontaFirme';
 
 export const usersRouter = Router();
 
@@ -223,5 +224,12 @@ usersRouter.patch('/:id/patentes', requirePermission('members.editProfile'), asy
       ...(isVeterano !== undefined ? { isVeterano } : {}),
     },
   });
+
+  if (isPontaFirme === true) {
+    await ensurePayerForUser(user.id);
+  } else if (isPontaFirme === false) {
+    await handlePontaFirmeRemoval(user.id);
+  }
+
   res.json({ id: user.id, isPontaFirme: user.isPontaFirme, isVeterano: user.isVeterano });
 });

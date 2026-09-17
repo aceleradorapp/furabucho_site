@@ -18,6 +18,7 @@ import { GalleryListPage } from './pages/GalleryListPage'
 import { LandingPage } from './pages/LandingPage'
 import { PioneirosPage } from './pages/PioneirosPage'
 import { PioneirosPainelPage } from './pages/PioneirosPainelPage'
+import { PontaFirmePage } from './pages/PontaFirmePage'
 import { ProfilePage } from './pages/ProfilePage'
 
 function App() {
@@ -144,6 +145,14 @@ function App() {
         element={
           <ProtectedRoute requirePermission="gallery.manage">
             <AdminGalleryHighlightsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ponta-firme"
+        element={
+          <ProtectedRoute requirePermission="pontaFirme.manage" allowIfPontaFirme>
+            <PontaFirmePage />
           </ProtectedRoute>
         }
       />
