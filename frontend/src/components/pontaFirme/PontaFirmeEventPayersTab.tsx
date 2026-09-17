@@ -1,4 +1,4 @@
-import { Plus, Search, Trash2, Users } from 'lucide-react';
+import { Plus, Search, Trash2, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api/client';
 import { Avatar } from '../Avatar';
@@ -15,6 +15,22 @@ interface ClaimableUser {
 
 function formatMoney(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function MoneyInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <div className="relative flex-1">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-muted pointer-events-none">R$</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        type="number"
+        step="0.01"
+        min="0"
+        className="w-full rounded-lg border border-border pl-8 pr-3 py-1.5 text-sm outline-none focus:border-primary"
+      />
+    </div>
+  );
 }
 
 function UserPicker({ seasonId, onPick }: { seasonId: number; onPick: (user: ClaimableUser) => void }) {
@@ -77,8 +93,35 @@ export function PontaFirmeEventPayersTab({
   const [newName, setNewName] = useState('');
   const [newValue, setNewValue] = useState('30');
   const [pickedUser, setPickedUser] = useState<ClaimableUser | null>(null);
+  const [guestNames, setGuestNames] = useState<string[]>(['']);
+  const [saving, setSaving] = useState(false);
 
   const totalArrecadadoEvento = payers.reduce((sum, p) => sum + p.total, 0);
+
+  function openAddForm() {
+    setAddMode('user');
+    setGuestNames(['']);
+  }
+
+  function closeAddForm() {
+    setAddMode('closed');
+    setPickedUser(null);
+    setNewName('');
+    setNewValue('30');
+    setGuestNames(['']);
+  }
+
+  function updateGuestName(index: number, value: string) {
+    setGuestNames((prev) => prev.map((n, i) => (i === index ? value : n)));
+  }
+
+  function addGuestNameField() {
+    setGuestNames((prev) => [...prev, '']);
+  }
+
+  function removeGuestNameField(index: number) {
+    setGuestNames((prev) => (prev.length === 1 ? [''] : prev.filter((_, i) => i !== index)));
+  }
 
   async function createPayer() {
     const value = Number(newValue.replace(',', '.'));
@@ -86,15 +129,18 @@ export function PontaFirmeEventPayersTab({
     if (addMode === 'user' && !pickedUser) return;
     if (addMode === 'name' && !newName.trim()) return;
 
-    await api.post(`/ponta-firme/seasons/${seasonId}/event-payers`, {
-      ...(addMode === 'user' ? { userId: pickedUser!.id } : { displayName: newName.trim() }),
-      valuePerPerson: value,
-    });
-    setAddMode('closed');
-    setNewName('');
-    setNewValue('30');
-    setPickedUser(null);
-    onChanged();
+    setSaving(true);
+    try {
+      await api.post(`/ponta-firme/seasons/${seasonId}/event-payers`, {
+        ...(addMode === 'user' ? { userId: pickedUser!.id } : { displayName: newName.trim() }),
+        valuePerPerson: value,
+        guestNames: guestNames.map((n) => n.trim()).filter(Boolean),
+      });
+      closeAddForm();
+      onChanged();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function deletePayer(payer: EventPayer) {
@@ -119,39 +165,33 @@ export function PontaFirmeEventPayersTab({
       </div>
 
       {payers.map((payer) => (
-        <button
+        <div
           key={payer.id}
-          onClick={() => setSelectedPayerId(payer.id)}
-          className="text-left bg-card border border-border rounded-2xl p-4 hover:border-primary/40 transition flex items-center gap-3"
+          className="bg-card border border-border rounded-2xl p-4 hover:border-primary/40 transition flex items-center gap-3"
         >
-          <Avatar name={payer.name} avatarUrl={payer.avatarUrl} size={38} />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-text-main truncate">
-              {payer.name}
-              {!payer.isClaimed && <span className="ml-1.5 text-[10px] text-amber-600 font-normal">sem cadastro</span>}
-            </p>
-            <p className="text-xs text-text-muted">
-              {payer.quantity} {payer.quantity === 1 ? 'pessoa' : 'pessoas'} · {formatMoney(payer.valuePerPerson)}/pessoa
-            </p>
-          </div>
-          <div className="text-right shrink-0">
-            <p className="text-sm font-bold text-text-main">{formatMoney(payer.total)}</p>
-          </div>
+          <button onClick={() => setSelectedPayerId(payer.id)} className="flex-1 min-w-0 flex items-center gap-3 text-left">
+            <Avatar name={payer.name} avatarUrl={payer.avatarUrl} size={38} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text-main truncate">
+                {payer.name}
+                {!payer.isClaimed && <span className="ml-1.5 text-[10px] text-amber-600 font-normal">sem cadastro</span>}
+              </p>
+              <p className="text-xs text-text-muted">
+                {payer.quantity} {payer.quantity === 1 ? 'pessoa' : 'pessoas'} · {formatMoney(payer.valuePerPerson)}/pessoa
+              </p>
+            </div>
+            <p className="text-sm font-bold text-text-main shrink-0">{formatMoney(payer.total)}</p>
+          </button>
           {canManage && (
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                deletePayer(payer);
-              }}
+            <button
+              onClick={() => deletePayer(payer)}
               className="text-text-faint hover:text-red-600 transition p-1 shrink-0"
               aria-label="Excluir pagante"
             >
               <Trash2 size={15} />
-            </span>
+            </button>
           )}
-        </button>
+        </div>
       ))}
 
       {payers.length === 0 && addMode === 'closed' && (
@@ -162,7 +202,7 @@ export function PontaFirmeEventPayersTab({
         <div className="bg-card border border-dashed border-border rounded-2xl p-4">
           {addMode === 'closed' && (
             <button
-              onClick={() => setAddMode('user')}
+              onClick={openAddForm}
               className="w-full inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary hover:text-primary-hover transition"
             >
               <Plus size={16} /> Adicionar pagante
@@ -170,7 +210,7 @@ export function PontaFirmeEventPayersTab({
           )}
 
           {addMode !== 'closed' && (
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-medium text-text-muted">
                   {addMode === 'user' ? 'Buscar membro cadastrado' : 'Nome de quem ainda não tem cadastro'}
@@ -206,31 +246,48 @@ export function PontaFirmeEventPayersTab({
 
               <div className="flex items-center gap-2">
                 <label className="text-xs text-text-muted shrink-0">Valor por pessoa</label>
-                <input
-                  value={newValue}
-                  onChange={(e) => setNewValue(e.target.value)}
-                  type="number"
-                  step="0.01"
-                  className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-primary"
-                />
+                <MoneyInput value={newValue} onChange={setNewValue} />
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-text-muted mb-1.5">Quem vai (opcional agora, pode completar depois)</p>
+                <div className="flex flex-col gap-1.5">
+                  {guestNames.map((name, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        value={name}
+                        onChange={(e) => updateGuestName(index, e.target.value)}
+                        placeholder={`Pessoa ${index + 1}`}
+                        className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm outline-none focus:border-primary"
+                      />
+                      <button
+                        onClick={() => removeGuestNameField(index)}
+                        className="text-text-faint hover:text-red-600 transition p-1 shrink-0"
+                        aria-label="Remover campo"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={addGuestNameField}
+                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-hover transition"
+                >
+                  <Plus size={13} /> Adicionar mais uma pessoa
+                </button>
               </div>
 
               <div className="flex items-center gap-2 justify-end">
-                <button
-                  onClick={() => {
-                    setAddMode('closed');
-                    setPickedUser(null);
-                    setNewName('');
-                  }}
-                  className="text-xs text-text-muted hover:text-text-main px-2 py-1"
-                >
+                <button onClick={closeAddForm} className="text-xs text-text-muted hover:text-text-main px-2 py-1">
                   Cancelar
                 </button>
                 <button
                   onClick={createPayer}
-                  className="text-xs font-semibold bg-primary hover:bg-primary-hover text-white rounded-full px-4 py-2 transition"
+                  disabled={saving}
+                  className="text-xs font-semibold bg-primary hover:bg-primary-hover text-white rounded-full px-4 py-2 transition disabled:opacity-60"
                 >
-                  Adicionar
+                  {saving ? 'Salvando...' : 'Adicionar'}
                 </button>
               </div>
             </div>

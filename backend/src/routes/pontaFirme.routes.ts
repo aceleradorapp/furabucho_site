@@ -304,10 +304,11 @@ pontaFirmeRouter.get('/seasons/:id/event-payers', async (req, res) => {
 
 pontaFirmeRouter.post('/seasons/:id/event-payers', requirePermission('pontaFirme.manage'), async (req, res) => {
   const seasonId = Number(req.params.id);
-  const { userId, displayName, valuePerPerson } = req.body as {
+  const { userId, displayName, valuePerPerson, guestNames } = req.body as {
     userId?: number;
     displayName?: string;
     valuePerPerson?: number;
+    guestNames?: string[];
   };
 
   if (!userId && !displayName?.trim()) {
@@ -317,13 +318,19 @@ pontaFirmeRouter.post('/seasons/:id/event-payers', requirePermission('pontaFirme
     return res.status(400).json({ error: 'Informe o valor por pessoa' });
   }
 
+  const cleanGuestNames = (guestNames ?? []).map((n) => n.trim()).filter(Boolean);
+
   try {
     const payer = await prisma.pontaFirmeEventPayer.create({
       data: {
         seasonId,
         valuePerPerson,
         ...(userId ? { userId } : { displayName: displayName?.trim() }),
+        ...(cleanGuestNames.length > 0
+          ? { guests: { create: cleanGuestNames.map((name) => ({ name })) } }
+          : {}),
       },
+      include: { guests: true },
     });
     res.status(201).json(payer);
   } catch {

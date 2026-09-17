@@ -102,14 +102,20 @@ export function PontaFirmeEventPayerModal({
             {editingValue ? (
               <div className="flex items-center gap-2">
                 <label className="text-xs text-text-muted shrink-0">Valor por pessoa</label>
-                <input
-                  value={valueInput}
-                  onChange={(e) => setValueInput(e.target.value)}
-                  type="number"
-                  step="0.01"
-                  autoFocus
-                  className="flex-1 rounded-lg border border-border px-2.5 py-1.5 text-sm outline-none focus:border-primary"
-                />
+                <div className="relative flex-1">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-text-muted pointer-events-none">
+                    R$
+                  </span>
+                  <input
+                    value={valueInput}
+                    onChange={(e) => setValueInput(e.target.value)}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    autoFocus
+                    className="w-full rounded-lg border border-border pl-7 pr-2.5 py-1.5 text-sm outline-none focus:border-primary"
+                  />
+                </div>
                 <button onClick={saveValue} className="text-primary hover:text-primary-hover transition p-1">
                   <Check size={16} />
                 </button>
