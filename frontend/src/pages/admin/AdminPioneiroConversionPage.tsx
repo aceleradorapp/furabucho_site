@@ -62,7 +62,6 @@ export function AdminPioneiroConversionPage() {
   const [pioneiros, setPioneiros] = useState<PioneiroRow[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  const [showConverted, setShowConverted] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
   const [sending, setSending] = useState(false);
@@ -84,7 +83,6 @@ export function AdminPioneiroConversionPage() {
   }, []);
 
   const pending = useMemo(() => pioneiros.filter((p) => !p.convertedUser), [pioneiros]);
-  const converted = useMemo(() => pioneiros.filter((p) => p.convertedUser), [pioneiros]);
 
   function toggle(id: number) {
     setSelected((prev) => {
@@ -309,24 +307,35 @@ export function AdminPioneiroConversionPage() {
             </div>
           </div>
         ) : (
-          <>
-            <div className="flex flex-col gap-3">
-              {pending.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 py-16 text-text-muted">
-                  <UserPlus size={32} className="text-border" />
-                  <p className="text-sm">Nenhum pioneiro aguardando envio pro cadastro real.</p>
-                </div>
-              ) : (
-                pending.map((p) => {
-                  const isSelected = selected.has(p.id);
-                  return (
-                    <button
-                      key={p.id}
-                      onClick={() => toggle(p.id)}
-                      className={`flex items-center gap-3 text-left bg-card border rounded-2xl p-4 transition ${
-                        isSelected ? 'border-primary ring-1 ring-primary' : 'border-border'
-                      }`}
-                    >
+          <div className="flex flex-col gap-3">
+            {pioneiros.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-16 text-text-muted">
+                <UserPlus size={32} className="text-border" />
+                <p className="text-sm">Nenhum pré-cadastro de Pioneiro ainda.</p>
+              </div>
+            ) : (
+              pioneiros.map((p) => {
+                const isSelected = selected.has(p.id);
+                const isConverted = !!p.convertedUser;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => !isConverted && toggle(p.id)}
+                    disabled={isConverted}
+                    title={isConverted ? 'Já enviado pro cadastro de membros' : undefined}
+                    className={`flex items-center gap-3 text-left bg-card border rounded-2xl p-4 transition ${
+                      isConverted
+                        ? 'opacity-60 grayscale cursor-default'
+                        : isSelected
+                          ? 'border-primary ring-1 ring-primary'
+                          : 'border-border'
+                    }`}
+                  >
+                    {isConverted ? (
+                      <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 bg-green-100 text-green-700">
+                        <Check size={13} strokeWidth={3} />
+                      </div>
+                    ) : (
                       <div
                         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition ${
                           isSelected ? 'bg-primary border-primary' : 'border-border'
@@ -334,9 +343,22 @@ export function AdminPioneiroConversionPage() {
                       >
                         {isSelected && <Check size={13} className="text-white" strokeWidth={3} />}
                       </div>
-                      <Avatar name={p.name} avatarUrl={null} size={38} />
-                      <div className="flex-1 min-w-0">
+                    )}
+                    <Avatar name={p.name} avatarUrl={null} size={38} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium text-text-main truncate">{p.name}</p>
+                        {isConverted && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 rounded-full px-2 py-0.5 shrink-0">
+                            Enviado
+                          </span>
+                        )}
+                      </div>
+                      {isConverted ? (
+                        <p className="text-xs text-text-muted">
+                          já é membro como <strong>@{p.convertedUser?.username}</strong>
+                        </p>
+                      ) : (
                         <div className="flex items-center gap-3 text-xs text-text-muted flex-wrap">
                           {p.email && (
                             <span className="inline-flex items-center gap-1">
@@ -350,48 +372,16 @@ export function AdminPioneiroConversionPage() {
                           )}
                           <span>desde {formatDate(p.createdAt)}</span>
                         </div>
-                      </div>
-                      <span className="text-xs font-semibold text-amber-600 inline-flex items-center gap-1 shrink-0">
-                        <Star size={12} /> {p.points.toFixed(1)}
-                      </span>
-                    </button>
-                  );
-                })
-              )}
-            </div>
-
-            {converted.length > 0 && (
-              <div className="mt-8">
-                <button
-                  onClick={() => setShowConverted((s) => !s)}
-                  className="text-sm text-text-muted hover:text-text-main transition mb-3"
-                >
-                  {showConverted ? 'Ocultar' : 'Mostrar'} já enviados pro cadastro real ({converted.length})
-                </button>
-                {showConverted && (
-                  <div className="flex flex-col gap-2">
-                    {converted.map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center gap-3 bg-card-subtle rounded-2xl p-3 opacity-70"
-                      >
-                        <Avatar name={p.name} avatarUrl={null} size={32} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-text-main truncate">{p.name}</p>
-                          <p className="text-xs text-text-muted">
-                            já é membro como <strong>@{p.convertedUser?.username}</strong>
-                          </p>
-                        </div>
-                        <span className="text-xs font-semibold text-amber-600 inline-flex items-center gap-1 shrink-0">
-                          <Star size={12} /> {p.points.toFixed(1)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold text-amber-600 inline-flex items-center gap-1 shrink-0">
+                      <Star size={12} /> {p.points.toFixed(1)}
+                    </span>
+                  </button>
+                );
+              })
             )}
-          </>
+          </div>
         )}
       </div>
 
