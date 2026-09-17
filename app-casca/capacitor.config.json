@@ -1,0 +1,16 @@
+{
+  "appId": "com.furabucho.webapp",
+  "appName": "Fura-Bucho",
+  "webDir": "www",
+  "server": {
+    "url": "https://friendsface.com.br",
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#0A0A0C"
+  },
+  "ios": {
+    "backgroundColor": "#0A0A0C"
+  }
+}
