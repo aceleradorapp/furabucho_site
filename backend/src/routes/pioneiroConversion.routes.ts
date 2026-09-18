@@ -26,12 +26,19 @@ pioneiroConversionRouter.get('/', async (_req, res) => {
       name: p.name,
       email: p.email,
       phone: p.phone,
+      avatarUrl: p.avatarUrl,
       points: p.points,
       status: p.status,
       createdAt: p.createdAt,
       convertedUser: p.convertedUser,
     })),
   );
+});
+
+pioneiroConversionRouter.delete('/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  await prisma.pioneiro.delete({ where: { id } });
+  res.status(204).end();
 });
 
 interface ConvertItem {
