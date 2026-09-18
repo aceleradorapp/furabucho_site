@@ -1,9 +1,11 @@
-import { Check, Mail, Phone, Rocket, Send, Star, UserPlus, X } from 'lucide-react';
+import { Check, Mail, Phone, Rocket, Send, Star, Trash2, UserPlus, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { Avatar } from '../../components/Avatar';
+import { useConfirm } from '../../components/ConfirmDialogProvider';
 import { PrivateLayout } from '../../components/PrivateLayout';
+import { UPLOADS_BASE } from '../../lib/config';
 
 interface Role {
   id: number;
@@ -16,6 +18,7 @@ interface PioneiroRow {
   name: string;
   email: string | null;
   phone: string | null;
+  avatarUrl: string | null;
   points: number;
   status: string;
   createdAt: string;
@@ -57,6 +60,7 @@ function formatDate(iso: string) {
 
 export function AdminPioneiroConversionPage() {
   const { user: authUser } = useAuth();
+  const confirm = useConfirm();
   const canChangeRole = authUser?.permissions['members.changeRole'] ?? false;
 
   const [pioneiros, setPioneiros] = useState<PioneiroRow[]>([]);
@@ -89,6 +93,24 @@ export function AdminPioneiroConversionPage() {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      return next;
+    });
+  }
+
+  async function handleDelete(pioneiro: PioneiroRow) {
+    const ok = await confirm({
+      title: `Excluir pré-cadastro de ${pioneiro.name}?`,
+      description: pioneiro.convertedUser
+        ? `Isso remove só o pré-cadastro de Pioneiro (fotos, comentários e pontos ganhos nessa fase). A conta de membro dela, @${pioneiro.convertedUser.username}, não é afetada.`
+        : 'Isso remove o pré-cadastro, os pontos ganhos, fotos e comentários enviados como Pioneiro. Essa ação não pode ser desfeita.',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    await api.delete(`/admin/pioneiro-conversao/${pioneiro.id}`);
+    setPioneiros((prev) => prev.filter((p) => p.id !== pioneiro.id));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(pioneiro.id);
       return next;
     });
   }
@@ -213,7 +235,11 @@ export function AdminPioneiroConversionPage() {
                 return (
                   <div key={d.pioneiroId} className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-3">
                     <div className="flex items-center gap-2">
-                      <Avatar name={d.name || '?'} avatarUrl={null} size={32} />
+                      <Avatar
+                        name={d.name || '?'}
+                        avatarUrl={pioneiro?.avatarUrl ? `${UPLOADS_BASE}${pioneiro.avatarUrl}` : null}
+                        size={32}
+                      />
                       <p className="text-sm font-semibold text-text-main">{pioneiro?.name}</p>
                       <span className="text-xs text-text-muted inline-flex items-center gap-1 ml-auto">
                         <Star size={12} className="text-amber-500" /> {pioneiro?.points.toFixed(1)} pts
@@ -318,66 +344,76 @@ export function AdminPioneiroConversionPage() {
                 const isSelected = selected.has(p.id);
                 const isConverted = !!p.convertedUser;
                 return (
-                  <button
+                  <div
                     key={p.id}
-                    onClick={() => !isConverted && toggle(p.id)}
-                    disabled={isConverted}
-                    title={isConverted ? 'Já enviado pro cadastro de membros' : undefined}
-                    className={`flex items-center gap-3 text-left bg-card border rounded-2xl p-4 transition ${
-                      isConverted
-                        ? 'opacity-60 grayscale cursor-default'
-                        : isSelected
-                          ? 'border-primary ring-1 ring-primary'
-                          : 'border-border'
+                    className={`flex items-center gap-3 bg-card border rounded-2xl p-4 transition ${
+                      isConverted ? 'opacity-60 grayscale' : isSelected ? 'border-primary ring-1 ring-primary' : 'border-border'
                     }`}
                   >
-                    {isConverted ? (
-                      <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 bg-green-100 text-green-700">
-                        <Check size={13} strokeWidth={3} />
-                      </div>
-                    ) : (
-                      <div
-                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition ${
-                          isSelected ? 'bg-primary border-primary' : 'border-border'
-                        }`}
-                      >
-                        {isSelected && <Check size={13} className="text-white" strokeWidth={3} />}
-                      </div>
-                    )}
-                    <Avatar name={p.name} avatarUrl={null} size={38} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium text-text-main truncate">{p.name}</p>
-                        {isConverted && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 rounded-full px-2 py-0.5 shrink-0">
-                            Enviado
-                          </span>
-                        )}
-                      </div>
+                    <button
+                      type="button"
+                      onClick={() => !isConverted && toggle(p.id)}
+                      disabled={isConverted}
+                      title={isConverted ? 'Já enviado pro cadastro de membros' : undefined}
+                      className={`flex items-center gap-3 text-left flex-1 min-w-0 ${isConverted ? 'cursor-default' : ''}`}
+                    >
                       {isConverted ? (
-                        <p className="text-xs text-text-muted">
-                          já é membro como <strong>@{p.convertedUser?.username}</strong>
-                        </p>
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 bg-green-100 text-green-700">
+                          <Check size={13} strokeWidth={3} />
+                        </div>
                       ) : (
-                        <div className="flex items-center gap-3 text-xs text-text-muted flex-wrap">
-                          {p.email && (
-                            <span className="inline-flex items-center gap-1">
-                              <Mail size={11} /> {p.email}
-                            </span>
-                          )}
-                          {p.phone && (
-                            <span className="inline-flex items-center gap-1">
-                              <Phone size={11} /> {p.phone}
-                            </span>
-                          )}
-                          <span>desde {formatDate(p.createdAt)}</span>
+                        <div
+                          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition ${
+                            isSelected ? 'bg-primary border-primary' : 'border-border'
+                          }`}
+                        >
+                          {isSelected && <Check size={13} className="text-white" strokeWidth={3} />}
                         </div>
                       )}
-                    </div>
+                      <Avatar name={p.name} avatarUrl={p.avatarUrl ? `${UPLOADS_BASE}${p.avatarUrl}` : null} size={38} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-medium text-text-main truncate">{p.name}</p>
+                          {isConverted && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 rounded-full px-2 py-0.5 shrink-0">
+                              Enviado
+                            </span>
+                          )}
+                        </div>
+                        {isConverted ? (
+                          <p className="text-xs text-text-muted">
+                            já é membro como <strong>@{p.convertedUser?.username}</strong>
+                          </p>
+                        ) : (
+                          <div className="flex items-center gap-3 text-xs text-text-muted flex-wrap">
+                            {p.email && (
+                              <span className="inline-flex items-center gap-1">
+                                <Mail size={11} /> {p.email}
+                              </span>
+                            )}
+                            {p.phone && (
+                              <span className="inline-flex items-center gap-1">
+                                <Phone size={11} /> {p.phone}
+                              </span>
+                            )}
+                            <span>desde {formatDate(p.createdAt)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </button>
                     <span className="text-xs font-semibold text-amber-600 inline-flex items-center gap-1 shrink-0">
                       <Star size={12} /> {p.points.toFixed(1)}
                     </span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p)}
+                      className="text-text-muted hover:text-red-600 transition p-1.5 shrink-0"
+                      aria-label="Excluir pré-cadastro"
+                      title="Excluir pré-cadastro"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 );
               })
             )}
