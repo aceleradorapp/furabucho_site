@@ -2,6 +2,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   Anchor,
   Home,
+  ImageIcon,
   Images,
   KeyRound,
   LogOut,
@@ -143,6 +144,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
               to="/feed"
               className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/feed') ? 'text-primary' : 'text-text-main'}`}
               aria-label="Feed"
+              title="Feed"
             >
               <Home size={22} />
             </Link>
@@ -151,6 +153,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
               to="/galeria"
               className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/galeria') ? 'text-primary' : 'text-text-main'}`}
               aria-label="Galeria"
+              title="Galeria"
             >
               <Images size={22} />
             </Link>
@@ -169,6 +172,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
               to="/app"
               className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/app') ? 'text-primary' : 'text-text-main'}`}
               aria-label="Baixar o app"
+              title="Baixar o app"
             >
               <Smartphone size={22} />
             </Link>
@@ -191,7 +195,11 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
             {hasSettingsMenu && (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <button className="p-2 rounded-full hover:bg-card-subtle transition text-text-main" aria-label="Configurações">
+                  <button
+                    className="p-2 rounded-full hover:bg-card-subtle transition text-text-main"
+                    aria-label="Configurações"
+                    title="Configurações"
+                  >
                     <Settings size={22} />
                   </button>
                 </DropdownMenu.Trigger>
@@ -218,6 +226,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
                         >
                           <Users size={16} /> Usuários
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions['members.view'] && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin/fotos-perfil"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <ImageIcon size={16} /> Fotos de Perfil
                         </Link>
                       </DropdownMenu.Item>
                     )}
@@ -318,7 +336,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
 
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <button className="p-1.5 rounded-full hover:bg-card-subtle transition ml-1" aria-label="Perfil">
+                <button className="p-1.5 rounded-full hover:bg-card-subtle transition ml-1" aria-label="Perfil" title="Perfil">
                   <Avatar name={user.name} avatarUrl={user.avatarUrl} size={30} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
                 </button>
               </DropdownMenu.Trigger>
