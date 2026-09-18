@@ -17,6 +17,7 @@ import { pioneirosRouter } from './routes/pioneiros.routes';
 import { adminPioneirosRouter } from './routes/adminPioneiros.routes';
 import { pioneiroConversionRouter } from './routes/pioneiroConversion.routes';
 import { pontaFirmeRouter } from './routes/pontaFirme.routes';
+import { birthdaysRouter } from './routes/birthdays.routes';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use('/api/pioneiros', pioneirosRouter);
 app.use('/api/admin/pioneiros', adminPioneirosRouter);
 app.use('/api/admin/pioneiro-conversao', pioneiroConversionRouter);
 app.use('/api/ponta-firme', pontaFirmeRouter);
+app.use('/api/birthdays', birthdaysRouter);
 
 app.use((err: { code?: string; message?: string }, _req: Request, res: Response, _next: NextFunction) => {
   if (err.code === 'P2025') {
