@@ -16,10 +16,15 @@ function isIOSDevice() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
 
+function isMobileDevice() {
+  return /android|iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(isStandaloneDisplay());
   const isIOS = isIOSDevice();
+  const isMobile = isMobileDevice();
 
   useEffect(() => {
     function handleBeforeInstallPrompt(e: Event) {
@@ -47,8 +52,8 @@ export function useInstallPrompt() {
     setDeferredPrompt(null);
   }
 
-  const canInstall = !isInstalled && !!deferredPrompt;
+  const canInstall = !isInstalled && isMobile && !!deferredPrompt;
   const showIOSInstructions = !isInstalled && isIOS && !deferredPrompt;
 
-  return { canInstall, showIOSInstructions, isInstalled, promptInstall };
+  return { canInstall, showIOSInstructions, isInstalled, isMobile, promptInstall };
 }
