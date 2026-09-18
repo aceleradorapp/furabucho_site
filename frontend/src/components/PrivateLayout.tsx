@@ -1,6 +1,7 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   Anchor,
+  Cake,
   Home,
   ImageIcon,
   Images,
@@ -25,6 +26,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AnnouncementBellButton, AnnouncementFullscreenViewer, type AnnouncementItem } from './AnnouncementsBell';
 import { Avatar } from './Avatar';
 import { useConfirm } from './ConfirmDialogProvider';
+import { TodayBirthdaysBanner } from './TodayBirthdaysBanner';
 
 const ANNOUNCEMENT_AUTO_SHOW_DELAY = 3000;
 const ANNOUNCEMENT_POLL_INTERVAL = 20000;
@@ -156,6 +158,15 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
               title="Galeria"
             >
               <Images size={22} />
+            </Link>
+
+            <Link
+              to="/aniversariantes"
+              className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/aniversariantes') ? 'text-primary' : 'text-text-main'}`}
+              aria-label="Aniversariantes"
+              title="Aniversariantes"
+            >
+              <Cake size={22} />
             </Link>
 
             <AnnouncementBellButton
@@ -371,6 +382,8 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
+      <TodayBirthdaysBanner />
+
       {!isProfileComplete && location.pathname !== '/perfil' && (
         <div className="bg-primary/10 border-b border-primary/20">
           <div className="max-w-5xl mx-auto px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
@@ -402,6 +415,13 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           aria-label="Galeria"
         >
           <Images size={24} />
+        </Link>
+        <Link
+          to="/aniversariantes"
+          className={`p-2 ${isActive('/aniversariantes') ? 'text-primary' : 'text-text-muted'}`}
+          aria-label="Aniversariantes"
+        >
+          <Cake size={24} />
         </Link>
         <AnnouncementBellButton
           announcements={announcements}

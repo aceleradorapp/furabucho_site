@@ -12,6 +12,7 @@ import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { AdminUserPermissionsPage } from './pages/admin/AdminUserPermissionsPage'
 import { AdminUserPhotosPage } from './pages/admin/AdminUserPhotosPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
+import { BirthdaysPage } from './pages/BirthdaysPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { DownloadAppPage } from './pages/DownloadAppPage'
 import { FeedPage } from './pages/FeedPage'
@@ -59,6 +60,14 @@ function App() {
         element={
           <ProtectedRoute>
             <GalleryDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/aniversariantes"
+        element={
+          <ProtectedRoute>
+            <BirthdaysPage />
           </ProtectedRoute>
         }
       />
