@@ -38,7 +38,7 @@ export function AnnouncementBellButton({
   return (
     <DropdownMenu.Root open={open} onOpenChange={onOpenChange}>
       <DropdownMenu.Trigger asChild>
-        <button className={className} aria-label="Novidades">
+        <button className={className} aria-label="Novidades" title="Novidades">
           <span className="relative inline-flex">
             <Megaphone size={iconSize} />
             {unseenCount > 0 && (

@@ -7,7 +7,7 @@ export interface RolePatente {
 }
 
 export const ROLE_PATENTES: Record<string, RolePatente> = {
-  admin: { label: 'Fundador', color: '#FFD54A', icon: Crown },
+  admin: { label: 'Administrador', color: '#FFD54A', icon: Crown },
   membro_ajudante: { label: 'Guardião', color: '#60A5FA', icon: Shield },
   membro: { label: 'Fura-Bucho', color: '#FF5E14', icon: Flame },
 };
