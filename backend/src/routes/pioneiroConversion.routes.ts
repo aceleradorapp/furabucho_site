@@ -102,7 +102,16 @@ pioneiroConversionRouter.post('/convert', async (req: AuthedRequest, res) => {
     try {
       const user = await prisma.$transaction(async (tx) => {
         const created = await tx.user.create({
-          data: { name, username, email, whatsapp, roleId: roleId as number, passwordHash, mustChangePassword: true },
+          data: {
+            name,
+            username,
+            email,
+            whatsapp,
+            roleId: roleId as number,
+            passwordHash,
+            mustChangePassword: true,
+            ...(pioneiro.avatarUrl ? { avatarUrl: pioneiro.avatarUrl } : {}),
+          },
         });
         await tx.pioneiro.update({ where: { id: pioneiroId }, data: { convertedUserId: created.id } });
         return created;
