@@ -53,7 +53,10 @@ export function useInstallPrompt() {
   }
 
   const canInstall = !isInstalled && isMobile && !!deferredPrompt;
-  const showIOSInstructions = !isInstalled && isIOS && !deferredPrompt;
+  // Cobre tanto iOS (nunca dispara beforeinstallprompt) quanto Android/outros navegadores que
+  // suportam instalar mas ainda não dispararam o prompt automático nessa sessão -- em vez de
+  // dizer "não suportado", mostra a instrução manual certa pro sistema.
+  const showManualInstructions = !isInstalled && isMobile && !deferredPrompt;
 
-  return { canInstall, showIOSInstructions, isInstalled, isMobile, promptInstall };
+  return { canInstall, showManualInstructions, isInstalled, isMobile, isIOS, promptInstall };
 }

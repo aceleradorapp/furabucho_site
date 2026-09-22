@@ -422,7 +422,7 @@ export function AdminPioneiroConversionPage() {
       </div>
 
       {!reviewMode && selected.size > 0 && (
-        <div className="fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur-md border-t border-border">
+        <div className="fixed bottom-16 md:bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur-md border-t border-border">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
             <p className="text-sm text-text-muted">{selected.size} selecionado(s)</p>
             <button
