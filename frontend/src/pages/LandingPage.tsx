@@ -45,6 +45,13 @@ interface HighlightImage {
   galleryYear: number;
 }
 
+interface ShowcaseMember {
+  id: number;
+  name: string;
+  nickname: string | null;
+  caricatureUrl: string | null;
+}
+
 export function LandingPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +60,7 @@ export function LandingPage() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [highlights, setHighlights] = useState<HighlightImage[]>([]);
+  const [members, setMembers] = useState<ShowcaseMember[]>([]);
 
   useEffect(() => {
     if (searchParams.get('login')) {
@@ -72,6 +80,7 @@ export function LandingPage() {
     api.get<SiteSettings>('/settings').then(setSettings);
     api.get<Banner[]>('/banners').then((data) => setBanners(data.filter((b) => b.active)));
     api.get<HighlightImage[]>('/galleries/featured').then(setHighlights);
+    api.get<ShowcaseMember[]>('/settings/members-showcase').then(setMembers);
   }, []);
 
   const siteName = settings?.siteName ?? 'Amigos Fura-Bucho';
@@ -241,6 +250,9 @@ export function LandingPage() {
           </div>
         </section>
       )}
+
+      {/* ================= SEÇÃO MEMBROS ================= */}
+      {members.length > 0 && <MembersShowcase members={members} />}
 
       {/* ================= SEÇÃO SOBRE NÓS ================= */}
       <section id="sobre" className="w-full py-24 bg-[#0A0A0C] border-t border-white/5 scroll-mt-10">
@@ -466,5 +478,55 @@ function HighlightsCarousel({ images }: { images: HighlightImage[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+function MembersShowcase({ members }: { members: ShowcaseMember[] }) {
+  return (
+    <section className="w-full py-24 bg-[#0F0F12] border-t border-white/5">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-14">
+          <span className="text-[#FF5E14] font-black tracking-widest text-xs uppercase mb-2 block">A Turma</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+            Nossos Membros
+          </h2>
+          <p className="text-zinc-400 text-sm max-w-md mx-auto mt-4">
+            Gente de verdade, com nome e cara — a família que faz o Fura-Bucho acontecer.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-10 sm:gap-x-8">
+          {members.map((m, index) => {
+            const firstName = m.name.trim().split(/\s+/)[0];
+            return (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.4, delay: (index % 12) * 0.05 }}
+                className="flex flex-col items-center gap-3 w-24 sm:w-28"
+              >
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-white/10 shadow-lg hover:border-[#FF5E14]/60 transition-colors shrink-0">
+                  <img
+                    src={`${UPLOADS_BASE}${m.caricatureUrl}`}
+                    alt={m.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-white text-sm font-semibold leading-tight truncate w-full">{firstName}</p>
+                  {m.nickname && (
+                    <p className="text-[#FF5E14] text-xs italic leading-tight mt-0.5 truncate w-full">
+                      "{m.nickname}"
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
