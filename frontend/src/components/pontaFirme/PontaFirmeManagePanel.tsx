@@ -12,6 +12,7 @@ interface ClaimableUser {
   nickname: string | null;
   avatarUrl: string | null;
   email: string;
+  alreadyLinkedElsewhere?: boolean;
 }
 
 function UserPicker({ seasonId, onPick }: { seasonId: number; onPick: (user: ClaimableUser) => void }) {
@@ -19,7 +20,7 @@ function UserPicker({ seasonId, onPick }: { seasonId: number; onPick: (user: Cla
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.get<ClaimableUser[]>(`/ponta-firme/claimable-users?seasonId=${seasonId}`).then(setUsers);
+    api.get<ClaimableUser[]>(`/ponta-firme/claimable-users?seasonId=${seasonId}&includeLinked=1`).then(setUsers);
   }, [seasonId]);
 
   const filtered = useMemo(() => {
@@ -39,7 +40,7 @@ function UserPicker({ seasonId, onPick }: { seasonId: number; onPick: (user: Cla
           className="w-full rounded-lg border border-border pl-8 pr-3 py-1.5 text-sm outline-none focus:border-primary"
         />
       </div>
-      <div className="max-h-40 overflow-y-auto flex flex-col gap-1">
+      <div className="max-h-52 overflow-y-auto flex flex-col gap-1">
         {filtered.map((u) => (
           <button
             key={u.id}
@@ -47,7 +48,15 @@ function UserPicker({ seasonId, onPick }: { seasonId: number; onPick: (user: Cla
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-card-subtle transition text-left"
           >
             <Avatar name={u.nickname || u.name} avatarUrl={u.avatarUrl} size={26} />
-            <span className="text-sm text-text-main truncate">{u.nickname || u.name}</span>
+            <span className="text-sm text-text-main truncate flex-1">{u.nickname || u.name}</span>
+            {u.alreadyLinkedElsewhere && (
+              <span
+                className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 shrink-0"
+                title="Essa conta já está em outro registro nessa temporada — ao selecionar, os pagamentos são juntados aqui e o outro registro é removido."
+              >
+                juntar registros
+              </span>
+            )}
           </button>
         ))}
         {filtered.length === 0 && <p className="text-xs text-text-muted py-3 text-center">Nenhum membro encontrado.</p>}
