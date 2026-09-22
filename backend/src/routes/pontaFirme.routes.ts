@@ -94,18 +94,20 @@ pontaFirmeRouter.get('/seasons/:id/data', async (req, res) => {
 
 pontaFirmeRouter.get('/claimable-users', requirePermission('pontaFirme.manage'), async (req, res) => {
   const seasonId = Number(req.query.seasonId);
+  const includeLinked = req.query.includeLinked === '1';
+
   const alreadyLinked = await prisma.pontaFirmePayer.findMany({
     where: { seasonId, userId: { not: null } },
     select: { userId: true },
   });
-  const excludeIds = alreadyLinked.map((p) => p.userId as number);
+  const linkedIds = new Set(alreadyLinked.map((p) => p.userId as number));
 
   const users = await prisma.user.findMany({
-    where: { id: { notIn: excludeIds } },
+    where: includeLinked ? undefined : { id: { notIn: Array.from(linkedIds) } },
     select: { id: true, name: true, nickname: true, avatarUrl: true, email: true },
     orderBy: { name: 'asc' },
   });
-  res.json(users);
+  res.json(users.map((u) => ({ ...u, alreadyLinkedElsewhere: linkedIds.has(u.id) })));
 });
 
 pontaFirmeRouter.get('/event-claimable-users', requirePermission('pontaFirme.manage'), async (req, res) => {
@@ -148,6 +150,40 @@ pontaFirmeRouter.post('/seasons/:id/payers', requirePermission('pontaFirme.manag
 pontaFirmeRouter.patch('/payers/:id', requirePermission('pontaFirme.manage'), async (req: AuthedRequest, res) => {
   const id = Number(req.params.id);
   const { userId, displayName, removed } = req.body as { userId?: number; displayName?: string; removed?: boolean };
+
+  if (userId !== undefined) {
+    const payer = await prisma.pontaFirmePayer.findUnique({ where: { id } });
+    if (!payer) return res.status(404).json({ error: 'Registro não encontrado' });
+
+    const duplicate = await prisma.pontaFirmePayer.findUnique({
+      where: { seasonId_userId: { seasonId: payer.seasonId, userId } },
+    });
+
+    if (duplicate && duplicate.id !== id) {
+      // Essa conta já tem outro registro nessa temporada (normalmente vazio, criado ao marcar o
+      // selo Ponta Firme) — junta os pagamentos dele aqui e remove o duplicado, em vez de travar
+      // por causa da constraint unica de seasonId+userId.
+      const [duplicatePayments, existingPayments] = await Promise.all([
+        prisma.pontaFirmePayment.findMany({ where: { payerId: duplicate.id } }),
+        prisma.pontaFirmePayment.findMany({ where: { payerId: id }, select: { monthDate: true } }),
+      ]);
+      const existingMonths = new Set(existingPayments.map((p) => p.monthDate.toISOString()));
+      const paymentsToMove = duplicatePayments.filter((p) => !existingMonths.has(p.monthDate.toISOString()));
+
+      await prisma.$transaction([
+        ...paymentsToMove.map((p) =>
+          prisma.pontaFirmePayment.create({
+            data: { payerId: id, monthDate: p.monthDate, amount: p.amount, paidAt: p.paidAt },
+          }),
+        ),
+        prisma.pontaFirmePayer.delete({ where: { id: duplicate.id } }),
+        prisma.pontaFirmePayer.update({ where: { id }, data: { userId, displayName: null } }),
+      ]);
+
+      const merged = await prisma.pontaFirmePayer.findUnique({ where: { id } });
+      return res.json(merged);
+    }
+  }
 
   const payer = await prisma.pontaFirmePayer.update({
     where: { id },
