@@ -3,9 +3,11 @@ import { Image as ImageIcon, Video, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { api, ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { compressImageFile } from '../lib/compressImage';
 import { Avatar } from './Avatar';
 
-const MAX_MEDIA_SIZE = 25 * 1024 * 1024;
+const MAX_IMAGE_INPUT_SIZE = 30 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 10 * 1024 * 1024;
 
 export function PostComposerModal({
   open,
@@ -22,6 +24,7 @@ export function PostComposerModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [mediaKind, setMediaKind] = useState<'image' | 'video' | null>(null);
   const [posting, setPosting] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -40,16 +43,37 @@ export function PostComposerModal({
     onOpenChange(next);
   }
 
-  function handlePickFile(selected: File, kind: 'image' | 'video') {
-    if (selected.size > MAX_MEDIA_SIZE) {
-      setError(`Arquivo muito grande. O limite é ${MAX_MEDIA_SIZE / 1024 / 1024}MB.`);
-      return;
-    }
-    setError(null);
+  function setMedia(selected: File, kind: 'image' | 'video') {
     setFile(selected);
     setMediaKind(kind);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(selected));
+  }
+
+  async function handlePickFile(selected: File, kind: 'image' | 'video') {
+    setError(null);
+
+    if (kind === 'video') {
+      if (selected.size > MAX_VIDEO_SIZE) {
+        setError(`Vídeo muito grande (limite de ${MAX_VIDEO_SIZE / 1024 / 1024}MB) — grave um vídeo mais curto.`);
+        return;
+      }
+      setMedia(selected, 'video');
+      return;
+    }
+
+    if (selected.size > MAX_IMAGE_INPUT_SIZE) {
+      setError(`Imagem muito grande. O limite é ${MAX_IMAGE_INPUT_SIZE / 1024 / 1024}MB.`);
+      return;
+    }
+
+    setCompressing(true);
+    try {
+      const compressed = await compressImageFile(selected);
+      setMedia(compressed, 'image');
+    } finally {
+      setCompressing(false);
+    }
   }
 
   function handleRemoveMedia() {
@@ -110,6 +134,8 @@ export function PostComposerModal({
               className="w-full resize-none outline-none text-[15px] text-text-main placeholder:text-text-muted mb-3"
             />
 
+            {compressing && <p className="text-xs text-text-muted mb-2">Otimizando imagem...</p>}
+
             {previewUrl && (
               <div className="relative rounded-xl overflow-hidden bg-black mb-1 border border-border">
                 <button
@@ -150,7 +176,7 @@ export function PostComposerModal({
               <button
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
-                disabled={!!file}
+                disabled={!!file || compressing}
                 className="p-2 rounded-full text-green-600 hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
                 title="Adicionar foto"
               >
@@ -159,7 +185,7 @@ export function PostComposerModal({
               <button
                 type="button"
                 onClick={() => videoInputRef.current?.click()}
-                disabled={!!file}
+                disabled={!!file || compressing}
                 className="p-2 rounded-full text-purple-600 hover:bg-purple-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
                 title="Adicionar vídeo"
               >
@@ -170,7 +196,7 @@ export function PostComposerModal({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={posting || (!file && !caption.trim())}
+              disabled={posting || compressing || (!file && !caption.trim())}
               className="rounded-full bg-primary hover:bg-primary-hover text-white font-semibold text-sm px-6 py-2 transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {posting ? 'Publicando...' : 'Publicar'}
