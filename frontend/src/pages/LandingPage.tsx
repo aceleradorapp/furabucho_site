@@ -11,11 +11,12 @@ import {
   Users,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { InstallAppButton } from '../components/InstallAppButton';
 import { LoginModal } from '../components/LoginModal';
 import { PioneirosPrompt } from '../components/PioneirosPrompt';
+import { useAuth } from '../auth/AuthContext';
 import { UPLOADS_BASE } from '../lib/config';
 
 interface SiteSettings {
@@ -45,6 +46,8 @@ interface HighlightImage {
 }
 
 export function LandingPage() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [loginOpen, setLoginOpen] = useState(false);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
@@ -58,6 +61,12 @@ export function LandingPage() {
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    // Quem abre o site (ou o app instalado) já logado não deveria cair na landing
+    // publica de novo — isso que fazia parecer que era preciso logar toda vez.
+    if (!loading && user) navigate('/feed', { replace: true });
+  }, [loading, user, navigate]);
 
   useEffect(() => {
     api.get<SiteSettings>('/settings').then(setSettings);
@@ -302,7 +311,7 @@ export function LandingPage() {
       </footer>
 
       <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
-      {settings && <PioneirosPrompt active={settings.pioneirosCampaignActive} />}
+      {settings && !user && <PioneirosPrompt active={settings.pioneirosCampaignActive} />}
     </div>
   );
 }
