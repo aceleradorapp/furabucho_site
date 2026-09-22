@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const DISMISSED_KEY = 'fb_pioneiros_dismissed';
+const PIONEIRO_TOKEN_KEY = 'fb_pioneiro_token';
 const SHOW_DELAY_MS = 900;
 
 export function PioneirosPrompt({ active }: { active: boolean }) {
@@ -13,6 +14,15 @@ export function PioneirosPrompt({ active }: { active: boolean }) {
 
   useEffect(() => {
     if (!active) return;
+
+    // Quem já se cadastrou como Pioneiro não precisa ser convidado de novo.
+    let alreadyPioneiro = false;
+    try {
+      alreadyPioneiro = !!localStorage.getItem(PIONEIRO_TOKEN_KEY);
+    } catch {
+      alreadyPioneiro = false;
+    }
+    if (alreadyPioneiro) return;
 
     let dismissed = false;
     try {
