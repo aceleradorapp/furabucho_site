@@ -34,11 +34,11 @@ export function isVideoFile(filename: string) {
 
 export const postUpload = multer({
   storage,
-  limits: { fileSize: 25 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (!allowedExt.has(ext) && !videoExt.has(ext)) {
-      return cb(new Error('Formato não suportado. Use imagem (jpg, png, webp, gif) ou vídeo (mp4, webm, mov) de até 25MB.'));
+      return cb(new Error('Formato não suportado. Use imagem (jpg, png, webp, gif) ou vídeo (mp4, webm, mov) de até 10MB.'));
     }
     cb(null, true);
   },
