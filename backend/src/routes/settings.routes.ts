@@ -16,6 +16,17 @@ settingsRouter.get('/', async (_req, res) => {
   res.json(settings);
 });
 
+// Público — vitrine de membros na página inicial. Só quem já tem caricatura cadastrada aparece,
+// e a lista se atualiza sozinha (sem curadoria manual) sempre que alguém sobe uma.
+settingsRouter.get('/members-showcase', async (_req, res) => {
+  const members = await prisma.user.findMany({
+    where: { caricatureUrl: { not: null } },
+    select: { id: true, name: true, nickname: true, caricatureUrl: true },
+    orderBy: { name: 'asc' },
+  });
+  res.json(members);
+});
+
 settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (req, res) => {
   const { siteName, subtitle, foundingYear, heroTitle, aboutText, logoUrl, heroImageUrl, pioneirosCampaignActive } =
     req.body as {
