@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api } from '../api/client';
+import { api, ApiError } from '../api/client';
 
 export interface AuthUser {
   id: number;
@@ -40,8 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await api.get<{ user: AuthUser }>('/auth/me');
       setUser(data.user);
-    } catch {
-      localStorage.removeItem('fb_token');
+    } catch (err) {
+      // Só desloga de verdade quando o servidor diz que o token é inválido/expirado (401).
+      // Qualquer outro erro (rede instável, servidor reiniciando num deploy, etc.) não deve
+      // apagar a sessão guardada — o usuário tentaria de novo e continuaria logado.
+      if (err instanceof ApiError && err.status === 401) {
+        localStorage.removeItem('fb_token');
+      }
       setUser(null);
     } finally {
       setLoading(false);

@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { Download, Share, SquarePlus, X } from 'lucide-react';
+import { Download, MoreVertical, Share, SquarePlus, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
@@ -13,15 +13,15 @@ export function InstallAppButton({
   children?: ReactNode;
   dialogTheme?: 'light' | 'dark';
 }) {
-  const { canInstall, showIOSInstructions, promptInstall } = useInstallPrompt();
-  const [iosDialogOpen, setIosDialogOpen] = useState(false);
+  const { canInstall, showManualInstructions, isIOS, promptInstall } = useInstallPrompt();
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
 
-  if (!canInstall && !showIOSInstructions) return null;
+  if (!canInstall && !showManualInstructions) return null;
 
-  if (showIOSInstructions) {
+  if (showManualInstructions) {
     const isDark = dialogTheme === 'dark';
     return (
-      <Dialog.Root open={iosDialogOpen} onOpenChange={setIosDialogOpen}>
+      <Dialog.Root open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
         <Dialog.Trigger asChild>
           <button type="button" className={className}>
             {children ?? (
@@ -48,23 +48,45 @@ export function InstallAppButton({
                 <X size={18} />
               </Dialog.Close>
             </div>
-            <ol className={`space-y-3 text-sm ${isDark ? 'text-zinc-300' : 'text-text-muted'}`}>
-              <li className="flex items-start gap-2.5">
-                <Share size={16} className="text-primary shrink-0 mt-0.5" />
-                <span>
-                  Toque no ícone de{' '}
-                  <strong className={isDark ? 'text-white' : 'text-text-main'}>Compartilhar</strong> na barra do
-                  Safari.
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <SquarePlus size={16} className="text-primary shrink-0 mt-0.5" />
-                <span>
-                  Escolha{' '}
-                  <strong className={isDark ? 'text-white' : 'text-text-main'}>Adicionar à Tela de Início</strong>.
-                </span>
-              </li>
-            </ol>
+            {isIOS ? (
+              <ol className={`space-y-3 text-sm ${isDark ? 'text-zinc-300' : 'text-text-muted'}`}>
+                <li className="flex items-start gap-2.5">
+                  <Share size={16} className="text-primary shrink-0 mt-0.5" />
+                  <span>
+                    Toque no ícone de{' '}
+                    <strong className={isDark ? 'text-white' : 'text-text-main'}>Compartilhar</strong> na barra do
+                    Safari.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <SquarePlus size={16} className="text-primary shrink-0 mt-0.5" />
+                  <span>
+                    Escolha{' '}
+                    <strong className={isDark ? 'text-white' : 'text-text-main'}>Adicionar à Tela de Início</strong>.
+                  </span>
+                </li>
+              </ol>
+            ) : (
+              <ol className={`space-y-3 text-sm ${isDark ? 'text-zinc-300' : 'text-text-muted'}`}>
+                <li className="flex items-start gap-2.5">
+                  <MoreVertical size={16} className="text-primary shrink-0 mt-0.5" />
+                  <span>
+                    Toque no menu <strong className={isDark ? 'text-white' : 'text-text-main'}>⋮</strong> no canto
+                    superior do navegador.
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <SquarePlus size={16} className="text-primary shrink-0 mt-0.5" />
+                  <span>
+                    Escolha{' '}
+                    <strong className={isDark ? 'text-white' : 'text-text-main'}>
+                      Instalar app / Adicionar à tela inicial
+                    </strong>
+                    .
+                  </span>
+                </li>
+              </ol>
+            )}
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
