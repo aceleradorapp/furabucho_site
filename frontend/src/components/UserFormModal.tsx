@@ -19,6 +19,7 @@ export interface EditableMember {
   caricatureUrl: string | null;
   isPontaFirme: boolean;
   isVeterano: boolean;
+  birthDate: string | null;
 }
 
 interface Role {
@@ -103,6 +104,7 @@ export function UserFormModal({
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [roleId, setRoleId] = useState<number | ''>('');
   const [isPontaFirme, setIsPontaFirme] = useState(false);
   const [isVeterano, setIsVeterano] = useState(false);
@@ -125,6 +127,7 @@ export function UserFormModal({
       setEmail(initialUser.email ?? '');
       setNickname(initialUser.nickname ?? '');
       setWhatsapp(formatPhoneBR(initialUser.whatsapp ?? ''));
+      setBirthDate(initialUser.birthDate ? initialUser.birthDate.slice(0, 10) : '');
       setRoleId(initialUser.roleId);
       setIsPontaFirme(initialUser.isPontaFirme);
       setIsVeterano(initialUser.isVeterano);
@@ -137,6 +140,7 @@ export function UserFormModal({
       setPassword('');
       setNickname('');
       setWhatsapp('');
+      setBirthDate('');
       setRoleId(roles.find((r) => r.key === 'membro')?.id ?? roles[0]?.id ?? '');
       setIsPontaFirme(false);
       setIsVeterano(false);
@@ -211,6 +215,7 @@ export function UserFormModal({
             name: name.trim(),
             nickname: nickname.trim() || null,
             whatsapp: whatsapp.trim() || null,
+            birthDate: birthDate || null,
             ...(avatarCleared ? { avatarUrl: null } : {}),
             ...(caricatureCleared ? { caricatureUrl: null } : {}),
           }),
@@ -321,6 +326,17 @@ export function UserFormModal({
                   className={inputClass}
                 />
               </div>
+              {mode === 'edit' && (
+                <div>
+                  <label className="text-sm text-text-muted">Data de nascimento (opcional)</label>
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              )}
               {mode === 'create' && (
                 <div>
                   <label className="text-sm text-text-muted">Senha temporária (opcional)</label>
