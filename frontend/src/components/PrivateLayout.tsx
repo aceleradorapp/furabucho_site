@@ -113,13 +113,13 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
   ].filter(Boolean) as string[];
   const isProfileComplete = missingProfileParts.length === 0;
 
-  const hasSettingsMenu =
-    user.permissions['settings.edit'] ||
-    user.permissions['members.view'] ||
-    user.permissions['gallery.manage'] ||
-    user.permissions['pioneiros.manage'] ||
-    user.permissions['uploads.manage'] ||
-    user.role === 'admin';
+  const canSite = user.permissions['settings.edit'] || user.permissions['announcements.manage'] || user.permissions['gallery.manage'];
+  const canMembers = user.permissions['members.view'];
+  const canGallery = user.permissions['gallery.manage'];
+  const canPioneiros = user.permissions['gallery.manage'] || user.permissions['pioneiros.manage'];
+  const canSystem = user.permissions['uploads.manage'] || user.role === 'admin';
+
+  const hasSettingsMenu = canSite || canMembers || canGallery || canPioneiros || canSystem;
 
   const hasPontaFirmeAccess = user.isPontaFirme || user.role === 'admin' || user.permissions['pontaFirme.manage'];
 
@@ -222,137 +222,176 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                   <DropdownMenu.Content
                     align="end"
                     sideOffset={8}
-                    className="bg-card rounded-xl shadow-2xl border border-border py-2 min-w-[220px] z-40"
+                    className="bg-card rounded-xl shadow-2xl border border-border py-2 min-w-[240px] z-40"
                   >
-                    {user.permissions['settings.edit'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/configuracoes"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <Settings size={16} /> Configurações do site
-                        </Link>
-                      </DropdownMenu.Item>
+                    {canSite && (
+                      <DropdownMenu.Group>
+                        <DropdownMenu.Label className="px-4 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                          Site
+                        </DropdownMenu.Label>
+                        {user.permissions['settings.edit'] && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/configuracoes"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <Settings size={16} /> Configurações do site
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                        {user.permissions['announcements.manage'] && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/novidades"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <Megaphone size={16} /> Novidades
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                        {user.permissions['gallery.manage'] && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/carrossel-inicial"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <Sparkles size={16} /> Carrossel da página inicial
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                      </DropdownMenu.Group>
                     )}
-                    {user.permissions['members.view'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/usuarios"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <Users size={16} /> Usuários
-                        </Link>
-                      </DropdownMenu.Item>
+
+                    {canMembers && (
+                      <DropdownMenu.Group>
+                        {canSite && <DropdownMenu.Separator className="my-1.5 h-px bg-border" />}
+                        <DropdownMenu.Label className="px-4 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                          Membros
+                        </DropdownMenu.Label>
+                        <DropdownMenu.Item asChild>
+                          <Link
+                            to="/admin/usuarios"
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                          >
+                            <Users size={16} /> Usuários
+                          </Link>
+                        </DropdownMenu.Item>
+                        <DropdownMenu.Item asChild>
+                          <Link
+                            to="/admin/fotos-perfil"
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                          >
+                            <ImageIcon size={16} /> Fotos de Perfil
+                          </Link>
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Group>
                     )}
-                    {user.permissions['members.view'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/fotos-perfil"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <ImageIcon size={16} /> Fotos de Perfil
-                        </Link>
-                      </DropdownMenu.Item>
+
+                    {canGallery && (
+                      <DropdownMenu.Group>
+                        {(canSite || canMembers) && <DropdownMenu.Separator className="my-1.5 h-px bg-border" />}
+                        <DropdownMenu.Label className="px-4 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                          Galeria
+                        </DropdownMenu.Label>
+                        <DropdownMenu.Item asChild>
+                          <Link
+                            to="/admin/galeria"
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                          >
+                            <Images size={16} /> Gerenciar galeria
+                          </Link>
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Group>
                     )}
-                    {user.permissions['uploads.manage'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/arquivos"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <HardDrive size={16} /> Arquivos do Servidor
-                        </Link>
-                      </DropdownMenu.Item>
+
+                    {canPioneiros && (
+                      <DropdownMenu.Group>
+                        {(canSite || canMembers || canGallery) && <DropdownMenu.Separator className="my-1.5 h-px bg-border" />}
+                        <DropdownMenu.Label className="px-4 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                          Programa Pioneiros
+                        </DropdownMenu.Label>
+                        {user.permissions['gallery.manage'] && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/pioneiros/painel"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <Trophy size={16} /> Painel dos Pioneiros
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                        {user.permissions['gallery.manage'] && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/pioneiros-fotos"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <Rocket size={16} /> Fotos dos Pioneiros
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                        {user.permissions['gallery.manage'] && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/pioneiros-comentarios"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <MessageSquare size={16} /> Comentários dos Pioneiros
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                        {user.permissions['pioneiros.manage'] && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/pioneiros-conversao"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <UserPlus size={16} /> Pioneiros → Membros
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                      </DropdownMenu.Group>
                     )}
-                    {user.permissions['announcements.manage'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/novidades"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <Megaphone size={16} /> Novidades
-                        </Link>
-                      </DropdownMenu.Item>
-                    )}
-                    {user.permissions['gallery.manage'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/galeria"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <Images size={16} /> Gerenciar galeria
-                        </Link>
-                      </DropdownMenu.Item>
-                    )}
-                    {user.permissions['gallery.manage'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/carrossel-inicial"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <Sparkles size={16} /> Carrossel da página inicial
-                        </Link>
-                      </DropdownMenu.Item>
-                    )}
-                    {user.permissions['gallery.manage'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/pioneiros-fotos"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <Rocket size={16} /> Fotos dos Pioneiros
-                        </Link>
-                      </DropdownMenu.Item>
-                    )}
-                    {user.permissions['gallery.manage'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/pioneiros-comentarios"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <MessageSquare size={16} /> Comentários dos Pioneiros
-                        </Link>
-                      </DropdownMenu.Item>
-                    )}
-                    {user.permissions['pioneiros.manage'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/pioneiros-conversao"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <UserPlus size={16} /> Pioneiros → Membros
-                        </Link>
-                      </DropdownMenu.Item>
-                    )}
-                    {user.permissions['gallery.manage'] && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/pioneiros/painel"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <Trophy size={16} /> Painel dos Pioneiros
-                        </Link>
-                      </DropdownMenu.Item>
-                    )}
-                    {user.role === 'admin' && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/papeis"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <ShieldCheck size={16} /> Papéis
-                        </Link>
-                      </DropdownMenu.Item>
-                    )}
-                    {user.role === 'admin' && (
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          to="/admin/permissoes"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
-                        >
-                          <KeyRound size={16} /> Permissões por usuário
-                        </Link>
-                      </DropdownMenu.Item>
+
+                    {canSystem && (
+                      <DropdownMenu.Group>
+                        {(canSite || canMembers || canGallery || canPioneiros) && (
+                          <DropdownMenu.Separator className="my-1.5 h-px bg-border" />
+                        )}
+                        <DropdownMenu.Label className="px-4 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                          Sistema
+                        </DropdownMenu.Label>
+                        {user.permissions['uploads.manage'] && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/arquivos"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <HardDrive size={16} /> Arquivos do Servidor
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                        {user.role === 'admin' && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/papeis"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <ShieldCheck size={16} /> Papéis
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                        {user.role === 'admin' && (
+                          <DropdownMenu.Item asChild>
+                            <Link
+                              to="/admin/permissoes"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                            >
+                              <KeyRound size={16} /> Permissões por usuário
+                            </Link>
+                          </DropdownMenu.Item>
+                        )}
+                      </DropdownMenu.Group>
                     )}
                   </DropdownMenu.Content>
                 </DropdownMenu.Portal>
