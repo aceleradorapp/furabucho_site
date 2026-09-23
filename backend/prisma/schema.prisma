@@ -49,6 +49,7 @@ model User {
   caricatureUrl     String?
   birthDate         DateTime? @db.Date
   isPontaFirme      Boolean   @default(false)
+  isPontaFirmePagante Boolean @default(false)
   isVeterano        Boolean   @default(false)
   roleId            Int
   role              Role      @relation(fields: [roleId], references: [id])

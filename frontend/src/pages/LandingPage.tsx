@@ -61,6 +61,7 @@ export function LandingPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [highlights, setHighlights] = useState<HighlightImage[]>([]);
   const [members, setMembers] = useState<ShowcaseMember[]>([]);
+  const [activeMembersCount, setActiveMembersCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (searchParams.get('login')) {
@@ -81,6 +82,7 @@ export function LandingPage() {
     api.get<Banner[]>('/banners').then((data) => setBanners(data.filter((b) => b.active)));
     api.get<HighlightImage[]>('/galleries/featured').then(setHighlights);
     api.get<ShowcaseMember[]>('/settings/members-showcase').then(setMembers);
+    api.get<{ count: number }>('/settings/active-members-count').then((data) => setActiveMembersCount(data.count));
   }, []);
 
   const siteName = settings?.siteName ?? 'Amigos Fura-Bucho';
@@ -177,6 +179,21 @@ export function LandingPage() {
           >
             Mais que uma festa anual, uma tradição inquebrável. O espaço oficial para manter as resenhas, fotos e datas da família viva.
           </motion.p>
+
+          {activeMembersCount !== null && activeMembersCount > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="inline-flex items-center gap-2 mt-5 text-zinc-300 text-sm"
+            >
+              <Users size={16} className="text-[#FF5E14]" />
+              <span>
+                <strong className="text-white font-bold">{activeMembersCount}</strong>{' '}
+                {activeMembersCount === 1 ? 'membro ativo' : 'membros ativos'}
+              </span>
+            </motion.div>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
