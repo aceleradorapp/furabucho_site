@@ -18,6 +18,7 @@ import {
   Sparkles,
   Sun,
   Trophy,
+  UserCog,
   UserPlus,
   Users,
   UserRound,
@@ -36,7 +37,7 @@ const ANNOUNCEMENT_AUTO_SHOW_DELAY = 3000;
 const ANNOUNCEMENT_POLL_INTERVAL = 20000;
 
 export function PrivateLayout({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, realUser, viewAsMember, viewModeLoading, toggleViewAsMember, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const confirm = useConfirm();
   const navigate = useNavigate();
@@ -436,6 +437,19 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                     {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                     {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
                   </DropdownMenu.Item>
+                  {realUser?.role === 'admin' && (
+                    <DropdownMenu.Item
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        toggleViewAsMember();
+                      }}
+                      disabled={viewModeLoading}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                    >
+                      <UserCog size={16} />
+                      {viewAsMember ? 'Voltar para Admin' : 'Ver como Membro'}
+                    </DropdownMenu.Item>
+                  )}
                   <DropdownMenu.Item
                     onSelect={handleLogout}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-card-subtle outline-none cursor-pointer"
@@ -448,6 +462,23 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </header>
+
+      {viewAsMember && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30">
+          <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-400 min-w-0">
+              <UserCog size={16} className="shrink-0" />
+              <span className="truncate">Visualizando como <strong>Membro</strong> — é só uma prévia, seu acesso continua o mesmo.</span>
+            </div>
+            <button
+              onClick={toggleViewAsMember}
+              className="shrink-0 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-full px-3 py-1.5 transition"
+            >
+              Voltar para Admin
+            </button>
+          </div>
+        </div>
+      )}
 
       <TodayBirthdaysBanner />
 

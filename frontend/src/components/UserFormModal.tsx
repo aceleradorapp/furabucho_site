@@ -1,5 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { ImageIcon, ImagePlus, Medal, Send, Target, X } from 'lucide-react';
+import { ImageIcon, ImagePlus, Medal, Send, Target, Wallet, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api/client';
 import { IMAGE_SPECS } from '../lib/imageSpecs';
@@ -18,6 +18,7 @@ export interface EditableMember {
   avatarUrl: string | null;
   caricatureUrl: string | null;
   isPontaFirme: boolean;
+  isPontaFirmePagante: boolean;
   isVeterano: boolean;
   birthDate: string | null;
 }
@@ -107,6 +108,7 @@ export function UserFormModal({
   const [birthDate, setBirthDate] = useState('');
   const [roleId, setRoleId] = useState<number | ''>('');
   const [isPontaFirme, setIsPontaFirme] = useState(false);
+  const [isPontaFirmePagante, setIsPontaFirmePagante] = useState(false);
   const [isVeterano, setIsVeterano] = useState(false);
 
   const [avatarBlob, setAvatarBlob] = useState<Blob | null>(null);
@@ -130,6 +132,7 @@ export function UserFormModal({
       setBirthDate(initialUser.birthDate ? initialUser.birthDate.slice(0, 10) : '');
       setRoleId(initialUser.roleId);
       setIsPontaFirme(initialUser.isPontaFirme);
+      setIsPontaFirmePagante(initialUser.isPontaFirmePagante);
       setIsVeterano(initialUser.isVeterano);
       setAvatarPreview(initialUser.avatarUrl ? `${UPLOADS_BASE}${initialUser.avatarUrl}` : null);
       setCaricaturePreview(initialUser.caricatureUrl ? `${UPLOADS_BASE}${initialUser.caricatureUrl}` : null);
@@ -143,6 +146,7 @@ export function UserFormModal({
       setBirthDate('');
       setRoleId(roles.find((r) => r.key === 'membro')?.id ?? roles[0]?.id ?? '');
       setIsPontaFirme(false);
+      setIsPontaFirmePagante(false);
       setIsVeterano(false);
       setAvatarPreview(null);
       setCaricaturePreview(null);
@@ -235,8 +239,9 @@ export function UserFormModal({
           tasks.push(api.patch(`/admin/users/${initialUser.id}`, { roleId }));
         }
         if (canSetPatentes) {
-          const patentesPatch: { isPontaFirme?: boolean; isVeterano?: boolean } = {};
+          const patentesPatch: { isPontaFirme?: boolean; isPontaFirmePagante?: boolean; isVeterano?: boolean } = {};
           if (isPontaFirme !== initialUser.isPontaFirme) patentesPatch.isPontaFirme = isPontaFirme;
+          if (isPontaFirmePagante !== initialUser.isPontaFirmePagante) patentesPatch.isPontaFirmePagante = isPontaFirmePagante;
           if (isVeterano !== initialUser.isVeterano) patentesPatch.isVeterano = isVeterano;
           if (Object.keys(patentesPatch).length > 0) {
             tasks.push(api.patch(`/admin/users/${initialUser.id}/patentes`, patentesPatch));
@@ -368,19 +373,43 @@ export function UserFormModal({
             </div>
 
             {canSetPatentes && (
-              <div className="flex flex-wrap gap-4">
-                <label className="inline-flex items-center gap-2 text-sm text-text-main cursor-pointer w-fit">
-                  <input
-                    type="checkbox"
-                    checked={isPontaFirme}
-                    onChange={(e) => setIsPontaFirme(e.target.checked)}
-                    className="accent-primary"
-                  />
-                  <span className="inline-flex items-center gap-1.5 font-medium">
-                    <Target size={15} className={isPontaFirme ? 'text-amber-500' : 'text-text-muted'} />
-                    Ponta Firme
-                  </span>
-                </label>
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="inline-flex items-center gap-2 text-sm text-text-main cursor-pointer w-fit">
+                    <input
+                      type="checkbox"
+                      checked={isPontaFirme}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setIsPontaFirme(checked);
+                        if (!checked) setIsPontaFirmePagante(false);
+                      }}
+                      className="accent-primary"
+                    />
+                    <span className="inline-flex items-center gap-1.5 font-medium">
+                      <Target size={15} className={isPontaFirme ? 'text-amber-500' : 'text-text-muted'} />
+                      Ponta Firme
+                    </span>
+                  </label>
+                  <label
+                    className={`inline-flex items-center gap-2 text-sm cursor-pointer w-fit ${
+                      isPontaFirme ? 'text-text-main' : 'text-text-muted/50 cursor-not-allowed'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isPontaFirmePagante}
+                      disabled={!isPontaFirme}
+                      onChange={(e) => setIsPontaFirmePagante(e.target.checked)}
+                      className="accent-primary"
+                    />
+                    <span className="inline-flex items-center gap-1.5 font-medium">
+                      <Wallet size={15} className={isPontaFirmePagante ? 'text-green-600' : 'text-text-muted'} />
+                      Pagante Anual{' '}
+                      <span className="text-xs font-normal opacity-80">(entra na cobrança mensal)</span>
+                    </span>
+                  </label>
+                </div>
                 <label className="inline-flex items-center gap-2 text-sm text-text-main cursor-pointer w-fit">
                   <input
                     type="checkbox"

@@ -16,6 +16,13 @@ settingsRouter.get('/', async (_req, res) => {
   res.json(settings);
 });
 
+// Público — mostrado antes do login na pagina inicial. "Ativo" = ja fez o 1o acesso e trocou a
+// senha temporaria (mesmo criterio usado na tela de Usuarios), nao so pre-cadastrado.
+settingsRouter.get('/active-members-count', async (_req, res) => {
+  const count = await prisma.user.count({ where: { mustChangePassword: false } });
+  res.json({ count });
+});
+
 // Público — vitrine de membros na página inicial. Só quem já tem caricatura cadastrada aparece,
 // e a lista se atualiza sozinha (sem curadoria manual) sempre que alguém sobe uma.
 settingsRouter.get('/members-showcase', async (_req, res) => {
