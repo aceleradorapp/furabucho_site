@@ -57,7 +57,7 @@ function ImagePickerField({
             <button
               type="button"
               onClick={onRemove}
-              className="absolute -top-1 -right-1 bg-white text-red-600 border border-border rounded-full p-0.5 shadow-sm hover:bg-red-50 transition"
+              className="absolute -top-1 -right-1 bg-card text-red-600 border border-border rounded-full p-0.5 shadow-sm hover:bg-red-50 transition"
               title={`Remover ${label.toLowerCase()}`}
             >
               <X size={11} />
@@ -258,7 +258,7 @@ export function UserFormModal({
     <Dialog.Root open={open} onOpenChange={(next) => !saving && onOpenChange(next)}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[94vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-2xl focus:outline-none flex flex-col max-h-[90vh]">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[94vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-card shadow-2xl focus:outline-none flex flex-col max-h-[90vh]">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
             <Dialog.Title className="font-semibold text-text-main">
               {mode === 'create' ? 'Adicionar membro' : 'Editar membro'}
@@ -396,7 +396,7 @@ export function UserFormModal({
               </div>
             )}
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           </form>
 
           <div className="px-5 py-3 border-t border-border flex justify-end shrink-0">

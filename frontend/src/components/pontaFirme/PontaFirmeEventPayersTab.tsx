@@ -91,7 +91,7 @@ function PersonNameField({
         className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
       />
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+        <div className="absolute z-10 mt-1 w-full bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
           {suggestions.map((u) => (
             <button
               key={u.id}
@@ -342,7 +342,7 @@ export function PontaFirmeEventPayersTab({
               </div>
 
               {formError && (
-                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{formError}</p>
+                <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2">{formError}</p>
               )}
 
               <div className="flex items-center gap-2 justify-end">

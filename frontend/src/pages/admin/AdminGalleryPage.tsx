@@ -71,7 +71,7 @@ export function AdminGalleryPage() {
         </div>
 
         {creating && (
-          <form onSubmit={handleCreate} className="bg-white border border-border rounded-2xl p-4 mb-6 flex flex-wrap items-end gap-3">
+          <form onSubmit={handleCreate} className="bg-card border border-border rounded-2xl p-4 mb-6 flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[180px]">
               <label className="text-xs text-text-muted">Título</label>
               <input
@@ -98,7 +98,7 @@ export function AdminGalleryPage() {
             >
               Criar álbum
             </button>
-            {error && <p className="text-sm text-red-600 w-full">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400 w-full">{error}</p>}
           </form>
         )}
 
@@ -125,7 +125,7 @@ export function AdminGalleryPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {galleries.map((g) => (
-              <div key={g.id} className="relative bg-white rounded-2xl overflow-hidden border border-border">
+              <div key={g.id} className="relative bg-card rounded-2xl overflow-hidden border border-border">
                 <Link to={`/admin/galeria/${g.id}`} className="block">
                   <div className="aspect-square bg-card-subtle flex items-center justify-center">
                     {g.coverUrl ? (

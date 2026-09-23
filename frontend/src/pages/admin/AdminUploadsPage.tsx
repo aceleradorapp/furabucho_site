@@ -141,7 +141,7 @@ export function AdminUploadsPage() {
         <p className="text-sm text-text-muted mb-6">
           Imagens enviadas ao site. As com selo <span className="text-amber-600 font-semibold">laranja</span> não
           estão sendo usadas em lugar nenhum e podem ser excluídas com segurança; as com selo{' '}
-          <span className="text-green-700 font-semibold">verde</span> (esmaecidas) estão em uso e ficam protegidas.
+          <span className="text-green-700 dark:text-green-400 font-semibold">verde</span> (esmaecidas) estão em uso e ficam protegidas.
         </p>
 
         {data && (
@@ -154,7 +154,7 @@ export function AdminUploadsPage() {
               <p className="text-xs text-text-muted mb-1">Espaço total</p>
               <p className="text-xl font-bold text-text-main">{formatBytes(data.totalSize)}</p>
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 col-span-2 sm:col-span-1">
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-2xl p-4 col-span-2 sm:col-span-1">
               <p className="text-xs text-amber-700 mb-1">Não utilizado</p>
               <p className="text-xl font-bold text-amber-700">
                 {unused.length} arquivo(s) · {formatBytes(data.unusedSize)}
@@ -240,7 +240,7 @@ export function AdminUploadsPage() {
         </div>
 
         <div>
-          <h2 className="text-sm font-semibold text-green-700 uppercase tracking-wide mb-4 inline-flex items-center gap-1.5">
+          <h2 className="text-sm font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-4 inline-flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-green-600" /> Em uso ({inUse.length})
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">

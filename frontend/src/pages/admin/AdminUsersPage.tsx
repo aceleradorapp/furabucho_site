@@ -138,7 +138,7 @@ export function AdminUsersPage() {
               Repasse essa senha temporária para <strong>{lastCreated.email || lastCreated.whatsapp}</strong>. No
               primeiro acesso ele será obrigado a trocá-la.
             </p>
-            <p className="mt-2 font-mono bg-white border border-border rounded-lg px-3 py-1.5 inline-block">
+            <p className="mt-2 font-mono bg-card border border-border rounded-lg px-3 py-1.5 inline-block">
               {lastCreated.tempPassword}
             </p>
           </div>
@@ -187,7 +187,7 @@ export function AdminUsersPage() {
                   {u.mustChangePassword ? (
                     <span className="text-amber-600">aguardando 1º acesso</span>
                   ) : (
-                    <span className="text-green-700">ativo</span>
+                    <span className="text-green-700 dark:text-green-400">ativo</span>
                   )}
                 </div>
               </div>

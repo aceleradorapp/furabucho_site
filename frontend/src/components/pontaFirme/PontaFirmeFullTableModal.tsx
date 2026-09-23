@@ -22,7 +22,7 @@ export function PontaFirmeFullTableModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[95vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-2xl focus:outline-none flex flex-col max-h-[88vh]">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[95vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-card shadow-2xl focus:outline-none flex flex-col max-h-[88vh]">
           <div className="flex items-center justify-between p-5 border-b border-border shrink-0">
             <Dialog.Title className="font-display uppercase tracking-wider text-base text-text-main">
               Tabela completa · {seasonLabel}
@@ -36,7 +36,7 @@ export function PontaFirmeFullTableModal({
             <table className="min-w-full text-xs border-collapse">
               <thead>
                 <tr>
-                  <th className="sticky left-0 bg-white text-left px-3 py-2 font-semibold text-text-main border-b border-border">
+                  <th className="sticky left-0 bg-card text-left px-3 py-2 font-semibold text-text-main border-b border-border">
                     Integrante
                   </th>
                   {SEASON_MONTH_LABELS_SHORT.map((m) => (
@@ -50,7 +50,7 @@ export function PontaFirmeFullTableModal({
               <tbody>
                 {payers.map((p) => (
                   <tr key={p.id} className={p.removedAt ? 'opacity-50' : ''}>
-                    <td className="sticky left-0 bg-white px-3 py-2 font-medium text-text-main border-b border-border whitespace-nowrap">
+                    <td className="sticky left-0 bg-card px-3 py-2 font-medium text-text-main border-b border-border whitespace-nowrap">
                       {p.name}
                       {p.removedAt && <span className="ml-1.5 text-[10px] text-red-500">(removido)</span>}
                     </td>

@@ -464,7 +464,7 @@ function ImageTile({
               type="button"
               onClick={onRemove}
               title="Remover imagem"
-              className="absolute -top-2 -right-2 bg-white text-red-600 border border-border rounded-full p-1 shadow-sm hover:bg-red-50 transition"
+              className="absolute -top-2 -right-2 bg-card text-red-600 border border-border rounded-full p-1 shadow-sm hover:bg-red-50 transition"
             >
               <X size={13} />
             </button>

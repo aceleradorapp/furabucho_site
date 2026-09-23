@@ -87,7 +87,7 @@ export function AdminGalleryDetailPage() {
           <ArrowLeft size={16} /> Voltar
         </Link>
 
-        <div className="bg-white border border-border rounded-2xl p-4 mb-6 flex flex-wrap items-end gap-3">
+        <div className="bg-card border border-border rounded-2xl p-4 mb-6 flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[180px]">
             <label className="text-xs text-text-muted">Título</label>
             <input

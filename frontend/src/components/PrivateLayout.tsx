@@ -10,11 +10,13 @@ import {
   LogOut,
   Megaphone,
   MessageSquare,
+  Moon,
   Rocket,
   Settings,
   ShieldCheck,
   Smartphone,
   Sparkles,
+  Sun,
   Trophy,
   UserPlus,
   Users,
@@ -24,6 +26,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { useTheme } from '../theme/ThemeContext';
 import { AnnouncementBellButton, AnnouncementFullscreenViewer, type AnnouncementItem } from './AnnouncementsBell';
 import { Avatar } from './Avatar';
 import { useConfirm } from './ConfirmDialogProvider';
@@ -34,6 +37,7 @@ const ANNOUNCEMENT_POLL_INTERVAL = 20000;
 
 export function PrivateLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const confirm = useConfirm();
   const navigate = useNavigate();
   const location = useLocation();
@@ -421,6 +425,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                     >
                       <UserRound size={16} /> Meu perfil
                     </Link>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      toggleTheme();
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer"
+                  >
+                    {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                    {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     onSelect={handleLogout}

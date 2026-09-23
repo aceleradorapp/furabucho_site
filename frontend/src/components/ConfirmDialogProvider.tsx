@@ -34,12 +34,12 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
       <AlertDialog.Root open={!!pending} onOpenChange={(open) => !open && respond(false)}>
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200]" />
-          <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[201] w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-2xl p-6 focus:outline-none">
+          <AlertDialog.Content className="fixed left-1/2 top-1/2 z-[201] w-[90vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-card shadow-2xl p-6 focus:outline-none">
             {pending && (
               <>
                 <div
                   className={`w-11 h-11 rounded-full flex items-center justify-center mb-4 ${
-                    isDanger ? 'bg-red-50 text-red-600' : 'bg-primary/10 text-primary'
+                    isDanger ? 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400' : 'bg-primary/10 text-primary'
                   }`}
                 >
                   {isDanger ? <AlertTriangle size={22} /> : <HelpCircle size={22} />}

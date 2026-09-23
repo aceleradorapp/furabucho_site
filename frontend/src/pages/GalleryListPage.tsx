@@ -46,7 +46,7 @@ export function GalleryListPage() {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-border p-14 flex flex-col items-center gap-2 text-text-muted">
+          <div className="bg-card rounded-2xl border border-dashed border-border p-14 flex flex-col items-center gap-2 text-text-muted">
             <ImageIcon size={28} />
             <p className="text-sm">Nenhum álbum encontrado.</p>
           </div>
@@ -56,7 +56,7 @@ export function GalleryListPage() {
               <motion.div key={g.id} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
                 <Link
                   to={`/galeria/${g.id}`}
-                  className="block bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-lg transition-shadow"
+                  className="block bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-lg transition-shadow"
                 >
                   <div className="aspect-square bg-card-subtle flex items-center justify-center">
                     {g.coverUrl ? (

@@ -38,7 +38,7 @@ export function DownloadAppPage() {
 
           {isMobile ? (
             isInstalled ? (
-              <p className="text-sm text-green-700 font-medium">✓ Já está instalado nesse celular.</p>
+              <p className="text-sm text-green-700 dark:text-green-400 font-medium">✓ Já está instalado nesse celular.</p>
             ) : canInstall || showManualInstructions ? (
               <InstallAppButton className="inline-flex items-center gap-2 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-semibold px-5 py-2.5 transition">
                 <Download size={16} /> Criar atalho na tela inicial

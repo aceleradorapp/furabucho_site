@@ -208,7 +208,7 @@ export function AdminPioneiroConversionPage() {
               const pioneiro = pioneiros.find((p) => p.id === r.pioneiroId);
               return (
                 <div key={r.pioneiroId} className="flex items-center gap-2">
-                  {r.ok ? <Check size={14} className="text-green-600 shrink-0" /> : <X size={14} className="text-red-600 shrink-0" />}
+                  {r.ok ? <Check size={14} className="text-green-600 shrink-0" /> : <X size={14} className="text-red-600 dark:text-red-400 shrink-0" />}
                   <span className="text-text-main">{pioneiro?.name ?? `#${r.pioneiroId}`}</span>
                   {r.ok ? (
                     <span className="text-text-muted">
@@ -218,14 +218,14 @@ export function AdminPioneiroConversionPage() {
                       ) : (
                         <>
                           · senha temporária:{' '}
-                          <span className="font-mono bg-white border border-border rounded px-1.5 py-0.5">
+                          <span className="font-mono bg-card border border-border rounded px-1.5 py-0.5">
                             {r.tempPassword}
                           </span>
                         </>
                       )}
                     </span>
                   ) : (
-                    <span className="text-red-600">{r.error}</span>
+                    <span className="text-red-600 dark:text-red-400">{r.error}</span>
                   )}
                 </div>
               );
@@ -233,7 +233,7 @@ export function AdminPioneiroConversionPage() {
           </div>
         )}
 
-        {loadError && <p className="text-sm text-red-600 mb-4">{loadError}</p>}
+        {loadError && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{loadError}</p>}
 
         {reviewMode ? (
           <div className="flex flex-col gap-4">
@@ -321,7 +321,7 @@ export function AdminPioneiroConversionPage() {
                       </div>
                     </div>
 
-                    {error && <p className="text-xs text-red-600">{error}</p>}
+                    {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
                   </div>
                 );
               })
@@ -369,7 +369,7 @@ export function AdminPioneiroConversionPage() {
                       className={`flex items-center gap-3 text-left flex-1 min-w-0 ${isConverted ? 'cursor-default' : ''}`}
                     >
                       {isConverted ? (
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 bg-green-100 text-green-700">
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400">
                           <Check size={13} strokeWidth={3} />
                         </div>
                       ) : (
@@ -386,7 +386,7 @@ export function AdminPioneiroConversionPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium text-text-main truncate">{p.name}</p>
                           {isConverted && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 rounded-full px-2 py-0.5 shrink-0">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 rounded-full px-2 py-0.5 shrink-0">
                               Enviado
                             </span>
                           )}

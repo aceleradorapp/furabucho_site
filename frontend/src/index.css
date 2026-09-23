@@ -1,6 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap");
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @theme {
   --color-primary: #FF5E14;
   --color-primary-hover: #E04D0B;
@@ -23,6 +25,15 @@
 
 :root {
   color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-card: #1C1C1F;
+  --color-card-subtle: #141416;
+  --color-text-main: #F4F4F5;
+  --color-text-muted: #A1A1AA;
+  --color-border: #2E2E33;
 }
 
 html {

@@ -68,7 +68,7 @@ function AuthorName({ author }: { author: FeedPost['author'] }) {
 
 function PostSkeleton() {
   return (
-    <div className="bg-white rounded-2xl border border-border overflow-hidden animate-pulse">
+    <div className="bg-card rounded-2xl border border-border overflow-hidden animate-pulse">
       <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="w-9 h-9 rounded-full bg-card-subtle" />
         <div className="flex-1">
@@ -140,7 +140,7 @@ export function FeedPage() {
         {user?.permissions['feed.create'] && (
           <button
             onClick={() => setComposerOpen(true)}
-            className="w-full flex items-center gap-3 bg-white rounded-2xl border border-border px-4 py-3 mb-5 text-left hover:border-primary/40 hover:shadow-sm transition"
+            className="w-full flex items-center gap-3 bg-card rounded-2xl border border-border px-4 py-3 mb-5 text-left hover:border-primary/40 hover:shadow-sm transition"
           >
             <Avatar name={user.name} avatarUrl={user.avatarUrl} size={38} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
             <span className="text-sm text-text-muted flex-1">No que você está pensando?</span>
@@ -161,7 +161,7 @@ export function FeedPage() {
               return (
                 <article
                   key={post.id}
-                  className={`bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow ${post.blocked ? 'border-red-300' : 'border-border'}`}
+                  className={`bg-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow ${post.blocked ? 'border-red-300' : 'border-border'}`}
                 >
                   <header className="flex items-center justify-between gap-2 px-4 py-3">
                     <div className="flex items-center gap-2 min-w-0">
@@ -173,7 +173,7 @@ export function FeedPage() {
                         <p className="text-xs text-text-muted">{timeAgo(post.createdAt)}</p>
                       </div>
                       {post.blocked && (
-                        <span className="text-[10px] font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full ml-1 shrink-0">
+                        <span className="text-[10px] font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded-full ml-1 shrink-0">
                           bloqueado
                         </span>
                       )}
