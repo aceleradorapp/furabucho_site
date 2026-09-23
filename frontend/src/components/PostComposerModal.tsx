@@ -111,7 +111,7 @@ export function PostComposerModal({
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 data-[state=open]:animate-in data-[state=open]:fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[94vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-2xl focus:outline-none flex flex-col max-h-[88vh]">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[94vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-card shadow-2xl focus:outline-none flex flex-col max-h-[88vh]">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
             <Dialog.Title className="font-semibold text-text-main">Nova publicação</Dialog.Title>
             <Dialog.Close className="text-text-muted hover:text-text-main transition" aria-label="Fechar">
@@ -154,7 +154,7 @@ export function PostComposerModal({
               </div>
             )}
 
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>}
           </div>
 
           <div className="px-5 py-3 border-t border-border flex items-center justify-between shrink-0">

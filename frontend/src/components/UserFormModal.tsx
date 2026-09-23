@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api/client';
 import { IMAGE_SPECS } from '../lib/imageSpecs';
 import { UPLOADS_BASE } from '../lib/config';
+import { formatPhoneBR } from '../lib/phoneMask';
 import { ImageUploadButton } from './ImageUploadButton';
 
 export interface EditableMember {
@@ -18,6 +19,7 @@ export interface EditableMember {
   caricatureUrl: string | null;
   isPontaFirme: boolean;
   isVeterano: boolean;
+  birthDate: string | null;
 }
 
 interface Role {
@@ -55,7 +57,7 @@ function ImagePickerField({
             <button
               type="button"
               onClick={onRemove}
-              className="absolute -top-1 -right-1 bg-white text-red-600 border border-border rounded-full p-0.5 shadow-sm hover:bg-red-50 transition"
+              className="absolute -top-1 -right-1 bg-card text-red-600 border border-border rounded-full p-0.5 shadow-sm hover:bg-red-50 transition"
               title={`Remover ${label.toLowerCase()}`}
             >
               <X size={11} />
@@ -102,6 +104,7 @@ export function UserFormModal({
   const [password, setPassword] = useState('');
   const [nickname, setNickname] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [roleId, setRoleId] = useState<number | ''>('');
   const [isPontaFirme, setIsPontaFirme] = useState(false);
   const [isVeterano, setIsVeterano] = useState(false);
@@ -123,7 +126,8 @@ export function UserFormModal({
       setUsername(initialUser.username);
       setEmail(initialUser.email ?? '');
       setNickname(initialUser.nickname ?? '');
-      setWhatsapp(initialUser.whatsapp ?? '');
+      setWhatsapp(formatPhoneBR(initialUser.whatsapp ?? ''));
+      setBirthDate(initialUser.birthDate ? initialUser.birthDate.slice(0, 10) : '');
       setRoleId(initialUser.roleId);
       setIsPontaFirme(initialUser.isPontaFirme);
       setIsVeterano(initialUser.isVeterano);
@@ -136,6 +140,7 @@ export function UserFormModal({
       setPassword('');
       setNickname('');
       setWhatsapp('');
+      setBirthDate('');
       setRoleId(roles.find((r) => r.key === 'membro')?.id ?? roles[0]?.id ?? '');
       setIsPontaFirme(false);
       setIsVeterano(false);
@@ -210,6 +215,7 @@ export function UserFormModal({
             name: name.trim(),
             nickname: nickname.trim() || null,
             whatsapp: whatsapp.trim() || null,
+            birthDate: birthDate || null,
             ...(avatarCleared ? { avatarUrl: null } : {}),
             ...(caricatureCleared ? { caricatureUrl: null } : {}),
           }),
@@ -252,7 +258,7 @@ export function UserFormModal({
     <Dialog.Root open={open} onOpenChange={(next) => !saving && onOpenChange(next)}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[94vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-2xl focus:outline-none flex flex-col max-h-[90vh]">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[94vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-card shadow-2xl focus:outline-none flex flex-col max-h-[90vh]">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
             <Dialog.Title className="font-semibold text-text-main">
               {mode === 'create' ? 'Adicionar membro' : 'Editar membro'}
@@ -315,11 +321,22 @@ export function UserFormModal({
                 <input
                   type="tel"
                   value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder="(11) 91234-5678"
+                  onChange={(e) => setWhatsapp(formatPhoneBR(e.target.value))}
+                  placeholder="(19)997230475"
                   className={inputClass}
                 />
               </div>
+              {mode === 'edit' && (
+                <div>
+                  <label className="text-sm text-text-muted">Data de nascimento (opcional)</label>
+                  <input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              )}
               {mode === 'create' && (
                 <div>
                   <label className="text-sm text-text-muted">Senha temporária (opcional)</label>
@@ -379,7 +396,7 @@ export function UserFormModal({
               </div>
             )}
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           </form>
 
           <div className="px-5 py-3 border-t border-border flex justify-end shrink-0">

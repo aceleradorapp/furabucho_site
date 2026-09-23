@@ -1,6 +1,7 @@
 import { Check, ChevronDown, ImageIcon, Sparkles, UploadCloud, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api/client';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 
@@ -38,6 +39,7 @@ export function AdminGalleryHighlightsPage() {
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   async function loadInitial() {
     const [galleriesData, featured] = await Promise.all([
@@ -54,7 +56,7 @@ export function AdminGalleryHighlightsPage() {
   }
 
   useEffect(() => {
-    loadInitial();
+    loadInitial().finally(() => setInitialLoading(false));
   }, []);
 
   const isDirty = useMemo(() => {
@@ -167,7 +169,8 @@ export function AdminGalleryHighlightsPage() {
         <div className="mt-8">
           <h2 className="text-sm font-semibold text-text-main mb-3">Álbuns</h2>
           <div className="flex flex-col gap-2.5">
-            {galleries.map((gallery) => {
+            {initialLoading && <PageLoader />}
+            {!initialLoading && galleries.map((gallery) => {
               const images = expanded[gallery.id];
               const isOpen = !!images;
               const selectedCountInGallery = images
@@ -251,7 +254,7 @@ export function AdminGalleryHighlightsPage() {
                 </div>
               );
             })}
-            {galleries.length === 0 && (
+            {!initialLoading && galleries.length === 0 && (
               <p className="text-sm text-text-muted py-6 text-center">Nenhum álbum cadastrado ainda.</p>
             )}
           </div>

@@ -2,6 +2,7 @@ import { Check, CheckCircle2, FolderInput, ImageIcon, Trash2, UserRound } from '
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api/client';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 
@@ -32,6 +33,7 @@ export function AdminPioneiroPhotosPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newYear, setNewYear] = useState(currentYear);
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const [photosData, galleriesData] = await Promise.all([
@@ -43,7 +45,7 @@ export function AdminPioneiroPhotosPage() {
   }
 
   useEffect(() => {
-    load();
+    load().finally(() => setLoading(false));
   }, []);
 
   const byPioneiro = useMemo(() => {
@@ -124,7 +126,9 @@ export function AdminPioneiroPhotosPage() {
           não servem. Fotos já enviadas ficam em cinza, só pra registro.
         </p>
 
-        {byPioneiro.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : byPioneiro.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-text-muted">
             <ImageIcon size={32} className="text-border" />
             <p className="text-sm">Nenhuma foto enviada ainda.</p>

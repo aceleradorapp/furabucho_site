@@ -2,6 +2,7 @@ import { MessageSquare, Trash2, UserRound } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api/client';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 
 interface PioneiroComment {
@@ -64,7 +65,7 @@ export function AdminPioneiroCommentsPage() {
         </p>
 
         {loading ? (
-          <p className="text-sm text-text-muted">Carregando...</p>
+          <PageLoader />
         ) : byPioneiro.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-text-muted">
             <MessageSquare size={32} className="text-border" />

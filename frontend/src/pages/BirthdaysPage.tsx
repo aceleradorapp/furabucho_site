@@ -2,6 +2,7 @@ import { Cake, PartyPopper, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client';
 import { Avatar } from '../components/Avatar';
+import { PageLoader } from '../components/PageLoader';
 import { PrivateLayout } from '../components/PrivateLayout';
 
 interface BirthdayUser {
@@ -34,11 +35,12 @@ function formatDayMonth(day: number, month: number) {
 
 export function BirthdaysPage() {
   const [users, setUsers] = useState<BirthdayUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [monthFilter, setMonthFilter] = useState<number | null>(null);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.get<BirthdayUser[]>('/birthdays').then(setUsers);
+    api.get<BirthdayUser[]>('/birthdays').then(setUsers).finally(() => setLoading(false));
   }, []);
 
   const today = new Date();
@@ -136,7 +138,9 @@ export function BirthdaysPage() {
           ))}
         </div>
 
-        {groupedByMonth.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : groupedByMonth.length === 0 ? (
           <p className="text-sm text-text-muted py-10 text-center">Nenhum aniversariante encontrado.</p>
         ) : (
           <div className="flex flex-col gap-8">

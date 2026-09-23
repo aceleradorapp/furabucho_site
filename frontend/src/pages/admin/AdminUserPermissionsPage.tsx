@@ -2,6 +2,7 @@ import { RotateCcw, Search, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../../api/client';
 import { Avatar } from '../../components/Avatar';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 
 interface PermissionAction {
@@ -49,6 +50,7 @@ export function AdminUserPermissionsPage() {
   const [detail, setDetail] = useState<UserPermissionsResponse | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([api.get<MemberUser[]>('/admin/users'), api.get<PermissionCategory[]>('/admin/user-permissions/catalog')]).then(
@@ -56,7 +58,7 @@ export function AdminUserPermissionsPage() {
         setUsers(usersData);
         setCatalog(catalogData);
       },
-    );
+    ).finally(() => setUsersLoading(false));
   }, []);
 
   const filteredUsers = useMemo(() => {
@@ -117,7 +119,8 @@ export function AdminUserPermissionsPage() {
               />
             </div>
             <div className="overflow-y-auto flex-1 flex flex-col gap-1">
-              {filteredUsers.map((u) => (
+              {usersLoading && <PageLoader />}
+              {!usersLoading && filteredUsers.map((u) => (
                 <button
                   key={u.id}
                   onClick={() => selectUser(u.id)}
@@ -132,7 +135,7 @@ export function AdminUserPermissionsPage() {
                   </div>
                 </button>
               ))}
-              {filteredUsers.length === 0 && (
+              {!usersLoading && filteredUsers.length === 0 && (
                 <p className="text-sm text-text-muted text-center py-6">Nenhum membro encontrado.</p>
               )}
             </div>
@@ -146,7 +149,7 @@ export function AdminUserPermissionsPage() {
               </div>
             )}
 
-            {selectedUser && loadingDetail && <p className="text-sm text-text-muted py-8 text-center">Carregando...</p>}
+            {selectedUser && loadingDetail && <PageLoader />}
 
             {selectedUser && detail && !loadingDetail && (
               <div>

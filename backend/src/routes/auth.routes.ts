@@ -20,6 +20,7 @@ function serializeUser(user: {
   role: {
     key: string;
     label: string;
+    dailyPostLimit: number;
     permissions: { key: string; value: boolean }[];
   };
   permissionOverrides: { key: string; value: boolean }[];
@@ -36,11 +37,20 @@ function serializeUser(user: {
     isVeterano: user.isVeterano,
     role: user.role.key,
     roleLabel: user.role.label,
+    dailyPostLimit: user.role.dailyPostLimit,
     permissions: computeEffectivePermissions(user.role.key, user.role.permissions, user.permissionOverrides),
   };
 }
 
 const userInclude = { role: { include: { permissions: true } }, permissionOverrides: true } as const;
+
+// Espelha a mascara (DD)numero usada no cadastro, pra reconhecer o telefone no login
+// independente de a pessoa digitar com ou sem os parenteses.
+function formatPhoneBR(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits;
+  return `(${digits.slice(0, 2)})${digits.slice(2)}`;
+}
 
 authRouter.post('/login', async (req, res) => {
   const { identifier, password } = req.body as { identifier?: string; password?: string };
@@ -51,7 +61,14 @@ authRouter.post('/login', async (req, res) => {
 
   const trimmed = identifier.trim();
   const user = await prisma.user.findFirst({
-    where: { OR: [{ email: trimmed.toLowerCase() }, { username: trimmed }, { whatsapp: trimmed }] },
+    where: {
+      OR: [
+        { email: trimmed.toLowerCase() },
+        { username: trimmed },
+        { whatsapp: trimmed },
+        { whatsapp: formatPhoneBR(trimmed) },
+      ],
+    },
     include: userInclude,
   });
 

@@ -8,9 +8,10 @@ datasource db {
 }
 
 model Role {
-  id          Int     @id @default(autoincrement())
-  key         String  @unique
-  label       String
+  id              Int     @id @default(autoincrement())
+  key             String  @unique
+  label           String
+  dailyPostLimit  Int     @default(4)
 
   users       User[]
   permissions RolePermission[]
@@ -85,6 +86,7 @@ model Pioneiro {
   phone           String?  @unique
   passwordHash    String
   avatarUrl       String?
+  birthDate       DateTime? @db.Date
   points          Float    @default(0)
   status          String   @default("pending")
   convertedUserId Int?     @unique

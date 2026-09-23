@@ -4,6 +4,7 @@ import { api } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { Avatar } from '../../components/Avatar';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { type EditableMember, UserFormModal } from '../../components/UserFormModal';
 
@@ -41,6 +42,8 @@ export function AdminUsersPage() {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [editingUser, setEditingUser] = useState<MemberUser | null>(null);
 
+  const [loading, setLoading] = useState(true);
+
   async function load() {
     const u = await api.get<MemberUser[]>('/admin/users');
     setUsers(u);
@@ -51,7 +54,7 @@ export function AdminUsersPage() {
   }
 
   useEffect(() => {
-    load();
+    load().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -138,14 +141,15 @@ export function AdminUsersPage() {
               Repasse essa senha temporária para <strong>{lastCreated.email || lastCreated.whatsapp}</strong>. No
               primeiro acesso ele será obrigado a trocá-la.
             </p>
-            <p className="mt-2 font-mono bg-white border border-border rounded-lg px-3 py-1.5 inline-block">
+            <p className="mt-2 font-mono bg-card border border-border rounded-lg px-3 py-1.5 inline-block">
               {lastCreated.tempPassword}
             </p>
           </div>
         )}
 
         <div className="flex flex-col gap-3 overflow-y-auto pr-1" style={{ maxHeight: 'calc(100vh - 340px)', minHeight: 240 }}>
-          {filteredUsers.map((u) => (
+          {loading && <PageLoader />}
+          {!loading && filteredUsers.map((u) => (
             <div
               key={u.id}
               className="flex flex-col sm:flex-row sm:items-center gap-4 bg-card border border-border rounded-2xl p-4"
@@ -187,7 +191,7 @@ export function AdminUsersPage() {
                   {u.mustChangePassword ? (
                     <span className="text-amber-600">aguardando 1º acesso</span>
                   ) : (
-                    <span className="text-green-700">ativo</span>
+                    <span className="text-green-700 dark:text-green-400">ativo</span>
                   )}
                 </div>
               </div>
@@ -219,7 +223,7 @@ export function AdminUsersPage() {
             </div>
           ))}
 
-          {filteredUsers.length === 0 && (
+          {!loading && filteredUsers.length === 0 && (
             <p className="text-sm text-text-muted py-6 text-center">Nenhum membro encontrado.</p>
           )}
         </div>

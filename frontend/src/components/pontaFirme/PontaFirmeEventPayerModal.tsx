@@ -144,7 +144,7 @@ export function PontaFirmeEventPayerModal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white shadow-2xl focus:outline-none flex flex-col max-h-[85vh]">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-card shadow-2xl focus:outline-none flex flex-col max-h-[85vh]">
           <div className="flex items-center gap-3 p-5 border-b border-border shrink-0">
             <Avatar name={payer.name} avatarUrl={payer.avatarUrl} size={40} />
             <div className="flex-1 min-w-0">
@@ -278,7 +278,7 @@ export function PontaFirmeEventPayerModal({
             ))}
 
             {error && (
-              <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-1">{error}</p>
+              <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2 mt-1">{error}</p>
             )}
 
             {canManage && (

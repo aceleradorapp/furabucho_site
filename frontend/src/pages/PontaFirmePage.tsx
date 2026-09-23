@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { PageLoader } from '../components/PageLoader';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { PontaFirmeBalancoTab } from '../components/pontaFirme/PontaFirmeBalancoTab';
 import { PontaFirmeEventPayersTab } from '../components/pontaFirme/PontaFirmeEventPayersTab';
@@ -128,6 +129,8 @@ export function PontaFirmePage() {
           </div>
         )}
 
+        {!data && <PageLoader />}
+
         {data && (
           <>
             <div className="grid grid-cols-3 gap-2 sm:gap-2.5 mb-5">
@@ -145,16 +148,18 @@ export function PontaFirmePage() {
               </div>
               <div
                 className={`rounded-2xl p-2.5 sm:p-3.5 border min-w-0 ${
-                  saldo >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                  saldo >= 0
+                    ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
+                    : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
                 }`}
               >
                 <p
-                  className={`text-[9px] sm:text-[10px] uppercase tracking-wide truncate ${saldo >= 0 ? 'text-green-700' : 'text-red-600'}`}
+                  className={`text-[9px] sm:text-[10px] uppercase tracking-wide truncate ${saldo >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
                 >
                   Saldo
                 </p>
                 <p
-                  className={`text-xs sm:text-lg font-bold leading-tight break-words ${saldo >= 0 ? 'text-green-700' : 'text-red-600'}`}
+                  className={`text-xs sm:text-lg font-bold leading-tight break-words ${saldo >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
                 >
                   {formatMoney(saldo)}
                 </p>
@@ -166,7 +171,7 @@ export function PontaFirmePage() {
                 <button
                   onClick={() => setActiveTab('pagamentos')}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                    activeTab === 'pagamentos' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                    activeTab === 'pagamentos' ? 'bg-card shadow-sm text-text-main' : 'text-text-muted'
                   }`}
                 >
                   Pagamentos
@@ -174,7 +179,7 @@ export function PontaFirmePage() {
                 <button
                   onClick={() => setActiveTab('gastos')}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                    activeTab === 'gastos' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                    activeTab === 'gastos' ? 'bg-card shadow-sm text-text-main' : 'text-text-muted'
                   }`}
                 >
                   Gastos
@@ -182,7 +187,7 @@ export function PontaFirmePage() {
                 <button
                   onClick={() => setActiveTab('pagantes')}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                    activeTab === 'pagantes' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                    activeTab === 'pagantes' ? 'bg-card shadow-sm text-text-main' : 'text-text-muted'
                   }`}
                 >
                   Pagantes
@@ -190,7 +195,7 @@ export function PontaFirmePage() {
                 <button
                   onClick={() => setActiveTab('balanco')}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
-                    activeTab === 'balanco' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted'
+                    activeTab === 'balanco' ? 'bg-card shadow-sm text-text-main' : 'text-text-muted'
                   }`}
                 >
                   Balanço
