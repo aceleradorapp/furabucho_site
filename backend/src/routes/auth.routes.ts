@@ -20,6 +20,7 @@ function serializeUser(user: {
   role: {
     key: string;
     label: string;
+    dailyPostLimit: number;
     permissions: { key: string; value: boolean }[];
   };
   permissionOverrides: { key: string; value: boolean }[];
@@ -36,6 +37,7 @@ function serializeUser(user: {
     isVeterano: user.isVeterano,
     role: user.role.key,
     roleLabel: user.role.label,
+    dailyPostLimit: user.role.dailyPostLimit,
     permissions: computeEffectivePermissions(user.role.key, user.role.permissions, user.permissionOverrides),
   };
 }

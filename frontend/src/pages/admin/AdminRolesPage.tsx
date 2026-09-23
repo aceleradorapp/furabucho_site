@@ -18,6 +18,7 @@ interface Role {
   id: number;
   key: string;
   label: string;
+  dailyPostLimit: number;
   permissions: Record<string, boolean>;
 }
 
@@ -53,6 +54,12 @@ export function AdminRolesPage() {
     }
   }
 
+  async function saveDailyPostLimit(role: Role, value: number) {
+    const safeValue = Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : role.dailyPostLimit;
+    setRoles((prev) => prev.map((r) => (r.id === role.id ? { ...r, dailyPostLimit: safeValue } : r)));
+    await api.patch(`/admin/roles/${role.id}`, { dailyPostLimit: safeValue });
+  }
+
   return (
     <PrivateLayout>
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -69,13 +76,27 @@ export function AdminRolesPage() {
             const isAdminRole = role.key === 'admin';
             return (
               <div key={role.id} className="border border-border rounded-2xl p-5">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
                   <h2 className="font-medium text-text-main">{role.label}</h2>
-                  {isAdminRole && (
-                    <span className="text-xs text-text-muted bg-card-subtle rounded-full px-2.5 py-1">
-                      sempre acesso total
-                    </span>
-                  )}
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-xs text-text-muted">
+                      Posts por dia
+                      <input
+                        type="number"
+                        min={0}
+                        defaultValue={role.dailyPostLimit}
+                        key={`${role.id}-${role.dailyPostLimit}`}
+                        onBlur={(e) => saveDailyPostLimit(role, Number(e.target.value))}
+                        className="w-16 rounded-lg border border-border px-2 py-1 text-sm text-text-main outline-none focus:border-primary"
+                        title="0 = sem limite"
+                      />
+                    </label>
+                    {isAdminRole && (
+                      <span className="text-xs text-text-muted bg-card-subtle rounded-full px-2.5 py-1">
+                        sempre acesso total
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-4">
