@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api/client';
 import { IMAGE_SPECS } from '../lib/imageSpecs';
 import { UPLOADS_BASE } from '../lib/config';
+import { formatPhoneBR } from '../lib/phoneMask';
 import { ImageUploadButton } from './ImageUploadButton';
 
 export interface EditableMember {
@@ -123,7 +124,7 @@ export function UserFormModal({
       setUsername(initialUser.username);
       setEmail(initialUser.email ?? '');
       setNickname(initialUser.nickname ?? '');
-      setWhatsapp(initialUser.whatsapp ?? '');
+      setWhatsapp(formatPhoneBR(initialUser.whatsapp ?? ''));
       setRoleId(initialUser.roleId);
       setIsPontaFirme(initialUser.isPontaFirme);
       setIsVeterano(initialUser.isVeterano);
@@ -315,8 +316,8 @@ export function UserFormModal({
                 <input
                   type="tel"
                   value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder="(11) 91234-5678"
+                  onChange={(e) => setWhatsapp(formatPhoneBR(e.target.value))}
+                  placeholder="(19)997230475"
                   className={inputClass}
                 />
               </div>

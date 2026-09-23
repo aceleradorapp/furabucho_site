@@ -6,6 +6,7 @@ import { Avatar } from '../../components/Avatar';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
+import { formatPhoneBR } from '../../lib/phoneMask';
 
 interface Role {
   id: number;
@@ -126,7 +127,7 @@ export function AdminPioneiroConversionPage() {
         name: p.name,
         username: slugify(p.name),
         email: p.email ?? '',
-        whatsapp: p.phone ?? '',
+        whatsapp: formatPhoneBR(p.phone ?? ''),
         roleId: canChangeRole ? defaultRoleId : ('' as number | ''),
         password: '',
       }));
@@ -277,8 +278,8 @@ export function AdminPioneiroConversionPage() {
                         <input
                           type="tel"
                           value={d.whatsapp}
-                          onChange={(e) => updateDraft(d.pioneiroId, { whatsapp: e.target.value })}
-                          placeholder="(11) 91234-5678"
+                          onChange={(e) => updateDraft(d.pioneiroId, { whatsapp: formatPhoneBR(e.target.value) })}
+                          placeholder="(19)997230475"
                           className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
                         />
                       </div>
