@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { api } from '../api/client';
+import { PageLoader } from '../components/PageLoader';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { UPLOADS_BASE } from '../lib/config';
 
@@ -33,7 +34,7 @@ export function GalleryDetailPage() {
   if (!gallery) {
     return (
       <PrivateLayout>
-        <p className="text-text-muted p-8">Carregando...</p>
+        <PageLoader />
       </PrivateLayout>
     );
   }

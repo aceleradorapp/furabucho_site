@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { api, ApiError } from '../../api/client';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
 import { ImageUploadButton } from '../../components/ImageUploadButton';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 import { IMAGE_SPECS } from '../../lib/imageSpecs';
@@ -34,6 +35,7 @@ export function AdminAnnouncementsPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const data = await api.get<Announcement[]>('/announcements');
@@ -41,7 +43,7 @@ export function AdminAnnouncementsPage() {
   }
 
   useEffect(() => {
-    load();
+    load().finally(() => setLoading(false));
   }, []);
 
   async function handlePickImage(blob: Blob) {
@@ -191,8 +193,9 @@ export function AdminAnnouncementsPage() {
         </form>
 
         <h2 className="font-display uppercase tracking-wider text-lg text-text-main mb-3">Enviadas</h2>
+        {loading && <PageLoader />}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {announcements.map((a) => {
+          {!loading && announcements.map((a) => {
             const future = new Date(a.scheduledAt).getTime() > Date.now();
             return (
               <div key={a.id} className="flex gap-3 bg-card-subtle rounded-xl p-3">
@@ -219,7 +222,7 @@ export function AdminAnnouncementsPage() {
               </div>
             );
           })}
-          {announcements.length === 0 && <p className="text-sm text-text-muted">Nenhuma novidade enviada ainda.</p>}
+          {!loading && announcements.length === 0 && <p className="text-sm text-text-muted">Nenhuma novidade enviada ainda.</p>}
         </div>
       </div>
     </PrivateLayout>

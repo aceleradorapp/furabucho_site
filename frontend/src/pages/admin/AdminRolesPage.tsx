@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 
 interface PermissionAction {
@@ -24,6 +25,7 @@ export function AdminRolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [catalog, setCatalog] = useState<PermissionCategory[]>([]);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const [rolesData, catalogData] = await Promise.all([
@@ -35,7 +37,7 @@ export function AdminRolesPage() {
   }
 
   useEffect(() => {
-    load();
+    load().finally(() => setLoading(false));
   }, []);
 
   async function togglePermission(role: Role, actionKey: string) {
@@ -60,8 +62,10 @@ export function AdminRolesPage() {
           permissões — para abrir uma exceção pontual pra alguém específico, use "Permissões por usuário".
         </p>
 
+        {loading && <PageLoader />}
+
         <div className="flex flex-col gap-5">
-          {roles.map((role) => {
+          {!loading && roles.map((role) => {
             const isAdminRole = role.key === 'admin';
             return (
               <div key={role.id} className="border border-border rounded-2xl p-5">

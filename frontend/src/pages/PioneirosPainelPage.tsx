@@ -7,6 +7,7 @@ import {
   Gift,
   Home,
   ImagePlus,
+  Loader2,
   LogOut,
   MessageSquare,
   Rocket,
@@ -156,7 +157,11 @@ export function PioneirosPainelPage() {
   }
 
   if (mode === 'loading' || !settings || !pioneiro) {
-    return <div className="min-h-screen bg-[#0A0A0C]" />;
+    return (
+      <div className="min-h-screen bg-[#0A0A0C] flex items-center justify-center">
+        <Loader2 size={28} className="animate-spin text-[#FF5E14]" />
+      </div>
+    );
   }
 
   if (!settings.pioneirosCampaignActive) {

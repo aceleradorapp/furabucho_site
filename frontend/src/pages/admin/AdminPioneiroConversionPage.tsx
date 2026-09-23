@@ -4,6 +4,7 @@ import { api, ApiError } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { Avatar } from '../../components/Avatar';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 import { formatPhoneBR } from '../../lib/phoneMask';
@@ -73,6 +74,7 @@ export function AdminPioneiroConversionPage() {
   const [sending, setSending] = useState(false);
   const [results, setResults] = useState<ConvertResult[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const data = await api.get<PioneiroRow[]>('/admin/pioneiro-conversao');
@@ -84,7 +86,7 @@ export function AdminPioneiroConversionPage() {
   }
 
   useEffect(() => {
-    load();
+    load().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -345,7 +347,9 @@ export function AdminPioneiroConversionPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {pioneiros.length === 0 ? (
+            {loading ? (
+              <PageLoader />
+            ) : pioneiros.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-16 text-text-muted">
                 <UserPlus size={32} className="text-border" />
                 <p className="text-sm">Nenhum pré-cadastro de Pioneiro ainda.</p>

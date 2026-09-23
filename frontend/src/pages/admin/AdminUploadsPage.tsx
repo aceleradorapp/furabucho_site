@@ -2,6 +2,7 @@ import { Check, CheckCheck, Download, HardDrive, ImageIcon, Trash2 } from 'lucid
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 
@@ -143,6 +144,8 @@ export function AdminUploadsPage() {
           estão sendo usadas em lugar nenhum e podem ser excluídas com segurança; as com selo{' '}
           <span className="text-green-700 dark:text-green-400 font-semibold">verde</span> (esmaecidas) estão em uso e ficam protegidas.
         </p>
+
+        {!data && <PageLoader />}
 
         {data && (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">

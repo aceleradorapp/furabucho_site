@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { PageLoader } from '../components/PageLoader';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { PontaFirmeBalancoTab } from '../components/pontaFirme/PontaFirmeBalancoTab';
 import { PontaFirmeEventPayersTab } from '../components/pontaFirme/PontaFirmeEventPayersTab';
@@ -127,6 +128,8 @@ export function PontaFirmePage() {
             ))}
           </div>
         )}
+
+        {!data && <PageLoader />}
 
         {data && (
           <>

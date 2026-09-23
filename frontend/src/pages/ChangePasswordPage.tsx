@@ -2,15 +2,24 @@ import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { PageLoader } from '../components/PageLoader';
 
 export function ChangePasswordPage() {
-  const { user, refreshUser } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-svh bg-card-subtle flex items-center justify-center">
+        <PageLoader />
+      </div>
+    );
+  }
 
   if (!user) return <Navigate to="/?login=1" replace />;
   if (!user.mustChangePassword) return <Navigate to="/feed" replace />;

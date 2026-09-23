@@ -2,6 +2,7 @@ import { ImageIcon, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 
@@ -23,6 +24,7 @@ export function AdminGalleryPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newYear, setNewYear] = useState(currentYear);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const params = new URLSearchParams();
@@ -34,7 +36,7 @@ export function AdminGalleryPage() {
   }
 
   useEffect(() => {
-    load();
+    load().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [titleFilter, yearFilter]);
 
@@ -120,7 +122,9 @@ export function AdminGalleryPage() {
           />
         </div>
 
-        {galleries.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : galleries.length === 0 ? (
           <p className="text-sm text-text-muted">Nenhum álbum encontrado.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

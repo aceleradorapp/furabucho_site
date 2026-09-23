@@ -3,6 +3,7 @@ import { ImageIcon, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { PageLoader } from '../components/PageLoader';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { UPLOADS_BASE } from '../lib/config';
 
@@ -17,10 +18,11 @@ interface GallerySummary {
 
 export function GalleryListPage() {
   const [galleries, setGalleries] = useState<GallerySummary[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    api.get<GallerySummary[]>('/galleries').then(setGalleries);
+    api.get<GallerySummary[]>('/galleries').then(setGalleries).finally(() => setLoading(false));
   }, []);
 
   const filtered = galleries.filter((g) => {
@@ -45,7 +47,9 @@ export function GalleryListPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : filtered.length === 0 ? (
           <div className="bg-card rounded-2xl border border-dashed border-border p-14 flex flex-col items-center gap-2 text-text-muted">
             <ImageIcon size={28} />
             <p className="text-sm">Nenhum álbum encontrado.</p>
