@@ -1,6 +1,8 @@
 import crypto from 'crypto';
+import { NextFunction, Request, RequestHandler, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
+import { optimizeImageFile } from './imageOptimize';
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -14,7 +16,32 @@ const storage = multer.diskStorage({
 
 const allowedExt = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
 
-export const upload = multer({
+function collectUploadedFiles(req: Request): Express.Multer.File[] {
+  if (req.file) return [req.file];
+  if (Array.isArray(req.files)) return req.files;
+  if (req.files && typeof req.files === 'object') {
+    return Object.values(req.files).flat();
+  }
+  return [];
+}
+
+// Envolve qualquer middleware do multer (single/array/fields) pra, depois do upload salvar o
+// arquivo em disco, otimizar automaticamente cada imagem recebida -- sem precisar mexer em
+// nenhuma rota. É esse envolvimento que faz de `upload`/`postUpload` um "serviço" único de
+// compressão, valendo pra qualquer tela que suba imagem hoje ou no futuro.
+function withImageOptimization(middleware: RequestHandler): RequestHandler {
+  return (req: Request, res: Response, next: NextFunction) => {
+    middleware(req, res, (err: unknown) => {
+      if (err) return next(err);
+      const files = collectUploadedFiles(req);
+      Promise.all(files.map((f) => optimizeImageFile(f.path)))
+        .then(() => next())
+        .catch(next);
+    });
+  };
+}
+
+const imageMulter = multer({
   storage,
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
@@ -26,13 +53,20 @@ export const upload = multer({
   },
 });
 
+export const upload = {
+  single: (field: string): RequestHandler => withImageOptimization(imageMulter.single(field)),
+  array: (field: string, maxCount?: number): RequestHandler =>
+    withImageOptimization(imageMulter.array(field, maxCount)),
+  fields: (fields: multer.Field[]): RequestHandler => withImageOptimization(imageMulter.fields(fields)),
+};
+
 const videoExt = new Set(['.mp4', '.webm', '.mov']);
 
 export function isVideoFile(filename: string) {
   return videoExt.has(path.extname(filename).toLowerCase());
 }
 
-export const postUpload = multer({
+const postMulter = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
@@ -43,3 +77,7 @@ export const postUpload = multer({
     cb(null, true);
   },
 });
+
+export const postUpload = {
+  single: (field: string): RequestHandler => withImageOptimization(postMulter.single(field)),
+};
