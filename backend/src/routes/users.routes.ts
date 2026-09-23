@@ -36,6 +36,7 @@ usersRouter.get('/', requirePermission('members.view'), async (_req, res) => {
       avatarUrl: u.avatarUrl,
       caricatureUrl: u.caricatureUrl,
       isPontaFirme: u.isPontaFirme,
+      isPontaFirmePagante: u.isPontaFirmePagante,
       isVeterano: u.isVeterano,
       birthDate: u.birthDate,
     })),
@@ -222,25 +223,46 @@ usersRouter.post(
 
 usersRouter.patch('/:id/patentes', requirePermission('members.editProfile'), async (req, res) => {
   const id = Number(req.params.id);
-  const { isPontaFirme, isVeterano } = req.body as { isPontaFirme?: boolean; isVeterano?: boolean };
+  const { isPontaFirme, isPontaFirmePagante, isVeterano } = req.body as {
+    isPontaFirme?: boolean;
+    isPontaFirmePagante?: boolean;
+    isVeterano?: boolean;
+  };
 
-  if (isPontaFirme === undefined && isVeterano === undefined) {
+  if (isPontaFirme === undefined && isPontaFirmePagante === undefined && isVeterano === undefined) {
     return res.status(400).json({ error: 'Nada pra atualizar' });
   }
+
+  const existing = await prisma.user.findUnique({ where: { id }, select: { isPontaFirme: true, isPontaFirmePagante: true } });
+  if (!existing) return res.status(404).json({ error: 'Membro não encontrado' });
+
+  const resultingIsPontaFirme = isPontaFirme ?? existing.isPontaFirme;
+  // Nao dar pra ser Pagante Anual sem ser Ponta Firme -- se tirar o Ponta Firme, o pagante cai junto.
+  const resultingIsPagante = resultingIsPontaFirme ? (isPontaFirmePagante ?? existing.isPontaFirmePagante) : false;
+
+  const pagameChanged = resultingIsPagante !== existing.isPontaFirmePagante;
 
   const user = await prisma.user.update({
     where: { id },
     data: {
       ...(isPontaFirme !== undefined ? { isPontaFirme } : {}),
+      isPontaFirmePagante: resultingIsPagante,
       ...(isVeterano !== undefined ? { isVeterano } : {}),
     },
   });
 
-  if (isPontaFirme === true) {
-    await ensurePayerForUser(user.id);
-  } else if (isPontaFirme === false) {
-    await handlePontaFirmeRemoval(user.id);
+  if (pagameChanged) {
+    if (resultingIsPagante) {
+      await ensurePayerForUser(user.id);
+    } else {
+      await handlePontaFirmeRemoval(user.id);
+    }
   }
 
-  res.json({ id: user.id, isPontaFirme: user.isPontaFirme, isVeterano: user.isVeterano });
+  res.json({
+    id: user.id,
+    isPontaFirme: user.isPontaFirme,
+    isPontaFirmePagante: user.isPontaFirmePagante,
+    isVeterano: user.isVeterano,
+  });
 });

@@ -273,16 +273,14 @@ export function PontaFirmePage() {
                           </div>
                         </div>
 
-                        <div className="relative h-2.5 rounded-full bg-card-subtle overflow-visible">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400 transition-all"
-                            style={{ width: `${pct}%` }}
-                          />
-                          <Flag
-                            size={14}
-                            className="absolute -right-0.5 -top-[3px] text-text-muted"
-                            style={{ transform: 'translateX(50%)' }}
-                          />
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2.5 rounded-full bg-card-subtle overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400 transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <Flag size={13} className="text-text-muted shrink-0" />
                         </div>
                       </button>
                     );

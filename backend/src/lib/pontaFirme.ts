@@ -11,11 +11,23 @@ export function seasonBoundsForDate(date: Date) {
 
 export async function getOrCreateCurrentSeason() {
   const { label, startDate, endDate } = seasonBoundsForDate(new Date());
-  return prisma.pontaFirmeSeason.upsert({
-    where: { label },
-    update: {},
-    create: { label, startDate, endDate },
-  });
+
+  const existing = await prisma.pontaFirmeSeason.findUnique({ where: { label } });
+  if (existing) return existing;
+
+  const season = await prisma.pontaFirmeSeason.create({ data: { label, startDate, endDate } });
+
+  // Temporada nova: ja nasce com quem esta marcado Pagante Anual no momento da virada, sem
+  // precisar o admin readicionar cada um na mao (pagadores "sem cadastro" continuam so manuais).
+  const pagantes = await prisma.user.findMany({ where: { isPontaFirmePagante: true }, select: { id: true } });
+  if (pagantes.length > 0) {
+    await prisma.pontaFirmePayer.createMany({
+      data: pagantes.map((u) => ({ seasonId: season.id, userId: u.id })),
+      skipDuplicates: true,
+    });
+  }
+
+  return season;
 }
 
 export async function ensurePayerForUser(userId: number) {

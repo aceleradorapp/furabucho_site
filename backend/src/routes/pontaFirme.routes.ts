@@ -31,22 +31,29 @@ pontaFirmeRouter.get('/seasons', async (_req, res) => {
   res.json(seasons.map((s) => ({ id: s.id, label: s.label, startDate: s.startDate, endDate: s.endDate, isCurrent: s.id === current.id })));
 });
 
-pontaFirmeRouter.get('/seasons/:id/data', async (req, res) => {
+pontaFirmeRouter.get('/seasons/:id/data', async (req: AuthedRequest, res) => {
   const seasonId = Number(req.params.id);
   const season = await prisma.pontaFirmeSeason.findUnique({ where: { id: seasonId } });
   if (!season) return res.status(404).json({ error: 'Temporada não encontrada' });
 
   const months = monthDatesForSeason(season);
 
-  const payers = await prisma.pontaFirmePayer.findMany({
+  // Quem nao e pagante anual (ou saiu no meio do ano) some da lista pra quem so acompanha;
+  // admin/ajudante continuam vendo tudo, com o selo "removido", pra manter o historico visivel.
+  // O total Arrecadado sempre soma todo mundo -- o dinheiro que ja entrou nao desaparece do
+  // Balanco so porque a pessoa nao aparece mais na lista de cobranca.
+  const canManage = !!req.effectivePermissions?.['pontaFirme.manage'];
+
+  const allPayers = await prisma.pontaFirmePayer.findMany({
     where: { seasonId },
     include: {
       user: { select: { id: true, name: true, nickname: true, avatarUrl: true } },
       payments: { orderBy: { monthDate: 'asc' } },
     },
   });
+  const payers = canManage ? allPayers : allPayers.filter((p) => !p.removedAt);
 
-  const enriched = payers.map((p) => {
+  const enrich = (p: (typeof allPayers)[number]) => {
     const paymentsByMonth = new Map(p.payments.map((pay) => [pay.monthDate.toISOString().slice(0, 10), pay]));
     const monthsPaid = p.payments.length;
     const totalPaid = p.payments.reduce((sum, pay) => sum + toNumber(pay.amount), 0);
@@ -74,7 +81,9 @@ pontaFirmeRouter.get('/seasons/:id/data', async (req, res) => {
         };
       }),
     };
-  });
+  };
+
+  const enriched = payers.map(enrich);
 
   enriched.sort((a, b) => {
     if (b.monthsPaid !== a.monthsPaid) return b.monthsPaid - a.monthsPaid;
@@ -84,11 +93,16 @@ pontaFirmeRouter.get('/seasons/:id/data', async (req, res) => {
     return a.id - b.id;
   });
 
+  const totalArrecadado = allPayers.reduce(
+    (sum, p) => sum + p.payments.reduce((s, pay) => s + toNumber(pay.amount), 0),
+    0,
+  );
+
   res.json({
     season: { id: season.id, label: season.label, startDate: season.startDate, endDate: season.endDate },
     months,
     payers: enriched,
-    totalArrecadado: enriched.reduce((sum, p) => sum + p.totalPaid, 0),
+    totalArrecadado,
   });
 });
 
