@@ -144,66 +144,68 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="flex items-center gap-1">
-            <Link
-              to="/feed"
-              className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/feed') ? 'text-primary' : 'text-text-main'}`}
-              aria-label="Feed"
-              title="Feed"
-            >
-              <Home size={22} />
-            </Link>
-
-            <Link
-              to="/galeria"
-              className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/galeria') ? 'text-primary' : 'text-text-main'}`}
-              aria-label="Galeria"
-              title="Galeria"
-            >
-              <Images size={22} />
-            </Link>
-
-            <Link
-              to="/aniversariantes"
-              className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/aniversariantes') ? 'text-primary' : 'text-text-main'}`}
-              aria-label="Aniversariantes"
-              title="Aniversariantes"
-            >
-              <Cake size={22} />
-            </Link>
-
-            <AnnouncementBellButton
-              announcements={announcements}
-              open={bellOpenDesktop}
-              onOpenChange={setBellOpenDesktop}
-              onSelect={setActiveAnnouncement}
-              onDelete={handleDeleteAnnouncement}
-              canManage={user.permissions['announcements.manage']}
-              className="p-2 rounded-full hover:bg-card-subtle transition text-text-main"
-            />
-
-            <Link
-              to="/app"
-              className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/app') ? 'text-primary' : 'text-text-main'}`}
-              aria-label="Baixar o app"
-              title="Baixar o app"
-            >
-              <Smartphone size={22} />
-            </Link>
-
-            {hasPontaFirmeAccess && (
+            <div className="hidden md:flex items-center gap-1">
               <Link
-                to="/ponta-firme"
-                className={`p-2 rounded-full transition shadow-sm ${
-                  isActive('/ponta-firme')
-                    ? 'bg-[#F59E0B] text-white'
-                    : 'bg-[#F59E0B]/15 text-[#F59E0B] hover:bg-[#F59E0B]/25'
-                }`}
-                aria-label="Ponta Firme"
-                title="Área Ponta Firme"
+                to="/feed"
+                className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/feed') ? 'text-primary' : 'text-text-main'}`}
+                aria-label="Feed"
+                title="Feed"
               >
-                <Anchor size={22} />
+                <Home size={22} />
               </Link>
-            )}
+
+              <Link
+                to="/galeria"
+                className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/galeria') ? 'text-primary' : 'text-text-main'}`}
+                aria-label="Galeria"
+                title="Galeria"
+              >
+                <Images size={22} />
+              </Link>
+
+              <Link
+                to="/aniversariantes"
+                className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/aniversariantes') ? 'text-primary' : 'text-text-main'}`}
+                aria-label="Aniversariantes"
+                title="Aniversariantes"
+              >
+                <Cake size={22} />
+              </Link>
+
+              <AnnouncementBellButton
+                announcements={announcements}
+                open={bellOpenDesktop}
+                onOpenChange={setBellOpenDesktop}
+                onSelect={setActiveAnnouncement}
+                onDelete={handleDeleteAnnouncement}
+                canManage={user.permissions['announcements.manage']}
+                className="p-2 rounded-full hover:bg-card-subtle transition text-text-main"
+              />
+
+              <Link
+                to="/app"
+                className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/app') ? 'text-primary' : 'text-text-main'}`}
+                aria-label="Baixar o app"
+                title="Baixar o app"
+              >
+                <Smartphone size={22} />
+              </Link>
+
+              {hasPontaFirmeAccess && (
+                <Link
+                  to="/ponta-firme"
+                  className={`p-2 rounded-full transition shadow-sm ${
+                    isActive('/ponta-firme')
+                      ? 'bg-[#F59E0B] text-white'
+                      : 'bg-[#F59E0B]/15 text-[#F59E0B] hover:bg-[#F59E0B]/25'
+                  }`}
+                  aria-label="Ponta Firme"
+                  title="Área Ponta Firme"
+                >
+                  <Anchor size={22} />
+                </Link>
+              )}
+            </div>
 
             {hasSettingsMenu && (
               <DropdownMenu.Root>
@@ -457,9 +459,6 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
             <Anchor size={24} />
           </Link>
         )}
-        <Link to="/perfil" className={isActive('/perfil') ? 'text-primary' : 'text-text-muted'} aria-label="Perfil">
-          <Avatar name={user.name} avatarUrl={user.avatarUrl} size={28} role={user.role} isPontaFirme={user.isPontaFirme} isVeterano={user.isVeterano} />
-        </Link>
       </nav>
 
       {activeAnnouncement && (
