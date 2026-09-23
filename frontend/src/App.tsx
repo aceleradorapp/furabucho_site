@@ -10,6 +10,7 @@ import { AdminPioneiroPhotosPage } from './pages/admin/AdminPioneiroPhotosPage'
 import { AdminRolesPage } from './pages/admin/AdminRolesPage'
 import { AdminSettingsPage } from './pages/admin/AdminSettingsPage'
 import { AdminUserPermissionsPage } from './pages/admin/AdminUserPermissionsPage'
+import { AdminUploadsPage } from './pages/admin/AdminUploadsPage'
 import { AdminUserPhotosPage } from './pages/admin/AdminUserPhotosPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { BirthdaysPage } from './pages/BirthdaysPage'
@@ -100,6 +101,14 @@ function App() {
         element={
           <ProtectedRoute requirePermission="members.view">
             <AdminUserPhotosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/arquivos"
+        element={
+          <ProtectedRoute requirePermission="uploads.manage">
+            <AdminUploadsPage />
           </ProtectedRoute>
         }
       />

@@ -2,6 +2,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   Anchor,
   Cake,
+  HardDrive,
   Home,
   ImageIcon,
   Images,
@@ -117,6 +118,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
     user.permissions['members.view'] ||
     user.permissions['gallery.manage'] ||
     user.permissions['pioneiros.manage'] ||
+    user.permissions['uploads.manage'] ||
     user.role === 'admin';
 
   const hasPontaFirmeAccess = user.isPontaFirme || user.role === 'admin' || user.permissions['pontaFirme.manage'];
@@ -247,6 +249,16 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                           className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
                         >
                           <ImageIcon size={16} /> Fotos de Perfil
+                        </Link>
+                      </DropdownMenu.Item>
+                    )}
+                    {user.permissions['uploads.manage'] && (
+                      <DropdownMenu.Item asChild>
+                        <Link
+                          to="/admin/arquivos"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                        >
+                          <HardDrive size={16} /> Arquivos do Servidor
                         </Link>
                       </DropdownMenu.Item>
                     )}
