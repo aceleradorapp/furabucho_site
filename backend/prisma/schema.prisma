@@ -85,6 +85,7 @@ model Pioneiro {
   phone           String?  @unique
   passwordHash    String
   avatarUrl       String?
+  birthDate       DateTime? @db.Date
   points          Float    @default(0)
   status          String   @default("pending")
   convertedUserId Int?     @unique

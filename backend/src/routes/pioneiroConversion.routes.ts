@@ -1,5 +1,4 @@
 import bcrypt from 'bcrypt';
-import crypto from 'crypto';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthedRequest, requireAuth, requirePermission } from '../middleware/auth';
@@ -7,10 +6,6 @@ import { AuthedRequest, requireAuth, requirePermission } from '../middleware/aut
 export const pioneiroConversionRouter = Router();
 
 pioneiroConversionRouter.use(requireAuth, requirePermission('pioneiros.manage'));
-
-function generateTempPassword() {
-  return crypto.randomBytes(6).toString('base64').replace(/[+/=]/g, '').slice(0, 8) + '1A';
-}
 
 pioneiroConversionRouter.get('/', async (_req, res) => {
   const pioneiros = await prisma.pioneiro.findMany({
@@ -61,7 +56,14 @@ pioneiroConversionRouter.post('/convert', async (req: AuthedRequest, res) => {
   const canChangeRole = req.effectivePermissions?.['members.changeRole'] ?? false;
   const membroRole = await prisma.role.findUnique({ where: { key: 'membro' } });
 
-  const results: { pioneiroId: number; ok: boolean; user?: { id: number; username: string }; tempPassword?: string; error?: string }[] = [];
+  const results: {
+    pioneiroId: number;
+    ok: boolean;
+    user?: { id: number; username: string };
+    tempPassword?: string;
+    keptOwnPassword?: boolean;
+    error?: string;
+  }[] = [];
 
   for (const item of items) {
     const pioneiroId = Number(item.pioneiroId);
@@ -96,8 +98,14 @@ pioneiroConversionRouter.post('/convert', async (req: AuthedRequest, res) => {
       continue;
     }
 
-    const tempPassword = item.password?.trim() || generateTempPassword();
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    // Se o admin nao digitou uma senha na mao, reaproveita a senha que o proprio pioneiro ja
+    // escolheu no cadastro dele -- ele continua entrando com a mesma senha de sempre, sem
+    // precisar de senha temporaria nem trocar nada. So gera senha nova se o admin realmente
+    // quiser definir uma.
+    const customPassword = item.password?.trim();
+    const tempPassword = customPassword || undefined;
+    const passwordHash = customPassword ? await bcrypt.hash(customPassword, 10) : pioneiro.passwordHash;
+    const keptOwnPassword = !customPassword;
 
     try {
       const user = await prisma.$transaction(async (tx) => {
@@ -109,15 +117,22 @@ pioneiroConversionRouter.post('/convert', async (req: AuthedRequest, res) => {
             whatsapp,
             roleId: roleId as number,
             passwordHash,
-            mustChangePassword: true,
+            mustChangePassword: !keptOwnPassword,
             ...(pioneiro.avatarUrl ? { avatarUrl: pioneiro.avatarUrl } : {}),
+            ...(pioneiro.birthDate ? { birthDate: pioneiro.birthDate } : {}),
           },
         });
         await tx.pioneiro.update({ where: { id: pioneiroId }, data: { convertedUserId: created.id } });
         return created;
       });
 
-      results.push({ pioneiroId, ok: true, user: { id: user.id, username: user.username }, tempPassword });
+      results.push({
+        pioneiroId,
+        ok: true,
+        user: { id: user.id, username: user.username },
+        ...(tempPassword ? { tempPassword } : {}),
+        keptOwnPassword,
+      });
     } catch {
       results.push({ pioneiroId, ok: false, error: 'E-mail, WhatsApp ou usuário já cadastrado' });
     }

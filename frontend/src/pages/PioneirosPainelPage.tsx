@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Crown,
   Eye,
+  Gift,
   Home,
   ImagePlus,
   LogOut,
@@ -32,6 +33,7 @@ interface Pioneiro {
   avatarUrl: string | null;
   points: number;
   status: string;
+  birthDate: string | null;
 }
 
 interface PioneiroPhoto {
@@ -269,6 +271,7 @@ export function PioneirosPainelPage() {
 
         <div className="flex flex-col gap-5">
           <AvatarTask pioneiro={pioneiro} isPreview={isPreview} onUpdated={setPioneiro} />
+          <BirthDateTask pioneiro={pioneiro} isPreview={isPreview} onUpdated={setPioneiro} />
           <PhotosTask photos={photos} isPreview={isPreview} onUploaded={(newPhotos, earned) => {
             setPhotos((prev) => [...newPhotos, ...prev]);
             setPioneiro((p) => (p ? { ...p, points: p.points + earned } : p));
@@ -476,6 +479,66 @@ function AvatarTask({
           onConfirm={handleConfirmCrop}
         />
       )}
+    </TaskCard>
+  );
+}
+
+function BirthDateTask({
+  pioneiro,
+  isPreview,
+  onUpdated,
+}: {
+  pioneiro: Pioneiro;
+  isPreview: boolean;
+  onUpdated: (p: Pioneiro) => void;
+}) {
+  const [value, setValue] = useState(pioneiro.birthDate ? pioneiro.birthDate.slice(0, 10) : '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSave() {
+    setError(null);
+    if (!value) return setError('Escolha sua data de nascimento');
+
+    setSaving(true);
+    try {
+      const data = await pioneirosApi.post<{ pioneiro: Pioneiro }>('/pioneiros/birthdate', { birthDate: value });
+      onUpdated(data.pioneiro);
+    } catch {
+      setError('Não foi possível salvar. Tente de novo.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <TaskCard
+      icon={Gift}
+      title="Informe sua data de nascimento"
+      points="+5"
+      description="Assim a gente já sabe pra te parabenizar no dia certo quando o site for ao ar."
+      done={!!pioneiro.birthDate}
+    >
+      {!isPreview && (
+        <div className="flex items-center gap-3">
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="rounded-lg bg-white/5 border border-white/10 text-white px-3 py-2.5 text-sm outline-none focus:border-[#FF5E14] transition"
+          />
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 bg-[#FF5E14] hover:bg-[#E04D0B] disabled:opacity-60 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition"
+          >
+            <Send size={14} />
+            {saving ? 'Salvando...' : pioneiro.birthDate ? 'Atualizar' : 'Salvar'}
+          </button>
+        </div>
+      )}
+      {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
     </TaskCard>
   );
 }

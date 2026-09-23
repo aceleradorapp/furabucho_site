@@ -41,6 +41,7 @@ interface ConvertResult {
   ok: boolean;
   user?: { id: number; username: string };
   tempPassword?: string;
+  keptOwnPassword?: boolean;
   error?: string;
 }
 
@@ -211,8 +212,17 @@ export function AdminPioneiroConversionPage() {
                   <span className="text-text-main">{pioneiro?.name ?? `#${r.pioneiroId}`}</span>
                   {r.ok ? (
                     <span className="text-text-muted">
-                      cadastrado como <strong>{r.user?.username}</strong> · senha temporária:{' '}
-                      <span className="font-mono bg-white border border-border rounded px-1.5 py-0.5">{r.tempPassword}</span>
+                      cadastrado como <strong>{r.user?.username}</strong>{' '}
+                      {r.keptOwnPassword ? (
+                        '· continua com a mesma senha que ele já usava'
+                      ) : (
+                        <>
+                          · senha temporária:{' '}
+                          <span className="font-mono bg-white border border-border rounded px-1.5 py-0.5">
+                            {r.tempPassword}
+                          </span>
+                        </>
+                      )}
                     </span>
                   ) : (
                     <span className="text-red-600">{r.error}</span>
@@ -300,11 +310,11 @@ export function AdminPioneiroConversionPage() {
                         </div>
                       )}
                       <div>
-                        <label className="text-xs text-text-muted">Senha temporária (opcional)</label>
+                        <label className="text-xs text-text-muted">Definir senha manualmente (opcional)</label>
                         <input
                           value={d.password}
                           onChange={(e) => updateDraft(d.pioneiroId, { password: e.target.value })}
-                          placeholder="Gerar automaticamente"
+                          placeholder="Deixe em branco para manter a senha dele"
                           minLength={6}
                           className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
                         />
