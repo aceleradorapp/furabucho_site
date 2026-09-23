@@ -37,6 +37,7 @@ usersRouter.get('/', requirePermission('members.view'), async (_req, res) => {
       caricatureUrl: u.caricatureUrl,
       isPontaFirme: u.isPontaFirme,
       isVeterano: u.isVeterano,
+      birthDate: u.birthDate,
     })),
   );
 });
@@ -158,12 +159,13 @@ usersRouter.delete('/:id', requirePermission('members.delete'), async (req: Auth
 
 usersRouter.patch('/:id/profile-extras', requirePermission('members.editProfile'), async (req, res) => {
   const id = Number(req.params.id);
-  const { name, nickname, whatsapp, avatarUrl, caricatureUrl } = req.body as {
+  const { name, nickname, whatsapp, avatarUrl, caricatureUrl, birthDate } = req.body as {
     name?: string;
     nickname?: string | null;
     whatsapp?: string | null;
     avatarUrl?: string | null;
     caricatureUrl?: string | null;
+    birthDate?: string | null;
   };
 
   const user = await prisma.user.update({
@@ -174,6 +176,7 @@ usersRouter.patch('/:id/profile-extras', requirePermission('members.editProfile'
       ...(whatsapp !== undefined ? { whatsapp } : {}),
       ...(avatarUrl !== undefined ? { avatarUrl } : {}),
       ...(caricatureUrl !== undefined ? { caricatureUrl } : {}),
+      ...(birthDate !== undefined ? { birthDate: birthDate ? new Date(birthDate) : null } : {}),
     },
   });
 
@@ -184,6 +187,7 @@ usersRouter.patch('/:id/profile-extras', requirePermission('members.editProfile'
     whatsapp: user.whatsapp,
     avatarUrl: user.avatarUrl,
     caricatureUrl: user.caricatureUrl,
+    birthDate: user.birthDate,
   });
 });
 

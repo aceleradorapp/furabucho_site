@@ -12,6 +12,7 @@ const AVATAR_POINTS = 30;
 const PHOTO_POINTS = 1.5;
 const COMMENT_POINTS = 3;
 const VISIT_POINTS = 2;
+const BIRTHDATE_POINTS = 5;
 
 type PioneiroRecord = {
   id: number;
@@ -19,6 +20,7 @@ type PioneiroRecord = {
   avatarUrl: string | null;
   points: number;
   status: string;
+  birthDate?: Date | null;
 };
 
 function serializePioneiro(pioneiro: PioneiroRecord) {
@@ -28,6 +30,7 @@ function serializePioneiro(pioneiro: PioneiroRecord) {
     avatarUrl: pioneiro.avatarUrl,
     points: pioneiro.points,
     status: pioneiro.status,
+    birthDate: pioneiro.birthDate ?? null,
   };
 }
 
@@ -159,6 +162,25 @@ pioneirosRouter.post('/avatar', requirePioneiroAuth, upload.single('image'), asy
   });
 
   res.json({ pioneiro: serializePioneiro(updated), pointsEarned: firstTime ? AVATAR_POINTS : 0 });
+});
+
+pioneirosRouter.post('/birthdate', requirePioneiroAuth, async (req: PioneiroRequest, res) => {
+  const { birthDate } = req.body as { birthDate?: string };
+  if (!birthDate) return res.status(400).json({ error: 'Informe a data de nascimento' });
+
+  const pioneiro = await prisma.pioneiro.findUnique({ where: { id: req.pioneiroId } });
+  if (!pioneiro) return res.status(404).json({ error: 'Cadastro não encontrado' });
+
+  const firstTime = !pioneiro.birthDate;
+  const updated = await prisma.pioneiro.update({
+    where: { id: pioneiro.id },
+    data: {
+      birthDate: new Date(birthDate),
+      ...(firstTime ? { points: { increment: BIRTHDATE_POINTS } } : {}),
+    },
+  });
+
+  res.json({ pioneiro: serializePioneiro(updated), pointsEarned: firstTime ? BIRTHDATE_POINTS : 0 });
 });
 
 pioneirosRouter.get('/photos', requirePioneiroAuth, async (req: PioneiroRequest, res) => {

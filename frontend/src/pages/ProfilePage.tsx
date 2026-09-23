@@ -99,8 +99,8 @@ export function ProfilePage() {
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {message && <p className="text-sm text-green-700">{message}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {message && <p className="text-sm text-green-700 dark:text-green-400">{message}</p>}
 
           <button
             type="submit"

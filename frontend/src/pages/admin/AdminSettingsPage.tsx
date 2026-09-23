@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { api } from '../../api/client';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
 import { ImageUploadButton } from '../../components/ImageUploadButton';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { SaveStatusBadge, type SaveStatus } from '../../components/SaveStatusBadge';
 import { UPLOADS_BASE } from '../../lib/config';
@@ -193,7 +194,7 @@ export function AdminSettingsPage() {
   if (!settings) {
     return (
       <PrivateLayout>
-        <p className="text-text-muted p-8">Carregando...</p>
+        <PageLoader />
       </PrivateLayout>
     );
   }
@@ -464,7 +465,7 @@ function ImageTile({
               type="button"
               onClick={onRemove}
               title="Remover imagem"
-              className="absolute -top-2 -right-2 bg-white text-red-600 border border-border rounded-full p-1 shadow-sm hover:bg-red-50 transition"
+              className="absolute -top-2 -right-2 bg-card text-red-600 border border-border rounded-full p-1 shadow-sm hover:bg-red-50 transition"
             >
               <X size={13} />
             </button>

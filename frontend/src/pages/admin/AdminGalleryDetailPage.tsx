@@ -2,6 +2,7 @@ import { ArrowLeft, EyeOff, Eye, Trash2, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 
@@ -75,7 +76,7 @@ export function AdminGalleryDetailPage() {
   if (!gallery) {
     return (
       <PrivateLayout>
-        <p className="text-text-muted p-8">Carregando...</p>
+        <PageLoader />
       </PrivateLayout>
     );
   }
@@ -87,7 +88,7 @@ export function AdminGalleryDetailPage() {
           <ArrowLeft size={16} /> Voltar
         </Link>
 
-        <div className="bg-white border border-border rounded-2xl p-4 mb-6 flex flex-wrap items-end gap-3">
+        <div className="bg-card border border-border rounded-2xl p-4 mb-6 flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[180px]">
             <label className="text-xs text-text-muted">Título</label>
             <input

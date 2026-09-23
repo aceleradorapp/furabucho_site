@@ -19,8 +19,8 @@ export function SaveStatusBadge({ status, compact }: { status: SaveStatus; compa
             status === 'saving'
               ? 'bg-card-subtle text-text-muted'
               : status === 'saved'
-                ? 'bg-green-50 text-green-700'
-                : 'bg-red-50 text-red-600'
+                ? 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400'
+                : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
           }`}
         >
           {status === 'saving' && <Loader2 size={compact ? 10 : 12} className="animate-spin" />}

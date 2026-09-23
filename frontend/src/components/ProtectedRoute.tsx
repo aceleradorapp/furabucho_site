@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import type { PermissionKey } from '../lib/permissionKeys';
+import { PageLoader } from './PageLoader';
 
 export function ProtectedRoute({
   children,
@@ -17,7 +18,11 @@ export function ProtectedRoute({
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-svh flex items-center justify-center text-text-muted">Carregando...</div>;
+    return (
+      <div className="min-h-svh bg-card-subtle flex items-center justify-center">
+        <PageLoader />
+      </div>
+    );
   }
 
   if (!user) return <Navigate to="/?login=1" replace />;
@@ -26,7 +31,7 @@ export function ProtectedRoute({
 
   if (requireAdmin && user.role !== 'admin') {
     return (
-      <div className="min-h-svh flex items-center justify-center text-text-muted">
+      <div className="min-h-svh bg-card-subtle flex items-center justify-center text-text-muted">
         Você não tem permissão para acessar esta página.
       </div>
     );
@@ -37,7 +42,7 @@ export function ProtectedRoute({
     const allowed = required.some((permission) => user.permissions[permission]) || (allowIfPontaFirme && user.isPontaFirme);
     if (!allowed) {
       return (
-        <div className="min-h-svh flex items-center justify-center text-text-muted">
+        <div className="min-h-svh bg-card-subtle flex items-center justify-center text-text-muted">
           Você não tem permissão para acessar esta página.
         </div>
       );

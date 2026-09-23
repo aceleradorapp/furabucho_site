@@ -56,6 +56,11 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       { key: 'pioneiros.manage', label: 'Ver pré-cadastros de Pioneiros e enviá-los para o cadastro de membros' },
     ],
   },
+  {
+    key: 'uploads',
+    label: 'Arquivos do Servidor',
+    actions: [{ key: 'uploads.manage', label: 'Ver, baixar e excluir imagens enviadas ao site' }],
+  },
 ];
 
 export const ALL_PERMISSION_KEYS = PERMISSION_CATEGORIES.flatMap((c) => c.actions.map((a) => a.key));

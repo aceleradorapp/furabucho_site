@@ -2,6 +2,7 @@ import { Download, ImageIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import { Avatar } from '../../components/Avatar';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 
@@ -21,9 +22,10 @@ function extensionFromUrl(url: string) {
 export function AdminUserPhotosPage() {
   const [users, setUsers] = useState<MemberUser[]>([]);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<MemberUser[]>('/admin/users').then(setUsers);
+    api.get<MemberUser[]>('/admin/users').then(setUsers).finally(() => setLoading(false));
   }, []);
 
   async function handleDownload(u: MemberUser) {
@@ -57,7 +59,9 @@ export function AdminUserPhotosPage() {
           Veja e baixe a foto de perfil de cada membro cadastrado no sistema.
         </p>
 
-        {withPhoto.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : withPhoto.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-text-muted">
             <ImageIcon size={32} className="text-border" />
             <p className="text-sm">Nenhum membro com foto de perfil ainda.</p>

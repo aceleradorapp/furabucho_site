@@ -10,4 +10,5 @@ export type PermissionKey =
   | 'feed.moderate'
   | 'announcements.manage'
   | 'pontaFirme.manage'
-  | 'pioneiros.manage';
+  | 'pioneiros.manage'
+  | 'uploads.manage';

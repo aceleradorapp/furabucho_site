@@ -2,6 +2,7 @@ import { ImageIcon, Plus, Search, Trash2 } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
 
@@ -23,6 +24,7 @@ export function AdminGalleryPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newYear, setNewYear] = useState(currentYear);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const params = new URLSearchParams();
@@ -34,7 +36,7 @@ export function AdminGalleryPage() {
   }
 
   useEffect(() => {
-    load();
+    load().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [titleFilter, yearFilter]);
 
@@ -71,7 +73,7 @@ export function AdminGalleryPage() {
         </div>
 
         {creating && (
-          <form onSubmit={handleCreate} className="bg-white border border-border rounded-2xl p-4 mb-6 flex flex-wrap items-end gap-3">
+          <form onSubmit={handleCreate} className="bg-card border border-border rounded-2xl p-4 mb-6 flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[180px]">
               <label className="text-xs text-text-muted">Título</label>
               <input
@@ -98,7 +100,7 @@ export function AdminGalleryPage() {
             >
               Criar álbum
             </button>
-            {error && <p className="text-sm text-red-600 w-full">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400 w-full">{error}</p>}
           </form>
         )}
 
@@ -120,12 +122,14 @@ export function AdminGalleryPage() {
           />
         </div>
 
-        {galleries.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : galleries.length === 0 ? (
           <p className="text-sm text-text-muted">Nenhum álbum encontrado.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {galleries.map((g) => (
-              <div key={g.id} className="relative bg-white rounded-2xl overflow-hidden border border-border">
+              <div key={g.id} className="relative bg-card rounded-2xl overflow-hidden border border-border">
                 <Link to={`/admin/galeria/${g.id}`} className="block">
                   <div className="aspect-square bg-card-subtle flex items-center justify-center">
                     {g.coverUrl ? (

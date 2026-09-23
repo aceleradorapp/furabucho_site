@@ -61,6 +61,22 @@ postsRouter.post(
       return res.status(400).json({ error: 'Escreva algo ou anexe uma foto/vídeo' });
     }
 
+    const role = await prisma.role.findUnique({ where: { key: req.userRoleKey as string }, select: { dailyPostLimit: true } });
+    const dailyPostLimit = role?.dailyPostLimit ?? 4;
+
+    if (dailyPostLimit > 0) {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const postsToday = await prisma.post.count({
+        where: { authorId: req.userId as number, createdAt: { gte: startOfToday } },
+      });
+      if (postsToday >= dailyPostLimit) {
+        return res.status(429).json({
+          error: `Você atingiu o limite de ${dailyPostLimit} publicaç${dailyPostLimit === 1 ? 'ão' : 'ões'} por dia. Tente de novo amanhã.`,
+        });
+      }
+    }
+
     const post = await prisma.post.create({
       data: {
         authorId: req.userId as number,

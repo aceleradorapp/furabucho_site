@@ -16,6 +16,7 @@ const ROLE_PERMISSION_DEFAULTS: Record<string, Record<string, boolean>> = {
     'feed.moderate': false,
     'announcements.manage': true,
     'pioneiros.manage': true,
+    'uploads.manage': true,
   },
   membro: Object.fromEntries(ALL_PERMISSION_KEYS.map((key) => [key, false])),
 };

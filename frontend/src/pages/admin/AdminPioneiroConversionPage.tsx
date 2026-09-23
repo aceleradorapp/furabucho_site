@@ -4,8 +4,10 @@ import { api, ApiError } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { Avatar } from '../../components/Avatar';
 import { useConfirm } from '../../components/ConfirmDialogProvider';
+import { PageLoader } from '../../components/PageLoader';
 import { PrivateLayout } from '../../components/PrivateLayout';
 import { UPLOADS_BASE } from '../../lib/config';
+import { formatPhoneBR } from '../../lib/phoneMask';
 
 interface Role {
   id: number;
@@ -40,6 +42,7 @@ interface ConvertResult {
   ok: boolean;
   user?: { id: number; username: string };
   tempPassword?: string;
+  keptOwnPassword?: boolean;
   error?: string;
 }
 
@@ -71,6 +74,7 @@ export function AdminPioneiroConversionPage() {
   const [sending, setSending] = useState(false);
   const [results, setResults] = useState<ConvertResult[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
     const data = await api.get<PioneiroRow[]>('/admin/pioneiro-conversao');
@@ -82,7 +86,7 @@ export function AdminPioneiroConversionPage() {
   }
 
   useEffect(() => {
-    load();
+    load().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -126,7 +130,7 @@ export function AdminPioneiroConversionPage() {
         name: p.name,
         username: slugify(p.name),
         email: p.email ?? '',
-        whatsapp: p.phone ?? '',
+        whatsapp: formatPhoneBR(p.phone ?? ''),
         roleId: canChangeRole ? defaultRoleId : ('' as number | ''),
         password: '',
       }));
@@ -206,15 +210,24 @@ export function AdminPioneiroConversionPage() {
               const pioneiro = pioneiros.find((p) => p.id === r.pioneiroId);
               return (
                 <div key={r.pioneiroId} className="flex items-center gap-2">
-                  {r.ok ? <Check size={14} className="text-green-600 shrink-0" /> : <X size={14} className="text-red-600 shrink-0" />}
+                  {r.ok ? <Check size={14} className="text-green-600 shrink-0" /> : <X size={14} className="text-red-600 dark:text-red-400 shrink-0" />}
                   <span className="text-text-main">{pioneiro?.name ?? `#${r.pioneiroId}`}</span>
                   {r.ok ? (
                     <span className="text-text-muted">
-                      cadastrado como <strong>{r.user?.username}</strong> · senha temporária:{' '}
-                      <span className="font-mono bg-white border border-border rounded px-1.5 py-0.5">{r.tempPassword}</span>
+                      cadastrado como <strong>{r.user?.username}</strong>{' '}
+                      {r.keptOwnPassword ? (
+                        '· continua com a mesma senha que ele já usava'
+                      ) : (
+                        <>
+                          · senha temporária:{' '}
+                          <span className="font-mono bg-card border border-border rounded px-1.5 py-0.5">
+                            {r.tempPassword}
+                          </span>
+                        </>
+                      )}
                     </span>
                   ) : (
-                    <span className="text-red-600">{r.error}</span>
+                    <span className="text-red-600 dark:text-red-400">{r.error}</span>
                   )}
                 </div>
               );
@@ -222,7 +235,7 @@ export function AdminPioneiroConversionPage() {
           </div>
         )}
 
-        {loadError && <p className="text-sm text-red-600 mb-4">{loadError}</p>}
+        {loadError && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{loadError}</p>}
 
         {reviewMode ? (
           <div className="flex flex-col gap-4">
@@ -277,8 +290,8 @@ export function AdminPioneiroConversionPage() {
                         <input
                           type="tel"
                           value={d.whatsapp}
-                          onChange={(e) => updateDraft(d.pioneiroId, { whatsapp: e.target.value })}
-                          placeholder="(11) 91234-5678"
+                          onChange={(e) => updateDraft(d.pioneiroId, { whatsapp: formatPhoneBR(e.target.value) })}
+                          placeholder="(19)997230475"
                           className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
                         />
                       </div>
@@ -299,18 +312,18 @@ export function AdminPioneiroConversionPage() {
                         </div>
                       )}
                       <div>
-                        <label className="text-xs text-text-muted">Senha temporária (opcional)</label>
+                        <label className="text-xs text-text-muted">Definir senha manualmente (opcional)</label>
                         <input
                           value={d.password}
                           onChange={(e) => updateDraft(d.pioneiroId, { password: e.target.value })}
-                          placeholder="Gerar automaticamente"
+                          placeholder="Deixe em branco para manter a senha dele"
                           minLength={6}
                           className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
                         />
                       </div>
                     </div>
 
-                    {error && <p className="text-xs text-red-600">{error}</p>}
+                    {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
                   </div>
                 );
               })
@@ -334,7 +347,9 @@ export function AdminPioneiroConversionPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {pioneiros.length === 0 ? (
+            {loading ? (
+              <PageLoader />
+            ) : pioneiros.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-16 text-text-muted">
                 <UserPlus size={32} className="text-border" />
                 <p className="text-sm">Nenhum pré-cadastro de Pioneiro ainda.</p>
@@ -358,7 +373,7 @@ export function AdminPioneiroConversionPage() {
                       className={`flex items-center gap-3 text-left flex-1 min-w-0 ${isConverted ? 'cursor-default' : ''}`}
                     >
                       {isConverted ? (
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 bg-green-100 text-green-700">
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400">
                           <Check size={13} strokeWidth={3} />
                         </div>
                       ) : (
@@ -375,7 +390,7 @@ export function AdminPioneiroConversionPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium text-text-main truncate">{p.name}</p>
                           {isConverted && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 rounded-full px-2 py-0.5 shrink-0">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400 rounded-full px-2 py-0.5 shrink-0">
                               Enviado
                             </span>
                           )}
