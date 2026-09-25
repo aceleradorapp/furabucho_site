@@ -291,7 +291,7 @@ export function AdminPioneiroConversionPage() {
                           type="tel"
                           value={d.whatsapp}
                           onChange={(e) => updateDraft(d.pioneiroId, { whatsapp: formatPhoneBR(e.target.value) })}
-                          placeholder="(19)997230475"
+                          placeholder="(11)999999999"
                           className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
                         />
                       </div>
