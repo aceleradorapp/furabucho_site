@@ -2,10 +2,17 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthedRequest, requireAuth, requirePermission } from '../middleware/auth';
 import { isVideoFile, postUpload } from '../lib/upload';
+import { nomeExibicao, notificar } from '../lib/notifications';
 
 export const postsRouter = Router();
 
 postsRouter.use(requireAuth);
+
+/** Corta o comentario pra caber no aviso sem virar um textao. */
+function trecho(texto: string, max = 60) {
+  const limpo = texto.trim();
+  return limpo.length > max ? `${limpo.slice(0, max)}...` : limpo;
+}
 
 postsRouter.get('/', async (req: AuthedRequest, res) => {
   const isAdmin = req.userRoleKey === 'admin';
@@ -130,6 +137,24 @@ postsRouter.post('/:id/like', async (req: AuthedRequest, res) => {
   }
 
   await prisma.like.create({ data: { postId, userId } });
+
+  const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true } });
+  const quemCurtiu = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, nickname: true },
+  });
+  if (post && quemCurtiu) {
+    await notificar({
+      userId: post.authorId,
+      actorId: userId,
+      type: 'like',
+      message: `${nomeExibicao(quemCurtiu)} curtiu sua publicação`,
+      // Leva direto na publicacao, nao no topo do feed -- com o feed cheio, "curtiu sua
+      // publicacao" sem endereco obriga a pessoa a cacar qual era.
+      link: `/feed#post-${postId}`,
+    });
+  }
+
   res.json({ liked: true });
 });
 
@@ -142,6 +167,17 @@ postsRouter.post('/:id/comments', async (req: AuthedRequest, res) => {
     data: { postId, userId: req.userId as number, text },
     include: { user: { select: { id: true, name: true, nickname: true, avatarUrl: true } } },
   });
+
+  const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true } });
+  if (post) {
+    await notificar({
+      userId: post.authorId,
+      actorId: req.userId,
+      type: 'comment',
+      message: `${nomeExibicao(comment.user)} comentou na sua publicação: "${trecho(text)}"`,
+      link: `/feed#post-${postId}`,
+    });
+  }
 
   res.status(201).json(comment);
 });
@@ -158,8 +194,38 @@ postsRouter.patch('/:id/block', requirePermission('feed.moderate'), async (req, 
   res.json(post);
 });
 
-postsRouter.delete('/:id', requirePermission('feed.moderate'), async (req, res) => {
+// Apagar publicacao: o proprio autor sempre pode apagar a dele; quem modera pode apagar
+// qualquer uma. Sem isso, um membro que publicou errado ficava preso com o post pra sempre.
+postsRouter.delete('/:id', async (req: AuthedRequest, res) => {
   const id = Number(req.params.id);
+
+  const post = await prisma.post.findUnique({ where: { id }, select: { authorId: true } });
+  if (!post) return res.status(404).json({ error: 'Publicação não encontrada' });
+
+  const isAuthor = post.authorId === req.userId;
+  const canModerate = !!req.effectivePermissions?.['feed.moderate'];
+  if (!isAuthor && !canModerate) {
+    return res.status(403).json({ error: 'Você só pode apagar as suas próprias publicações' });
+  }
+
   await prisma.post.delete({ where: { id } });
+  res.status(204).end();
+});
+
+// Mesma regra pros comentarios -- antes nao existia jeito nenhum de apagar um comentario,
+// nem pro autor nem pro admin.
+postsRouter.delete('/comments/:id', async (req: AuthedRequest, res) => {
+  const id = Number(req.params.id);
+
+  const comment = await prisma.comment.findUnique({ where: { id }, select: { userId: true } });
+  if (!comment) return res.status(404).json({ error: 'Comentário não encontrado' });
+
+  const isAuthor = comment.userId === req.userId;
+  const canModerate = !!req.effectivePermissions?.['feed.moderate'];
+  if (!isAuthor && !canModerate) {
+    return res.status(403).json({ error: 'Você só pode apagar os seus próprios comentários' });
+  }
+
+  await prisma.comment.delete({ where: { id } });
   res.status(204).end();
 });

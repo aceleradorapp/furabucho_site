@@ -18,7 +18,12 @@ const ROLE_PERMISSION_DEFAULTS: Record<string, Record<string, boolean>> = {
     'pioneiros.manage': true,
     'uploads.manage': true,
   },
-  membro: Object.fromEntries(ALL_PERMISSION_KEYS.map((key) => [key, false])),
+  // Membro comum: participa do feed (publicar, curtir e comentar ja sao o coracao do app pra
+  // ele), mas nao administra nada. Sem 'feed.create' ele vira espectador e nao tem o que fazer.
+  membro: {
+    ...Object.fromEntries(ALL_PERMISSION_KEYS.map((key) => [key, false])),
+    'feed.create': true,
+  },
 };
 
 async function upsertRole(key: string, label: string) {

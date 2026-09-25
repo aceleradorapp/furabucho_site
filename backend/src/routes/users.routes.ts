@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
-import crypto from 'crypto';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
+import { SENHA_PADRAO } from '../lib/senha';
 import { upload } from '../lib/upload';
 import { AuthedRequest, requireAnyPermission, requireAuth, requirePermission } from '../middleware/auth';
 import { ensurePayerForUser, handlePontaFirmeRemoval } from '../lib/pontaFirme';
@@ -9,10 +9,6 @@ import { ensurePayerForUser, handlePontaFirmeRemoval } from '../lib/pontaFirme';
 export const usersRouter = Router();
 
 usersRouter.use(requireAuth);
-
-function generateTempPassword() {
-  return crypto.randomBytes(6).toString('base64').replace(/[+/=]/g, '').slice(0, 8) + '1A';
-}
 
 usersRouter.get('/', requirePermission('members.view'), async (_req, res) => {
   const users = await prisma.user.findMany({
@@ -92,7 +88,9 @@ usersRouter.post(
     const avatarFile = files?.avatar?.[0];
     const caricatureFile = files?.caricature?.[0];
 
-    const tempPassword = password || generateTempPassword();
+    // Sempre a mesma senha de balcao, pra dar pra ditar por telefone sem soletrar. Ela nao
+    // sobrevive ao primeiro acesso: 'mustChangePassword' abaixo obriga a trocar.
+    const tempPassword = password || SENHA_PADRAO;
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     try {

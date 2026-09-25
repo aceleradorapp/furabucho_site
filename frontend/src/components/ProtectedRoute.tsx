@@ -29,6 +29,12 @@ export function ProtectedRoute({
 
   if (user.mustChangePassword) return <Navigate to="/trocar-senha" replace />;
 
+  // Quem nunca passou pelas boas-vindas vai pra elas antes de qualquer tela — inclusive quem
+  // veio dos Pioneiros, que não passa pela troca de senha e cairia direto no feed sem contexto.
+  // A rota /boas-vindas não passa por aqui (ela faz a própria checagem), então não há risco de
+  // ela redirecionar pra si mesma.
+  if (!user.welcomeSeen) return <Navigate to="/boas-vindas" replace />;
+
   if (requireAdmin && user.role !== 'admin') {
     return (
       <div className="min-h-svh bg-card-subtle flex items-center justify-center text-text-muted">

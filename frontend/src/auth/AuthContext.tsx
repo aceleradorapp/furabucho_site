@@ -9,6 +9,7 @@ export interface AuthUser {
   avatarUrl: string | null;
   birthDate: string | null;
   mustChangePassword: boolean;
+  welcomeSeen: boolean;
   role: string;
   roleLabel: string;
   dailyPostLimit: number;

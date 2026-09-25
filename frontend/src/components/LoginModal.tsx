@@ -21,7 +21,10 @@ export function LoginModal({ open, onOpenChange }: { open: boolean; onOpenChange
     try {
       const loggedUser = await login(identifier, password);
       onOpenChange(false);
-      navigate(loggedUser.mustChangePassword ? '/trocar-senha' : '/feed');
+      // Troca de senha primeiro, boas-vindas depois, feed por último.
+      if (loggedUser.mustChangePassword) navigate('/trocar-senha');
+      else if (!loggedUser.welcomeSeen) navigate('/boas-vindas');
+      else navigate('/feed');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível entrar');
     } finally {
