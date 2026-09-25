@@ -20,10 +20,17 @@ import { PostComposerModal } from '../components/PostComposerModal';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { UPLOADS_BASE } from '../lib/config';
 
+interface PostUser {
+  id: number;
+  name: string;
+  nickname: string | null;
+  avatarUrl: string | null;
+}
+
 interface PostComment {
   id: number;
   text: string;
-  user: { id: number; name: string };
+  user: PostUser;
 }
 
 interface FeedPost {
@@ -44,6 +51,7 @@ interface FeedPost {
   };
   likeCount: number;
   likedByMe: boolean;
+  likedBy: PostUser[];
   comments: PostComment[];
 }
 
@@ -69,6 +77,32 @@ function AuthorName({ author }: { author: FeedPost['author'] }) {
       {author.nickname || author.name}
       {author.isPontaFirme && <BadgeCheck size={14} className="text-primary shrink-0" />}
     </span>
+  );
+}
+
+function likedByText(likedBy: PostUser[]) {
+  const names = likedBy.map((u) => u.nickname || u.name);
+  if (names.length === 1) return `Curtido por ${names[0]}`;
+  if (names.length === 2) return `Curtido por ${names[0]} e ${names[1]}`;
+  if (names.length === 3) return `Curtido por ${names[0]}, ${names[1]} e ${names[2]}`;
+  return `Curtido por ${names[0]}, ${names[1]} e mais ${names.length - 2}`;
+}
+
+function LikedByLine({ likedBy }: { likedBy: PostUser[] }) {
+  if (likedBy.length === 0) return null;
+  const preview = likedBy.slice(0, 3);
+
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      <div className="flex -space-x-2">
+        {preview.map((u) => (
+          <span key={u.id} className="rounded-full ring-2 ring-card">
+            <Avatar name={u.nickname || u.name} avatarUrl={u.avatarUrl} size={18} />
+          </span>
+        ))}
+      </div>
+      <span className="text-xs text-text-muted">{likedByText(likedBy)}</span>
+    </div>
   );
 }
 
@@ -292,6 +326,8 @@ export function FeedPage() {
                       </span>
                     </div>
 
+                    <LikedByLine likedBy={post.likedBy} />
+
                     {post.mediaType !== 'text' && post.caption && (
                       <p className="text-sm text-text-main mb-2">
                         <span className="font-medium mr-1.5">
@@ -311,12 +347,15 @@ export function FeedPage() {
                     )}
 
                     {visibleComments.length > 0 && (
-                      <div className="flex flex-col gap-1 mb-2">
+                      <div className="flex flex-col gap-2 mb-2">
                         {visibleComments.map((c) => (
-                          <p key={c.id} className="text-sm">
-                            <span className="font-medium text-text-main">{c.user.name}</span>{' '}
-                            <span className="text-text-muted">{c.text}</span>
-                          </p>
+                          <div key={c.id} className="flex items-start gap-2">
+                            <Avatar name={c.user.nickname || c.user.name} avatarUrl={c.user.avatarUrl} size={24} />
+                            <p className="text-sm leading-snug">
+                              <span className="font-medium text-text-main">{c.user.nickname || c.user.name}</span>{' '}
+                              <span className="text-text-muted">{c.text}</span>
+                            </p>
+                          </div>
                         ))}
                       </div>
                     )}
