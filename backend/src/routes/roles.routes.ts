@@ -25,6 +25,7 @@ rolesRouter.get('/', async (_req, res) => {
         key: role.key,
         label: role.label,
         dailyPostLimit: role.dailyPostLimit,
+        dailyRecadoLimit: role.dailyRecadoLimit,
         permissions: Object.fromEntries(ALL_PERMISSION_KEYS.map((key) => [key, map.get(key) ?? false])),
       };
     }),
@@ -33,21 +34,23 @@ rolesRouter.get('/', async (_req, res) => {
 
 rolesRouter.patch('/:id', async (req, res) => {
   const id = Number(req.params.id);
-  const { label, permissions, dailyPostLimit } = req.body as {
+  const { label, permissions, dailyPostLimit, dailyRecadoLimit } = req.body as {
     label?: string;
     permissions?: Record<string, boolean>;
     dailyPostLimit?: number;
+    dailyRecadoLimit?: number;
   };
 
   const role = await prisma.role.findUnique({ where: { id } });
   if (!role) return res.status(404).json({ error: 'Papel não encontrado' });
 
-  if (label !== undefined || dailyPostLimit !== undefined) {
+  if (label !== undefined || dailyPostLimit !== undefined || dailyRecadoLimit !== undefined) {
     await prisma.role.update({
       where: { id },
       data: {
         ...(label !== undefined ? { label } : {}),
         ...(dailyPostLimit !== undefined ? { dailyPostLimit: Math.max(0, Math.trunc(dailyPostLimit)) } : {}),
+        ...(dailyRecadoLimit !== undefined ? { dailyRecadoLimit: Math.max(0, Math.trunc(dailyRecadoLimit)) } : {}),
       },
     });
   }
@@ -71,6 +74,7 @@ rolesRouter.patch('/:id', async (req, res) => {
     key: updated!.key,
     label: updated!.label,
     dailyPostLimit: updated!.dailyPostLimit,
+    dailyRecadoLimit: updated!.dailyRecadoLimit,
     permissions: Object.fromEntries(ALL_PERMISSION_KEYS.map((key) => [key, map.get(key) ?? false])),
   });
 });

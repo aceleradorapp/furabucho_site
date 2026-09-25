@@ -13,6 +13,7 @@ import { AdminUserPermissionsPage } from './pages/admin/AdminUserPermissionsPage
 import { AdminUploadsPage } from './pages/admin/AdminUploadsPage'
 import { AdminUserPhotosPage } from './pages/admin/AdminUserPhotosPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
+import { BilhetinhosPage } from './pages/BilhetinhosPage'
 import { BirthdaysPage } from './pages/BirthdaysPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { DownloadAppPage } from './pages/DownloadAppPage'
@@ -61,6 +62,14 @@ function App() {
         element={
           <ProtectedRoute>
             <GalleryDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bilhetinhos"
+        element={
+          <ProtectedRoute>
+            <BilhetinhosPage />
           </ProtectedRoute>
         }
       />

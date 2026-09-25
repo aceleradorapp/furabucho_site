@@ -6,6 +6,7 @@ import {
   Heart,
   Image as ImageIcon,
   MessageCircle,
+  MoreHorizontal,
   Send,
   ShieldAlert,
   Trash2,
@@ -178,6 +179,12 @@ export function FeedPage() {
     await load();
   }
 
+  async function handleDeleteComment(commentId: number) {
+    if (!(await confirm({ title: 'Apagar este comentário?', variant: 'danger' }))) return;
+    await api.delete(`/posts/comments/${commentId}`);
+    await load();
+  }
+
   return (
     <PrivateLayout>
       <div className="max-w-xl mx-auto py-6 px-2 sm:px-4">
@@ -220,6 +227,8 @@ export function FeedPage() {
             posts.map((post) => {
               const visibleComments = expandedComments[post.id] ? post.comments : post.comments.slice(-2);
               const hiddenCount = post.comments.length - visibleComments.length;
+              const isAuthor = post.author.id === user?.id;
+              const canModerate = !!user?.permissions['feed.moderate'];
 
               return (
                 <article
@@ -242,14 +251,14 @@ export function FeedPage() {
                       )}
                     </div>
 
-                    {user?.role === 'admin' && (
+                    {(isAuthor || canModerate) && (
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
                           <button
                             className="p-1.5 rounded-full hover:bg-card-subtle text-text-muted shrink-0"
-                            aria-label="Ações de administrador"
+                            aria-label="Opções da publicação"
                           >
-                            <ShieldAlert size={18} />
+                            {canModerate ? <ShieldAlert size={18} /> : <MoreHorizontal size={18} />}
                           </button>
                         </DropdownMenu.Trigger>
                         <DropdownMenu.Portal>
@@ -258,17 +267,19 @@ export function FeedPage() {
                             sideOffset={6}
                             className="bg-card rounded-xl shadow-2xl border border-border py-2 min-w-[180px] z-40"
                           >
-                            <DropdownMenu.Item
-                              onSelect={() => handleToggleBlock(post)}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer"
-                            >
-                              <Ban size={16} /> {post.blocked ? 'Desbloquear' : 'Bloquear'}
-                            </DropdownMenu.Item>
+                            {canModerate && (
+                              <DropdownMenu.Item
+                                onSelect={() => handleToggleBlock(post)}
+                                className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer"
+                              >
+                                <Ban size={16} /> {post.blocked ? 'Desbloquear' : 'Bloquear'}
+                              </DropdownMenu.Item>
+                            )}
                             <DropdownMenu.Item
                               onSelect={() => handleDeletePost(post.id)}
                               className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-card-subtle outline-none cursor-pointer"
                             >
-                              <Trash2 size={16} /> Excluir
+                              <Trash2 size={16} /> {isAuthor && !canModerate ? 'Apagar minha publicação' : 'Excluir'}
                             </DropdownMenu.Item>
                           </DropdownMenu.Content>
                         </DropdownMenu.Portal>
@@ -349,12 +360,22 @@ export function FeedPage() {
                     {visibleComments.length > 0 && (
                       <div className="flex flex-col gap-2 mb-2">
                         {visibleComments.map((c) => (
-                          <div key={c.id} className="flex items-start gap-2">
+                          <div key={c.id} className="flex items-start gap-2 group">
                             <Avatar name={c.user.nickname || c.user.name} avatarUrl={c.user.avatarUrl} size={24} />
-                            <p className="text-sm leading-snug">
+                            <p className="text-sm leading-snug flex-1">
                               <span className="font-medium text-text-main">{c.user.nickname || c.user.name}</span>{' '}
                               <span className="text-text-muted">{c.text}</span>
                             </p>
+                            {(c.user.id === user?.id || canModerate) && (
+                              <button
+                                onClick={() => handleDeleteComment(c.id)}
+                                className="shrink-0 p-1 -m-1 text-text-muted/50 hover:text-red-600 transition"
+                                aria-label="Apagar comentário"
+                                title="Apagar comentário"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>

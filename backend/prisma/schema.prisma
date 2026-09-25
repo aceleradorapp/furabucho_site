@@ -8,10 +8,13 @@ datasource db {
 }
 
 model Role {
-  id              Int     @id @default(autoincrement())
-  key             String  @unique
-  label           String
-  dailyPostLimit  Int     @default(4)
+  id                Int     @id @default(autoincrement())
+  key               String  @unique
+  label             String
+  dailyPostLimit    Int     @default(4)
+  // Quantos bilhetinhos a pessoa pode ENVIAR por dia (cada envio conta 1, mesmo indo pra
+  // varias pessoas). Comeca baixo de proposito; 0 desliga o recurso pro papel.
+  dailyRecadoLimit  Int     @default(3)
 
   users       User[]
   permissions RolePermission[]
@@ -65,6 +68,46 @@ model User {
   pontaFirmePayers  PontaFirmePayer[]
   pontaFirmeEventPayers PontaFirmeEventPayer[]
   convertedFromPioneiro Pioneiro?
+  notifications     Notification[] @relation("NotificacoesRecebidas")
+  notificationsCaused Notification[] @relation("NotificacoesCausadas")
+  recadosEnviados   Recado[] @relation("RecadosEnviados")
+  recadosRecebidos  Recado[] @relation("RecadosRecebidos")
+}
+
+// "Bilhetinho": recado curto de um membro pra outro(s), sempre identificado (sem anonimato,
+// pra nao virar mal-entendido). Um envio pra varias pessoas vira varias linhas com o mesmo
+// batchId -- assim cada um le o seu, e quem enviou consegue ver que foi um envio so.
+model Recado {
+  id         Int       @id @default(autoincrement())
+  fromUserId Int
+  fromUser   User      @relation("RecadosEnviados", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId   Int
+  toUser     User      @relation("RecadosRecebidos", fields: [toUserId], references: [id], onDelete: Cascade)
+  message    String    @db.Text
+  batchId    String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([toUserId, readAt])
+  @@index([fromUserId, createdAt])
+}
+
+// Aviso pessoal dentro do app (o sino). Diferente de Announcement, que e recado do admin
+// pra todo mundo -- aqui e "fulano comentou na sua foto", que so interessa a uma pessoa.
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation("NotificacoesRecebidas", fields: [userId], references: [id], onDelete: Cascade)
+  // Quem provocou o aviso. Fica nulo quando e aviso do proprio sistema (aniversario, etc.).
+  actorId   Int?
+  actor     User?     @relation("NotificacoesCausadas", fields: [actorId], references: [id], onDelete: SetNull)
+  type      String
+  message   String    @db.Text
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
 }
 
 model SiteSettings {
