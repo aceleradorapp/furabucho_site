@@ -25,10 +25,13 @@ postsRouter.get('/', async (req: AuthedRequest, res) => {
           role: { select: { key: true } },
         },
       },
-      likes: true,
+      likes: {
+        orderBy: { createdAt: 'asc' },
+        include: { user: { select: { id: true, name: true, nickname: true, avatarUrl: true } } },
+      },
       comments: {
         orderBy: { createdAt: 'asc' },
-        include: { user: { select: { id: true, name: true } } },
+        include: { user: { select: { id: true, name: true, nickname: true, avatarUrl: true } } },
       },
     },
   });
@@ -44,6 +47,7 @@ postsRouter.get('/', async (req: AuthedRequest, res) => {
       author: { ...p.author, role: p.author.role.key },
       likeCount: p.likes.length,
       likedByMe: p.likes.some((l) => l.userId === req.userId),
+      likedBy: p.likes.map((l) => l.user),
       comments: p.comments.map((c) => ({ id: c.id, text: c.text, user: c.user, createdAt: c.createdAt })),
     })),
   );
@@ -109,6 +113,7 @@ postsRouter.post(
       author: { ...post.author, role: post.author.role.key },
       likeCount: 0,
       likedByMe: false,
+      likedBy: [],
       comments: [],
     });
   },
@@ -135,7 +140,7 @@ postsRouter.post('/:id/comments', async (req: AuthedRequest, res) => {
 
   const comment = await prisma.comment.create({
     data: { postId, userId: req.userId as number, text },
-    include: { user: { select: { id: true, name: true } } },
+    include: { user: { select: { id: true, name: true, nickname: true, avatarUrl: true } } },
   });
 
   res.status(201).json(comment);

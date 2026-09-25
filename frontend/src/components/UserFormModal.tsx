@@ -327,7 +327,7 @@ export function UserFormModal({
                   type="tel"
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(formatPhoneBR(e.target.value))}
-                  placeholder="(19)997230475"
+                  placeholder="(11)999999999"
                   className={inputClass}
                 />
               </div>
