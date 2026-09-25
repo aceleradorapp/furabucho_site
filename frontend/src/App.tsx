@@ -13,6 +13,7 @@ import { AdminUserPermissionsPage } from './pages/admin/AdminUserPermissionsPage
 import { AdminUploadsPage } from './pages/admin/AdminUploadsPage'
 import { AdminUserPhotosPage } from './pages/admin/AdminUserPhotosPage'
 import { AdminUsersPage } from './pages/admin/AdminUsersPage'
+import { BilhetinhosPage } from './pages/BilhetinhosPage'
 import { BirthdaysPage } from './pages/BirthdaysPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { DownloadAppPage } from './pages/DownloadAppPage'
@@ -24,6 +25,7 @@ import { PioneirosPage } from './pages/PioneirosPage'
 import { PioneirosPainelPage } from './pages/PioneirosPainelPage'
 import { PontaFirmePage } from './pages/PontaFirmePage'
 import { ProfilePage } from './pages/ProfilePage'
+import { WelcomePage } from './pages/WelcomePage'
 
 function App() {
   return (
@@ -32,6 +34,7 @@ function App() {
       <Route path="/pioneiros" element={<PioneirosPage />} />
       <Route path="/pioneiros/painel" element={<PioneirosPainelPage />} />
       <Route path="/trocar-senha" element={<ChangePasswordPage />} />
+      <Route path="/boas-vindas" element={<WelcomePage />} />
       <Route
         path="/feed"
         element={
@@ -61,6 +64,14 @@ function App() {
         element={
           <ProtectedRoute>
             <GalleryDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bilhetinhos"
+        element={
+          <ProtectedRoute>
+            <BilhetinhosPage />
           </ProtectedRoute>
         }
       />

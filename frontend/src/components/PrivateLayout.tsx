@@ -8,6 +8,7 @@ import {
   Images,
   KeyRound,
   LogOut,
+  Mail,
   Megaphone,
   MessageSquare,
   Moon,
@@ -30,11 +31,22 @@ import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../theme/ThemeContext';
 import { AnnouncementBellButton, AnnouncementFullscreenViewer, type AnnouncementItem } from './AnnouncementsBell';
 import { Avatar } from './Avatar';
+import { NotificationsBell } from './NotificationsBell';
 import { useConfirm } from './ConfirmDialogProvider';
 import { TodayBirthdaysBanner } from './TodayBirthdaysBanner';
 
 const ANNOUNCEMENT_AUTO_SHOW_DELAY = 3000;
 const ANNOUNCEMENT_POLL_INTERVAL = 20000;
+
+// As cinco telas do dia a dia. A mesma lista serve a barra de cima (desktop) e a de baixo
+// (celular), pra nao existir a chance de uma ter um item que a outra nao tem. Os rotulos sao
+// curtos de proposito: precisam caber embaixo do icone num celular de 360px.
+const MENU_PRINCIPAL = [
+  { to: '/feed', icone: Home, rotulo: 'Início' },
+  { to: '/galeria', icone: Images, rotulo: 'Fotos' },
+  { to: '/bilhetinhos', icone: Mail, rotulo: 'Bilhetes' },
+  { to: '/aniversariantes', icone: Cake, rotulo: 'Aniversários' },
+] as const;
 
 export function PrivateLayout({ children }: { children: ReactNode }) {
   const { user, realUser, viewAsMember, viewModeLoading, toggleViewAsMember, logout } = useAuth();
@@ -143,39 +155,29 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/feed" className="flex items-center gap-2">
             <img src="/ico-ff.jpeg" alt={siteName} className="w-8 h-8 rounded-lg object-cover shrink-0" />
-            <span className="hidden sm:inline font-display uppercase tracking-wider text-sm text-text-main">
+            {/* Entre 820px e 1100px a barra fica cheia por causa dos rótulos; some o nome do
+                site nessa faixa, que é o item mais dispensável (o logo continua ali). */}
+            <span className="hidden sm:inline min-[820px]:hidden min-[1100px]:inline font-display uppercase tracking-wider text-sm text-text-main">
               {siteName}
             </span>
           </Link>
 
           <nav className="flex items-center gap-1">
-            <div className="hidden md:flex items-center gap-1">
-              <Link
-                to="/feed"
-                className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/feed') ? 'text-primary' : 'text-text-main'}`}
-                aria-label="Feed"
-                title="Feed"
-              >
-                <Home size={22} />
-              </Link>
-
-              <Link
-                to="/galeria"
-                className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/galeria') ? 'text-primary' : 'text-text-main'}`}
-                aria-label="Galeria"
-                title="Galeria"
-              >
-                <Images size={22} />
-              </Link>
-
-              <Link
-                to="/aniversariantes"
-                className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/aniversariantes') ? 'text-primary' : 'text-text-main'}`}
-                aria-label="Aniversariantes"
-                title="Aniversariantes"
-              >
-                <Cake size={22} />
-              </Link>
+            <div className="hidden md:flex items-center gap-0.5">
+              {MENU_PRINCIPAL.map(({ to, icone: Icone, rotulo }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className={`flex items-center gap-2 px-2 min-[1100px]:px-3 h-11 rounded-full hover:bg-card-subtle transition ${
+                    isActive(to) ? 'text-primary font-semibold' : 'text-text-main'
+                  }`}
+                  aria-label={rotulo}
+                  title={rotulo}
+                >
+                  <Icone size={22} />
+                  <span className="hidden min-[820px]:inline text-sm">{rotulo}</span>
+                </Link>
+              ))}
 
               <AnnouncementBellButton
                 announcements={announcements}
@@ -184,22 +186,15 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                 onSelect={setActiveAnnouncement}
                 onDelete={handleDeleteAnnouncement}
                 canManage={user.permissions['announcements.manage']}
-                className="p-2 rounded-full hover:bg-card-subtle transition text-text-main"
+                className="flex items-center gap-2 px-2 min-[1100px]:px-3 h-11 rounded-full hover:bg-card-subtle transition text-text-main"
+                label="Novidades"
+                labelClassName="hidden min-[820px]:inline text-sm"
               />
-
-              <Link
-                to="/app"
-                className={`p-2 rounded-full hover:bg-card-subtle transition ${isActive('/app') ? 'text-primary' : 'text-text-main'}`}
-                aria-label="Baixar o app"
-                title="Baixar o app"
-              >
-                <Smartphone size={22} />
-              </Link>
 
               {hasPontaFirmeAccess && (
                 <Link
                   to="/ponta-firme"
-                  className={`p-2 rounded-full transition shadow-sm ${
+                  className={`ml-1 flex items-center justify-center w-11 h-11 rounded-full transition shadow-sm ${
                     isActive('/ponta-firme')
                       ? 'bg-[#F59E0B] text-white'
                       : 'bg-[#F59E0B]/15 text-[#F59E0B] hover:bg-[#F59E0B]/25'
@@ -211,6 +206,10 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                 </Link>
               )}
             </div>
+
+            {/* Avisos pessoais ficam no topo (perto do avatar) tanto no celular quanto no
+                desktop -- é coisa "sua", diferente das Novidades, que são recado pra todos. */}
+            <NotificationsBell className="p-2 rounded-full hover:bg-card-subtle transition text-text-main" />
 
             {hasSettingsMenu && (
               <DropdownMenu.Root>
@@ -422,9 +421,29 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                   <DropdownMenu.Item asChild>
                     <Link
                       to="/perfil"
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-main hover:bg-card-subtle outline-none"
                     >
                       <UserRound size={16} /> Meu perfil
+                    </Link>
+                  </DropdownMenu.Item>
+                  {/* Ponta Firme e "baixar o app" saíram da barra de navegação pra ela caber em
+                      cinco itens com nome. Aqui continuam a um toque de distância. */}
+                  {hasPontaFirmeAccess && (
+                    <DropdownMenu.Item asChild>
+                      <Link
+                        to="/ponta-firme"
+                        className="md:hidden flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#B45309] dark:text-[#F59E0B] hover:bg-card-subtle outline-none"
+                      >
+                        <Anchor size={16} /> Área Ponta Firme
+                      </Link>
+                    </DropdownMenu.Item>
+                  )}
+                  <DropdownMenu.Item asChild>
+                    <Link
+                      to="/app"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-main hover:bg-card-subtle outline-none"
+                    >
+                      <Smartphone size={16} /> Instalar no celular
                     </Link>
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
@@ -432,7 +451,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                       e.preventDefault();
                       toggleTheme();
                     }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer"
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer"
                   >
                     {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                     {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
@@ -444,7 +463,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                         toggleViewAsMember();
                       }}
                       disabled={viewModeLoading}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer disabled:opacity-60 disabled:cursor-wait"
                     >
                       <UserCog size={16} />
                       {viewAsMember ? 'Voltar para Admin' : 'Ver como Membro'}
@@ -452,7 +471,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                   )}
                   <DropdownMenu.Item
                     onSelect={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-card-subtle outline-none cursor-pointer"
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-card-subtle outline-none cursor-pointer"
                   >
                     <LogOut size={16} /> Sair
                   </DropdownMenu.Item>
@@ -503,24 +522,23 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
 
       <main className="pb-20 md:pb-8">{children}</main>
 
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-center justify-around h-16">
-        <Link to="/feed" className={`p-2 ${isActive('/feed') ? 'text-primary' : 'text-text-muted'}`} aria-label="Feed">
-          <Home size={24} />
-        </Link>
-        <Link
-          to="/galeria"
-          className={`p-2 ${isActive('/galeria') ? 'text-primary' : 'text-text-muted'}`}
-          aria-label="Galeria"
-        >
-          <Images size={24} />
-        </Link>
-        <Link
-          to="/aniversariantes"
-          className={`p-2 ${isActive('/aniversariantes') ? 'text-primary' : 'text-text-muted'}`}
-          aria-label="Aniversariantes"
-        >
-          <Cake size={24} />
-        </Link>
+      {/* Cinco itens, cada um com nome embaixo do ícone. Ícone sozinho obriga a adivinhar, e
+          boa parte da turma não vai adivinhar. O que sobra (Ponta Firme, baixar o app, perfil)
+          fica no menu do avatar, no topo, que também é alcançável no celular. */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-stretch h-[4.25rem] pb-[env(safe-area-inset-bottom)]">
+        {MENU_PRINCIPAL.map(({ to, icone: Icone, rotulo }) => (
+          <Link
+            key={to}
+            to={to}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 ${
+              isActive(to) ? 'text-primary font-semibold' : 'text-text-muted'
+            }`}
+            aria-label={rotulo}
+          >
+            <Icone size={23} />
+            <span className="text-[10px] leading-none">{rotulo}</span>
+          </Link>
+        ))}
         <AnnouncementBellButton
           announcements={announcements}
           open={bellOpenMobile}
@@ -528,21 +546,10 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           onSelect={setActiveAnnouncement}
           onDelete={handleDeleteAnnouncement}
           canManage={user.permissions['announcements.manage']}
-          className="p-2 text-text-muted"
-          iconSize={24}
+          className="flex-1 flex flex-col items-center justify-center gap-1 text-text-muted"
+          iconSize={23}
+          label="Novidades"
         />
-        <Link to="/app" className={`p-2 ${isActive('/app') ? 'text-primary' : 'text-text-muted'}`} aria-label="Baixar o app">
-          <Smartphone size={24} />
-        </Link>
-        {hasPontaFirmeAccess && (
-          <Link
-            to="/ponta-firme"
-            className={`p-2 rounded-full ${isActive('/ponta-firme') ? 'bg-[#F59E0B] text-white' : 'text-[#F59E0B]'}`}
-            aria-label="Ponta Firme"
-          >
-            <Anchor size={24} />
-          </Link>
-        )}
       </nav>
 
       {activeAnnouncement && (

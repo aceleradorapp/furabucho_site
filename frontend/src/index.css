@@ -61,6 +61,14 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* O Safari do iPhone dá zoom sozinho na página quando o campo focado tem fonte menor que 16px,
+   e depois não volta. Fixar 16px nos campos mata o problema na raiz, em todas as telas. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
 ::selection {
   background: var(--color-primary);
   color: white;

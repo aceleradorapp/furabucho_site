@@ -23,6 +23,8 @@ export function AnnouncementBellButton({
   canManage,
   className,
   iconSize = 22,
+  label,
+  labelClassName = 'text-[10px] font-medium leading-none',
 }: {
   announcements: AnnouncementItem[];
   open: boolean;
@@ -32,6 +34,9 @@ export function AnnouncementBellButton({
   canManage: boolean;
   className: string;
   iconSize?: number;
+  /** Texto junto ao ícone. Na barra de baixo do celular, ícone sozinho não explica. */
+  label?: string;
+  labelClassName?: string;
 }) {
   const unseenCount = announcements.filter((a) => !a.viewed).length;
 
@@ -47,6 +52,7 @@ export function AnnouncementBellButton({
               </span>
             )}
           </span>
+          {label && <span className={labelClassName}>{label}</span>}
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>

@@ -19,6 +19,7 @@ interface Role {
   key: string;
   label: string;
   dailyPostLimit: number;
+  dailyRecadoLimit: number;
   permissions: Record<string, boolean>;
 }
 
@@ -60,6 +61,12 @@ export function AdminRolesPage() {
     await api.patch(`/admin/roles/${role.id}`, { dailyPostLimit: safeValue });
   }
 
+  async function saveDailyRecadoLimit(role: Role, value: number) {
+    const safeValue = Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : role.dailyRecadoLimit;
+    setRoles((prev) => prev.map((r) => (r.id === role.id ? { ...r, dailyRecadoLimit: safeValue } : r)));
+    await api.patch(`/admin/roles/${role.id}`, { dailyRecadoLimit: safeValue });
+  }
+
   return (
     <PrivateLayout>
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -78,7 +85,7 @@ export function AdminRolesPage() {
               <div key={role.id} className="border border-border rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
                   <h2 className="font-medium text-text-main">{role.label}</h2>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-x-3 gap-y-2 flex-wrap">
                     <label className="flex items-center gap-2 text-xs text-text-muted">
                       Posts por dia
                       <input
@@ -89,6 +96,18 @@ export function AdminRolesPage() {
                         onBlur={(e) => saveDailyPostLimit(role, Number(e.target.value))}
                         className="w-16 rounded-lg border border-border px-2 py-1 text-sm text-text-main outline-none focus:border-primary"
                         title="0 = sem limite"
+                      />
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-text-muted">
+                      Bilhetinhos por dia
+                      <input
+                        type="number"
+                        min={0}
+                        defaultValue={role.dailyRecadoLimit}
+                        key={`${role.id}-recado-${role.dailyRecadoLimit}`}
+                        onBlur={(e) => saveDailyRecadoLimit(role, Number(e.target.value))}
+                        className="w-16 rounded-lg border border-border px-2 py-1 text-sm text-text-main outline-none focus:border-primary"
+                        title="Quantos envios por dia. Cada envio conta 1, mesmo indo pra várias pessoas. 0 = desativa os bilhetinhos para este papel."
                       />
                     </label>
                     {isAdminRole && (

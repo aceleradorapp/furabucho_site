@@ -6,12 +6,14 @@ import {
   Heart,
   Image as ImageIcon,
   MessageCircle,
+  MoreHorizontal,
   Send,
   ShieldAlert,
   Trash2,
   Video,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
@@ -129,6 +131,8 @@ function PostSkeleton() {
 export function FeedPage() {
   const { user } = useAuth();
   const confirm = useConfirm();
+  const location = useLocation();
+  const [postDestacado, setPostDestacado] = useState<number | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -145,6 +149,24 @@ export function FeedPage() {
   useEffect(() => {
     load();
   }, []);
+
+  // Um aviso do sino chega como /feed#post-123. Só dá pra rolar depois que as publicações
+  // carregaram, por isso o efeito também depende de `posts`. O destaque é temporário: serve pra
+  // pessoa achar a publicação com o olho, não pra ficar marcada.
+  useEffect(() => {
+    const alvo = location.hash.match(/^#post-(\d+)$/);
+    if (!alvo || posts.length === 0) return;
+
+    const id = Number(alvo[1]);
+    const el = document.getElementById(`post-${id}`);
+    // A publicação pode não estar aqui: foi apagada, ou bloqueada e some pra quem não modera.
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setPostDestacado(id);
+    const timer = setTimeout(() => setPostDestacado(null), 2500);
+    return () => clearTimeout(timer);
+  }, [location.hash, posts]);
 
   const postsToday = user ? posts.filter((p) => p.author.id === user.id && isToday(p.createdAt)).length : 0;
   const dailyLimit = user?.dailyPostLimit ?? 0;
@@ -175,6 +197,12 @@ export function FeedPage() {
   async function handleDeletePost(postId: number) {
     if (!(await confirm({ title: 'Excluir esta postagem definitivamente?', variant: 'danger' }))) return;
     await api.delete(`/posts/${postId}`);
+    await load();
+  }
+
+  async function handleDeleteComment(commentId: number) {
+    if (!(await confirm({ title: 'Apagar este comentário?', variant: 'danger' }))) return;
+    await api.delete(`/posts/comments/${commentId}`);
     await load();
   }
 
@@ -220,11 +248,16 @@ export function FeedPage() {
             posts.map((post) => {
               const visibleComments = expandedComments[post.id] ? post.comments : post.comments.slice(-2);
               const hiddenCount = post.comments.length - visibleComments.length;
+              const isAuthor = post.author.id === user?.id;
+              const canModerate = !!user?.permissions['feed.moderate'];
 
               return (
                 <article
                   key={post.id}
-                  className={`bg-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow ${post.blocked ? 'border-red-300' : 'border-border'}`}
+                  id={`post-${post.id}`}
+                  className={`bg-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow scroll-mt-20 ${
+                    post.blocked ? 'border-red-300' : 'border-border'
+                  } ${postDestacado === post.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-card-subtle' : ''}`}
                 >
                   <header className="flex items-center justify-between gap-2 px-4 py-3">
                     <div className="flex items-center gap-2 min-w-0">
@@ -242,14 +275,14 @@ export function FeedPage() {
                       )}
                     </div>
 
-                    {user?.role === 'admin' && (
+                    {(isAuthor || canModerate) && (
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger asChild>
                           <button
                             className="p-1.5 rounded-full hover:bg-card-subtle text-text-muted shrink-0"
-                            aria-label="Ações de administrador"
+                            aria-label="Opções da publicação"
                           >
-                            <ShieldAlert size={18} />
+                            {canModerate ? <ShieldAlert size={18} /> : <MoreHorizontal size={18} />}
                           </button>
                         </DropdownMenu.Trigger>
                         <DropdownMenu.Portal>
@@ -258,17 +291,19 @@ export function FeedPage() {
                             sideOffset={6}
                             className="bg-card rounded-xl shadow-2xl border border-border py-2 min-w-[180px] z-40"
                           >
-                            <DropdownMenu.Item
-                              onSelect={() => handleToggleBlock(post)}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer"
-                            >
-                              <Ban size={16} /> {post.blocked ? 'Desbloquear' : 'Bloquear'}
-                            </DropdownMenu.Item>
+                            {canModerate && (
+                              <DropdownMenu.Item
+                                onSelect={() => handleToggleBlock(post)}
+                                className="flex items-center gap-2 px-4 py-2 text-sm text-text-main hover:bg-card-subtle outline-none cursor-pointer"
+                              >
+                                <Ban size={16} /> {post.blocked ? 'Desbloquear' : 'Bloquear'}
+                              </DropdownMenu.Item>
+                            )}
                             <DropdownMenu.Item
                               onSelect={() => handleDeletePost(post.id)}
                               className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-card-subtle outline-none cursor-pointer"
                             >
-                              <Trash2 size={16} /> Excluir
+                              <Trash2 size={16} /> {isAuthor && !canModerate ? 'Apagar minha publicação' : 'Excluir'}
                             </DropdownMenu.Item>
                           </DropdownMenu.Content>
                         </DropdownMenu.Portal>
@@ -349,12 +384,22 @@ export function FeedPage() {
                     {visibleComments.length > 0 && (
                       <div className="flex flex-col gap-2 mb-2">
                         {visibleComments.map((c) => (
-                          <div key={c.id} className="flex items-start gap-2">
+                          <div key={c.id} className="flex items-start gap-2 group">
                             <Avatar name={c.user.nickname || c.user.name} avatarUrl={c.user.avatarUrl} size={24} />
-                            <p className="text-sm leading-snug">
+                            <p className="text-sm leading-snug flex-1">
                               <span className="font-medium text-text-main">{c.user.nickname || c.user.name}</span>{' '}
                               <span className="text-text-muted">{c.text}</span>
                             </p>
+                            {(c.user.id === user?.id || canModerate) && (
+                              <button
+                                onClick={() => handleDeleteComment(c.id)}
+                                className="shrink-0 p-1 -m-1 text-text-muted/50 hover:text-red-600 transition"
+                                aria-label="Apagar comentário"
+                                title="Apagar comentário"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
