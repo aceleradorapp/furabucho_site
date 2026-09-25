@@ -57,6 +57,9 @@ model User {
   roleId            Int
   role              Role      @relation(fields: [roleId], references: [id])
   mustChangePassword Boolean  @default(true)
+  // Quando a pessoa terminou as boas-vindas do primeiro acesso. Fica no banco (e nao no
+  // navegador) pra ela nao rever tudo de novo ao trocar de aparelho.
+  welcomeSeenAt     DateTime?
   createdAt         DateTime  @default(now())
 
   posts             Post[]

@@ -149,7 +149,9 @@ postsRouter.post('/:id/like', async (req: AuthedRequest, res) => {
       actorId: userId,
       type: 'like',
       message: `${nomeExibicao(quemCurtiu)} curtiu sua publicação`,
-      link: '/feed',
+      // Leva direto na publicacao, nao no topo do feed -- com o feed cheio, "curtiu sua
+      // publicacao" sem endereco obriga a pessoa a cacar qual era.
+      link: `/feed#post-${postId}`,
     });
   }
 
@@ -173,7 +175,7 @@ postsRouter.post('/:id/comments', async (req: AuthedRequest, res) => {
       actorId: req.userId,
       type: 'comment',
       message: `${nomeExibicao(comment.user)} comentou na sua publicação: "${trecho(text)}"`,
-      link: '/feed',
+      link: `/feed#post-${postId}`,
     });
   }
 

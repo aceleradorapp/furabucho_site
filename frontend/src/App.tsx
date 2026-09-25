@@ -25,6 +25,7 @@ import { PioneirosPage } from './pages/PioneirosPage'
 import { PioneirosPainelPage } from './pages/PioneirosPainelPage'
 import { PontaFirmePage } from './pages/PontaFirmePage'
 import { ProfilePage } from './pages/ProfilePage'
+import { WelcomePage } from './pages/WelcomePage'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
       <Route path="/pioneiros" element={<PioneirosPage />} />
       <Route path="/pioneiros/painel" element={<PioneirosPainelPage />} />
       <Route path="/trocar-senha" element={<ChangePasswordPage />} />
+      <Route path="/boas-vindas" element={<WelcomePage />} />
       <Route
         path="/feed"
         element={

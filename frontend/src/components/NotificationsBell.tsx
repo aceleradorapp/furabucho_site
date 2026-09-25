@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Bell } from 'lucide-react';
+import { Bell, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
@@ -75,6 +75,30 @@ export function NotificationsBell({ className, iconSize = 22 }: { className: str
     if (n.link) navigate(n.link);
   }
 
+  async function apagar(n: NotificationItem) {
+    const anterior = itens;
+    setItens((prev) => prev.filter((x) => x.id !== n.id));
+    if (!n.lida) setNaoLidas((v) => Math.max(0, v - 1));
+    try {
+      await api.delete(`/notifications/${n.id}`);
+    } catch {
+      setItens(anterior); // não deu certo: devolve o aviso pra lista em vez de sumir calado
+      carregar();
+    }
+  }
+
+  async function limparTudo() {
+    const anterior = itens;
+    setItens([]);
+    setNaoLidas(0);
+    try {
+      await api.delete('/notifications');
+    } catch {
+      setItens(anterior);
+      carregar();
+    }
+  }
+
   return (
     <DropdownMenu.Root open={open} onOpenChange={handleOpenChange}>
       <DropdownMenu.Trigger asChild>
@@ -103,28 +127,56 @@ export function NotificationsBell({ className, iconSize = 22 }: { className: str
             </p>
           )}
 
+          {/* A linha é uma div, não um button: a lixeira é um botão dentro dela, e botão
+              dentro de botão não é permitido em HTML. */}
           {itens.map((n) => (
-            <button
+            <div
               key={n.id}
-              onClick={() => abrirNotificacao(n)}
-              className={`w-full text-left flex items-start gap-2.5 px-3 py-2.5 hover:bg-card-subtle transition ${
+              className={`flex items-start gap-2.5 px-3 py-2.5 hover:bg-card-subtle transition ${
                 n.lida ? '' : 'bg-primary/5'
               }`}
             >
-              {n.actor ? (
-                <Avatar name={n.actor.nickname || n.actor.name} avatarUrl={n.actor.avatarUrl} size={30} />
-              ) : (
-                <span className="w-[30px] h-[30px] rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Bell size={14} className="text-primary" />
+              <button
+                onClick={() => abrirNotificacao(n)}
+                className="flex-1 min-w-0 flex items-start gap-2.5 text-left"
+              >
+                {n.actor ? (
+                  <Avatar name={n.actor.nickname || n.actor.name} avatarUrl={n.actor.avatarUrl} size={30} />
+                ) : (
+                  <span className="w-[30px] h-[30px] rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Bell size={14} className="text-primary" />
+                  </span>
+                )}
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm text-text-main leading-snug">{n.message}</span>
+                  <span className="block text-xs text-text-muted mt-0.5">{tempoAtras(n.createdAt)}</span>
                 </span>
-              )}
-              <span className="flex-1 min-w-0">
-                <span className="block text-sm text-text-main leading-snug">{n.message}</span>
-                <span className="block text-xs text-text-muted mt-0.5">{tempoAtras(n.createdAt)}</span>
-              </span>
-              {!n.lida && <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />}
-            </button>
+              </button>
+              {!n.lida && <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  apagar(n);
+                }}
+                className="shrink-0 p-1 -mr-1 text-text-muted/50 hover:text-red-600 transition"
+                aria-label="Apagar aviso"
+                title="Apagar aviso"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           ))}
+
+          {itens.length > 0 && (
+            <div className="border-t border-border mt-1 pt-1">
+              <button
+                onClick={limparTudo}
+                className="w-full text-center px-4 py-2 text-xs font-semibold text-text-muted hover:text-red-600 transition"
+              >
+                Limpar todos os avisos
+              </button>
+            </div>
+          )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

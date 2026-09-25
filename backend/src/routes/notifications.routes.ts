@@ -53,3 +53,20 @@ notificationsRouter.post('/:id/read', async (req: AuthedRequest, res) => {
 
   res.json({ ok: true, atualizadas: resultado.count });
 });
+
+/** Limpa a caixa inteira. Só mexe nos avisos de quem pediu. */
+notificationsRouter.delete('/', async (req: AuthedRequest, res) => {
+  const resultado = await prisma.notification.deleteMany({ where: { userId: req.userId } });
+  res.json({ ok: true, apagadas: resultado.count });
+});
+
+notificationsRouter.delete('/:id', async (req: AuthedRequest, res) => {
+  const id = Number(req.params.id);
+
+  // deleteMany com o userId junto: se o aviso for de outra pessoa, apaga zero linhas em vez de
+  // apagar o aviso alheio. Por isso não usamos delete() direto pelo id.
+  const resultado = await prisma.notification.deleteMany({ where: { id, userId: req.userId } });
+  if (resultado.count === 0) return res.status(404).json({ error: 'Aviso não encontrado' });
+
+  res.status(204).end();
+});

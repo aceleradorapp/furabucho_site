@@ -138,8 +138,8 @@ export function AdminUsersPage() {
           <div className="bg-card-subtle rounded-xl p-4 mb-4 text-sm">
             <p className="text-text-main font-medium mb-1">Membro cadastrado com sucesso!</p>
             <p className="text-text-muted">
-              Repasse essa senha temporária para <strong>{lastCreated.email || lastCreated.whatsapp}</strong>. No
-              primeiro acesso ele será obrigado a trocá-la.
+              Passe essa senha para <strong>{lastCreated.email || lastCreated.whatsapp}</strong> — é a senha padrão de
+              primeiro acesso, sempre a mesma, fácil de ditar. No primeiro acesso ele será obrigado a trocá-la.
             </p>
             <p className="mt-2 font-mono bg-card border border-border rounded-lg px-3 py-1.5 inline-block">
               {lastCreated.tempPassword}

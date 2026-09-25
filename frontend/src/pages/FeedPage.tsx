@@ -13,6 +13,7 @@ import {
   Video,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
@@ -130,6 +131,8 @@ function PostSkeleton() {
 export function FeedPage() {
   const { user } = useAuth();
   const confirm = useConfirm();
+  const location = useLocation();
+  const [postDestacado, setPostDestacado] = useState<number | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -146,6 +149,24 @@ export function FeedPage() {
   useEffect(() => {
     load();
   }, []);
+
+  // Um aviso do sino chega como /feed#post-123. Só dá pra rolar depois que as publicações
+  // carregaram, por isso o efeito também depende de `posts`. O destaque é temporário: serve pra
+  // pessoa achar a publicação com o olho, não pra ficar marcada.
+  useEffect(() => {
+    const alvo = location.hash.match(/^#post-(\d+)$/);
+    if (!alvo || posts.length === 0) return;
+
+    const id = Number(alvo[1]);
+    const el = document.getElementById(`post-${id}`);
+    // A publicação pode não estar aqui: foi apagada, ou bloqueada e some pra quem não modera.
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setPostDestacado(id);
+    const timer = setTimeout(() => setPostDestacado(null), 2500);
+    return () => clearTimeout(timer);
+  }, [location.hash, posts]);
 
   const postsToday = user ? posts.filter((p) => p.author.id === user.id && isToday(p.createdAt)).length : 0;
   const dailyLimit = user?.dailyPostLimit ?? 0;
@@ -233,7 +254,10 @@ export function FeedPage() {
               return (
                 <article
                   key={post.id}
-                  className={`bg-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow ${post.blocked ? 'border-red-300' : 'border-border'}`}
+                  id={`post-${post.id}`}
+                  className={`bg-card rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow scroll-mt-20 ${
+                    post.blocked ? 'border-red-300' : 'border-border'
+                  } ${postDestacado === post.id ? 'ring-2 ring-primary ring-offset-2 ring-offset-card-subtle' : ''}`}
                 >
                   <header className="flex items-center justify-between gap-2 px-4 py-3">
                     <div className="flex items-center gap-2 min-w-0">
