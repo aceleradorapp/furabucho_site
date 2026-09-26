@@ -76,6 +76,107 @@ model User {
   recadosEnviados   Recado[] @relation("RecadosEnviados")
   recadosRecebidos  Recado[] @relation("RecadosRecebidos")
   pushSubscriptions PushSubscription[]
+  clanLideradas     Clan[]        @relation("ClanLider")
+  clanMembro        ClanMember?
+  convitesRecebidos ClanInvite[]  @relation("ConviteConvidado")
+  convitesEnviados  ClanInvite[]  @relation("ConviteAutor")
+  clanSaidas        ClanLeave[]
+  clanEventos       ClanEvent[]   @relation("ClanEventoAutor")
+}
+
+// ---------------------------------------------------------------------------
+// Clas (times). Base das disputas que vem depois.
+// ---------------------------------------------------------------------------
+
+model Clan {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  // Historia ficticia que o proprio cla escreve ("turma do chopp e do barulho").
+  // Sem limite e sem aprovacao previa; o admin bloqueia se for ofensiva.
+  story        String?  @db.Text
+  storyBlocked Boolean  @default(false)
+
+  // A bandeira nao e uma imagem: sao as ESCOLHAS de quem montou. Ocupa quase nada,
+  // sai nitida em qualquer tamanho e ninguem sobe imagem impropria.
+  emblemShape    String @default("escudo")
+  emblemDivision String @default("inteiro")
+  emblemColor1   String @default("#FF5E14")
+  emblemColor2   String @default("#1C1C1F")
+  emblemSymbol   String @default("crown")
+
+  // Nulo = cla sem dono (o lider saiu). Qualquer membro pode assumir.
+  leaderId   Int?
+  leader     User?     @relation("ClanLider", fields: [leaderId], references: [id], onDelete: SetNull)
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  members ClanMember[]
+  invites ClanInvite[]
+  events  ClanEvent[]
+  leaves  ClanLeave[]
+}
+
+// O @unique no userId e o que garante "uma pessoa, um cla so" -- no banco, nao so no
+// codigo. Duas requisicoes simultaneas nao conseguem furar essa regra.
+model ClanMember {
+  id       Int      @id @default(autoincrement())
+  clanId   Int
+  clan     Clan     @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  userId   Int      @unique
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@index([clanId])
+}
+
+model ClanInvite {
+  id          Int    @id @default(autoincrement())
+  clanId      Int
+  clan        Clan   @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  userId      Int
+  user        User   @relation("ConviteConvidado", fields: [userId], references: [id], onDelete: Cascade)
+  invitedById Int
+  invitedBy   User   @relation("ConviteAutor", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  // pendente | aceito | recusado | cancelado
+  status String @default("pendente")
+  // Codigo da frase pronta escolhida na recusa. Nunca texto livre.
+  refusalCode String?
+  respondedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, status])
+  @@index([clanId, status])
+}
+
+// Registro de saida, so pra valer a carencia de 7 dias antes de entrar em outro cla.
+// Quem foi REMOVIDO pelo lider nao escolheu sair, entao nao cumpre carencia.
+model ClanLeave {
+  id     Int      @id @default(autoincrement())
+  userId Int
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clanId Int
+  clan   Clan     @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  kicked Boolean  @default(false)
+  leftAt DateTime @default(now())
+
+  @@index([userId, leftAt])
+}
+
+// O mural: tudo que acontece nos clas aparece aqui, e NAO no feed principal.
+model ClanEvent {
+  id      Int    @id @default(autoincrement())
+  clanId  Int
+  clan    Clan   @relation(fields: [clanId], references: [id], onDelete: Cascade)
+  // criado | entrou | saiu | removido | recusou | lideranca | historia | patente | admin
+  type    String
+  actorId Int?
+  actor   User?  @relation("ClanEventoAutor", fields: [actorId], references: [id], onDelete: SetNull)
+  text    String @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([clanId, createdAt])
+  @@index([createdAt])
 }
 
 // Um aparelho autorizado a receber aviso com o app fechado. E por APARELHO, nao por pessoa:
@@ -144,6 +245,10 @@ model SiteSettings {
   // dentro do app) so aparece quando eventDate esta preenchida -- deixar em branco desliga.
   eventDate                DateTime?
   eventTitle               String?
+  // Interruptor dos clas, igual ao dos Pioneiros: desligado, a area nao existe pra ninguem.
+  // Serve pra liberar como novidade quando ja houver gente suficiente -- cla com 7 pessoas
+  // vira um cla so e nao tem graca.
+  clansEnabled             Boolean  @default(false)
   updatedAt                DateTime @updatedAt
 }
 
