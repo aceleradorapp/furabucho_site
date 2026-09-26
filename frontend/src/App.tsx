@@ -16,6 +16,8 @@ import { AdminUsersPage } from './pages/admin/AdminUsersPage'
 import { BilhetinhosPage } from './pages/BilhetinhosPage'
 import { BirthdaysPage } from './pages/BirthdaysPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
+import { ClaDetalhePage } from './pages/ClaDetalhePage'
+import { ClasPage } from './pages/ClasPage'
 import { DownloadAppPage } from './pages/DownloadAppPage'
 import { FeedPage } from './pages/FeedPage'
 import { GalleryDetailPage } from './pages/GalleryDetailPage'
@@ -64,6 +66,22 @@ function App() {
         element={
           <ProtectedRoute>
             <GalleryDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clas"
+        element={
+          <ProtectedRoute>
+            <ClasPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clas/:id"
+        element={
+          <ProtectedRoute>
+            <ClaDetalhePage />
           </ProtectedRoute>
         }
       />

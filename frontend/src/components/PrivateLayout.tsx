@@ -2,6 +2,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import {
   Anchor,
   Cake,
+  Flag,
   HardDrive,
   Home,
   ImageIcon,
@@ -38,15 +39,19 @@ import { TodayBirthdaysBanner } from './TodayBirthdaysBanner';
 const ANNOUNCEMENT_AUTO_SHOW_DELAY = 3000;
 const ANNOUNCEMENT_POLL_INTERVAL = 20000;
 
-// As cinco telas do dia a dia. A mesma lista serve a barra de cima (desktop) e a de baixo
+// As telas do dia a dia. A mesma lista serve a barra de cima (desktop) e a de baixo
 // (celular), pra nao existir a chance de uma ter um item que a outra nao tem. Os rotulos sao
 // curtos de proposito: precisam caber embaixo do icone num celular de 360px.
-const MENU_PRINCIPAL = [
-  { to: '/feed', icone: Home, rotulo: 'Início' },
-  { to: '/galeria', icone: Images, rotulo: 'Fotos' },
-  { to: '/bilhetinhos', icone: Mail, rotulo: 'Bilhetes' },
-  { to: '/aniversariantes', icone: Cake, rotulo: 'Aniversários' },
-] as const;
+// Clas so entram quando o admin liberar -- ate la nem o item da barra existe.
+function menuPrincipal(comClas: boolean) {
+  return [
+    { to: '/feed', icone: Home, rotulo: 'Início' },
+    { to: '/galeria', icone: Images, rotulo: 'Fotos' },
+    { to: '/bilhetinhos', icone: Mail, rotulo: 'Bilhetes' },
+    ...(comClas ? [{ to: '/clas', icone: Flag, rotulo: 'Clãs' }] : []),
+    { to: '/aniversariantes', icone: Cake, rotulo: 'Aniversários' },
+  ];
+}
 
 export function PrivateLayout({ children }: { children: ReactNode }) {
   const { user, realUser, viewAsMember, viewModeLoading, toggleViewAsMember, logout } = useAuth();
@@ -55,6 +60,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [siteName, setSiteName] = useState('Fura-Bucho');
+  const [clansEnabled, setClansEnabled] = useState(false);
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [activeAnnouncement, setActiveAnnouncement] = useState<AnnouncementItem | null>(null);
   const [bellOpenDesktop, setBellOpenDesktop] = useState(false);
@@ -63,7 +69,10 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     function loadSiteName() {
-      api.get<{ siteName: string }>('/settings').then((s) => setSiteName(s.siteName));
+      api.get<{ siteName: string; clansEnabled: boolean }>('/settings').then((s) => {
+        setSiteName(s.siteName);
+        setClansEnabled(!!s.clansEnabled);
+      });
     }
     loadSiteName();
     window.addEventListener('site-settings-updated', loadSiteName);
@@ -144,6 +153,11 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
     return location.pathname === path;
   }
 
+  // Com 5 itens a barra cabe a partir de 820px (iPad em pé). Ligando os clãs vira 6 itens e
+  // ela precisa de ~880px, então o corte sobe — senão o texto transborda no tablet.
+  // Aqui a base é `hidden` e só UMA regra liga: não há disputa de ordem.
+  const rotuloVisivel = clansEnabled ? 'hidden min-[900px]:inline' : 'hidden min-[820px]:inline';
+
   function handleLogout() {
     logout();
     navigate('/');
@@ -157,14 +171,20 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
             <img src="/ico-ff.jpeg" alt={siteName} className="w-8 h-8 rounded-lg object-cover shrink-0" />
             {/* Entre 820px e 1100px a barra fica cheia por causa dos rótulos; some o nome do
                 site nessa faixa, que é o item mais dispensável (o logo continua ali). */}
-            <span className="hidden sm:inline min-[820px]:hidden min-[1100px]:inline font-display uppercase tracking-wider text-sm text-text-main">
+            {/* Some no meio da faixa (do `md` ao `xl`), onde a barra fica cheia de rótulos.
+                CUIDADO: só breakpoints NOMEADOS aqui. Misturar `sm:` com `min-[900px]:` não
+                funciona — o Tailwind v4 não garante a ordem entre os dois tipos, e a regra de
+                esconder simplesmente não vencia. O sintoma era o nome quebrando em duas linhas
+                em vez de sumir.
+                whitespace-nowrap: se um dia faltar espaço, prefiro que ele vaze a que quebre. */}
+            <span className="hidden sm:inline md:hidden xl:inline whitespace-nowrap font-display uppercase tracking-wider text-sm text-text-main">
               {siteName}
             </span>
           </Link>
 
           <nav className="flex items-center gap-1">
             <div className="hidden md:flex items-center gap-0.5">
-              {MENU_PRINCIPAL.map(({ to, icone: Icone, rotulo }) => (
+              {menuPrincipal(clansEnabled).map(({ to, icone: Icone, rotulo }) => (
                 <Link
                   key={to}
                   to={to}
@@ -175,7 +195,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                   title={rotulo}
                 >
                   <Icone size={22} />
-                  <span className="hidden min-[820px]:inline text-sm">{rotulo}</span>
+                  <span className={`${rotuloVisivel} text-sm`}>{rotulo}</span>
                 </Link>
               ))}
 
@@ -188,7 +208,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
                 canManage={user.permissions['announcements.manage']}
                 className="flex items-center gap-2 px-2 min-[1100px]:px-3 h-11 rounded-full hover:bg-card-subtle transition text-text-main"
                 label="Novidades"
-                labelClassName="hidden min-[820px]:inline text-sm"
+                labelClassName={`${rotuloVisivel} text-sm`}
               />
 
               {hasPontaFirmeAccess && (
@@ -526,7 +546,7 @@ export function PrivateLayout({ children }: { children: ReactNode }) {
           boa parte da turma não vai adivinhar. O que sobra (Ponta Firme, baixar o app, perfil)
           fica no menu do avatar, no topo, que também é alcançável no celular. */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur-md border-t border-border flex items-stretch h-[4.25rem] pb-[env(safe-area-inset-bottom)]">
-        {MENU_PRINCIPAL.map(({ to, icone: Icone, rotulo }) => (
+        {menuPrincipal(clansEnabled).map(({ to, icone: Icone, rotulo }) => (
           <Link
             key={to}
             to={to}
