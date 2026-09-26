@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { enviarPush } from './push';
 
 interface NotificarParams {
   /** Quem recebe o aviso */
@@ -25,6 +26,15 @@ export async function notificar({ userId, actorId, type, message, link }: Notifi
     });
   } catch (err) {
     console.error('Falha ao criar notificação:', err);
+    return;
+  }
+
+  // O aviso dentro do app ja esta salvo. O push e o mesmo aviso chegando no celular com o app
+  // fechado -- se falhar, a pessoa ainda ve tudo no sino. Por isso ele nunca derruba nada.
+  try {
+    await enviarPush(userId, { titulo: 'Amigos Fura-Bucho', corpo: message, link, tag: type });
+  } catch (err) {
+    console.error('Falha ao enviar push:', err);
   }
 }
 
