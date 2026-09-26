@@ -18,6 +18,7 @@ import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { useConfirm } from '../components/ConfirmDialogProvider';
+import { Countdown } from '../components/Countdown';
 import { PostComposerModal } from '../components/PostComposerModal';
 import { PrivateLayout } from '../components/PrivateLayout';
 import { UPLOADS_BASE } from '../lib/config';
@@ -133,6 +134,7 @@ export function FeedPage() {
   const confirm = useConfirm();
   const location = useLocation();
   const [postDestacado, setPostDestacado] = useState<number | null>(null);
+  const [evento, setEvento] = useState<{ eventDate: string | null; eventTitle: string | null } | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -148,6 +150,11 @@ export function FeedPage() {
 
   useEffect(() => {
     load();
+    // A contagem falhar não pode derrubar o feed — se não vier, o bloco só não aparece.
+    api
+      .get<{ eventDate: string | null; eventTitle: string | null }>('/settings')
+      .then(setEvento)
+      .catch(() => setEvento(null));
   }, []);
 
   // Um aviso do sino chega como /feed#post-123. Só dá pra rolar depois que as publicações
@@ -209,6 +216,12 @@ export function FeedPage() {
   return (
     <PrivateLayout>
       <div className="max-w-xl mx-auto py-6 px-2 sm:px-4">
+        {evento?.eventDate && (
+          <div className="mb-5">
+            <Countdown eventDate={evento.eventDate} eventTitle={evento.eventTitle} variante="app" />
+          </div>
+        )}
+
         {user?.permissions['feed.create'] && (
           <>
             <button
