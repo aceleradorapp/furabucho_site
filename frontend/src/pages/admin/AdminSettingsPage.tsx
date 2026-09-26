@@ -41,6 +41,7 @@ interface SiteSettings {
   pioneirosCampaignActive: boolean;
   eventDate: string | null;
   eventTitle: string | null;
+  clansEnabled: boolean;
 }
 
 interface Banner {
@@ -94,6 +95,7 @@ export function AdminSettingsPage() {
         pioneirosCampaignActive: next.pioneirosCampaignActive,
         eventDate: next.eventDate,
         eventTitle: next.eventTitle,
+        clansEnabled: next.clansEnabled,
       });
       setSettings(updated);
       window.dispatchEvent(new Event('site-settings-updated'));
@@ -356,6 +358,33 @@ export function AdminSettingsPage() {
               <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
             </span>
           </label>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Clãs"
+          description="Os membros se juntam em times, montam bandeira e sobem de patente. Enquanto estiver desligado, a área não existe pra ninguém — serve pra você liberar como novidade quando já houver gente suficiente."
+        >
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <span className="text-sm text-text-main">
+              {settings.clansEnabled
+                ? 'Liberado — a turma já pode criar clãs'
+                : 'Desligado — ninguém vê a área dos clãs'}
+            </span>
+            <span className="relative inline-flex shrink-0">
+              <input
+                type="checkbox"
+                checked={settings.clansEnabled}
+                onChange={(e) => updateField({ clansEnabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <span className="w-11 h-6 rounded-full bg-border peer-checked:bg-primary transition-colors" />
+              <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+            </span>
+          </label>
+          <p className="text-xs text-text-muted mt-3">
+            Clã com pouca gente vira um clã só e não tem graça. Vale abrir quando a turma já
+            estiver dentro do app.
+          </p>
         </SettingsSection>
 
         <SettingsSection

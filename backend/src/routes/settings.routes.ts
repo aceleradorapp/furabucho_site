@@ -46,6 +46,7 @@ settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (
     pioneirosCampaignActive,
     eventDate,
     eventTitle,
+    clansEnabled,
   } = req.body as {
     siteName?: string;
     subtitle?: string | null;
@@ -57,6 +58,7 @@ settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (
     pioneirosCampaignActive?: boolean;
     eventDate?: string | null;
     eventTitle?: string | null;
+    clansEnabled?: boolean;
   };
 
   // Data vazia desliga a contagem regressiva. Uma data que o navegador não entende seria
@@ -79,6 +81,7 @@ settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (
       ...(pioneirosCampaignActive !== undefined ? { pioneirosCampaignActive } : {}),
       ...(eventDate !== undefined ? { eventDate: eventDate ? new Date(eventDate) : null } : {}),
       ...(eventTitle !== undefined ? { eventTitle: eventTitle?.trim() || null } : {}),
+      ...(clansEnabled !== undefined ? { clansEnabled: Boolean(clansEnabled) } : {}),
     },
   });
 
