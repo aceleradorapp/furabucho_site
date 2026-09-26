@@ -9,6 +9,26 @@ import { SaveStatusBadge, type SaveStatus } from '../../components/SaveStatusBad
 import { UPLOADS_BASE } from '../../lib/config';
 import { IMAGE_SPECS } from '../../lib/imageSpecs';
 
+/**
+ * O campo datetime-local fala "AAAA-MM-DDTHH:mm" no fuso de quem está olhando, e o banco guarda
+ * em UTC. O servidor fica no Canadá, então mandar a string crua faria ele interpretar a data no
+ * fuso DELE — o encontro apareceria com horas de diferença. Por isso convertemos nos dois
+ * sentidos aqui, e o que trafega é sempre ISO com fuso.
+ */
+function isoParaCampo(iso: string | null) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function campoParaIso(valor: string) {
+  if (!valor) return null;
+  const d = new Date(valor);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 interface SiteSettings {
   id: number;
   siteName: string;
@@ -19,6 +39,8 @@ interface SiteSettings {
   heroImageUrl: string | null;
   aboutText: string | null;
   pioneirosCampaignActive: boolean;
+  eventDate: string | null;
+  eventTitle: string | null;
 }
 
 interface Banner {
@@ -70,6 +92,8 @@ export function AdminSettingsPage() {
         heroTitle: next.heroTitle,
         aboutText: next.aboutText,
         pioneirosCampaignActive: next.pioneirosCampaignActive,
+        eventDate: next.eventDate,
+        eventTitle: next.eventTitle,
       });
       setSettings(updated);
       window.dispatchEvent(new Event('site-settings-updated'));
@@ -272,6 +296,31 @@ export function AdminSettingsPage() {
                 value={settings.foundingYear ?? ''}
                 onChange={(e) => updateField({ foundingYear: e.target.value ? Number(e.target.value) : null })}
                 className={`${inputClass} max-w-[160px]`}
+              />
+            </Field>
+          </div>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Contagem regressiva do encontro"
+          description="Com a data preenchida, aparece um relógio na página inicial (antes do login) e no topo do feed. Deixe em branco pra desligar. Depois que o dia passa, ela some sozinha."
+        >
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Field label="Data e hora do encontro" hint="Deixe vazio para não mostrar contagem nenhuma.">
+              <input
+                type="datetime-local"
+                value={isoParaCampo(settings.eventDate)}
+                onChange={(e) => updateField({ eventDate: campoParaIso(e.target.value) })}
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="Nome do encontro" hint='Aparece junto da contagem. Se vazio, mostra "Nosso encontro".'>
+              <input
+                value={settings.eventTitle ?? ''}
+                onChange={(e) => updateField({ eventTitle: e.target.value })}
+                placeholder="Encontro 2026"
+                className={inputClass}
               />
             </Field>
           </div>

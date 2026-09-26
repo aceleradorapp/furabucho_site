@@ -75,6 +75,23 @@ model User {
   notificationsCaused Notification[] @relation("NotificacoesCausadas")
   recadosEnviados   Recado[] @relation("RecadosEnviados")
   recadosRecebidos  Recado[] @relation("RecadosRecebidos")
+  pushSubscriptions PushSubscription[]
+}
+
+// Um aparelho autorizado a receber aviso com o app fechado. E por APARELHO, nao por pessoa:
+// quem usa celular e computador tem duas linhas. O 'endpoint' e o endereco que o navegador
+// gera -- ele e unico e e o que identifica o aparelho pro servico de push.
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique @db.VarChar(512)
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+  userAgent String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // "Bilhetinho": recado curto de um membro pra outro(s), sempre identificado (sem anonimato,
@@ -123,6 +140,10 @@ model SiteSettings {
   heroImageUrl             String?
   aboutText                String?  @db.Text
   pioneirosCampaignActive  Boolean  @default(true)
+  // Encontro que o site inteiro esta esperando. A contagem regressiva (na pagina publica e
+  // dentro do app) so aparece quando eventDate esta preenchida -- deixar em branco desliga.
+  eventDate                DateTime?
+  eventTitle               String?
   updatedAt                DateTime @updatedAt
 }
 

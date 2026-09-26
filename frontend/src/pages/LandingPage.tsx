@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
+import { Countdown } from '../components/Countdown';
 import { InstallAppButton } from '../components/InstallAppButton';
 import { LoginModal } from '../components/LoginModal';
 import { PioneirosPrompt } from '../components/PioneirosPrompt';
@@ -28,6 +29,8 @@ interface SiteSettings {
   heroImageUrl: string | null;
   aboutText: string | null;
   pioneirosCampaignActive: boolean;
+  eventDate: string | null;
+  eventTitle: string | null;
 }
 
 interface Banner {
@@ -179,6 +182,17 @@ export function LandingPage() {
           >
             Mais que uma festa anual, uma tradição inquebrável. O espaço oficial para manter as resenhas, fotos e datas da família viva.
           </motion.p>
+
+          {settings?.eventDate && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="mt-8 w-full max-w-sm"
+            >
+              <Countdown eventDate={settings.eventDate} eventTitle={settings.eventTitle} variante="publica" />
+            </motion.div>
+          )}
 
           {activeMembersCount !== null && activeMembersCount > 0 && (
             <motion.div

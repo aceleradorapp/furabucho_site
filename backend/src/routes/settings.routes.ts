@@ -35,17 +35,35 @@ settingsRouter.get('/members-showcase', async (_req, res) => {
 });
 
 settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (req, res) => {
-  const { siteName, subtitle, foundingYear, heroTitle, aboutText, logoUrl, heroImageUrl, pioneirosCampaignActive } =
-    req.body as {
-      siteName?: string;
-      subtitle?: string | null;
-      foundingYear?: number | null;
-      heroTitle?: string | null;
-      aboutText?: string | null;
-      logoUrl?: string | null;
-      heroImageUrl?: string | null;
-      pioneirosCampaignActive?: boolean;
-    };
+  const {
+    siteName,
+    subtitle,
+    foundingYear,
+    heroTitle,
+    aboutText,
+    logoUrl,
+    heroImageUrl,
+    pioneirosCampaignActive,
+    eventDate,
+    eventTitle,
+  } = req.body as {
+    siteName?: string;
+    subtitle?: string | null;
+    foundingYear?: number | null;
+    heroTitle?: string | null;
+    aboutText?: string | null;
+    logoUrl?: string | null;
+    heroImageUrl?: string | null;
+    pioneirosCampaignActive?: boolean;
+    eventDate?: string | null;
+    eventTitle?: string | null;
+  };
+
+  // Data vazia desliga a contagem regressiva. Uma data que o navegador não entende seria
+  // gravada como "Invalid Date" e quebraria a conta na tela, então recusamos aqui.
+  if (eventDate !== undefined && eventDate !== null && eventDate !== '' && Number.isNaN(Date.parse(eventDate))) {
+    return res.status(400).json({ error: 'Data do encontro inválida' });
+  }
 
   const settings = await getOrCreateSettings();
   const updated = await prisma.siteSettings.update({
@@ -59,6 +77,8 @@ settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (
       ...(logoUrl !== undefined ? { logoUrl } : {}),
       ...(heroImageUrl !== undefined ? { heroImageUrl } : {}),
       ...(pioneirosCampaignActive !== undefined ? { pioneirosCampaignActive } : {}),
+      ...(eventDate !== undefined ? { eventDate: eventDate ? new Date(eventDate) : null } : {}),
+      ...(eventTitle !== undefined ? { eventTitle: eventTitle?.trim() || null } : {}),
     },
   });
 
