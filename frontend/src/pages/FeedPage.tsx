@@ -135,6 +135,7 @@ export function FeedPage() {
   const location = useLocation();
   const [postDestacado, setPostDestacado] = useState<number | null>(null);
   const [evento, setEvento] = useState<{ eventDate: string | null; eventTitle: string | null } | null>(null);
+  const [videoUploadEnabled, setVideoUploadEnabled] = useState(false);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -152,8 +153,11 @@ export function FeedPage() {
     load();
     // A contagem falhar não pode derrubar o feed — se não vier, o bloco só não aparece.
     api
-      .get<{ eventDate: string | null; eventTitle: string | null }>('/settings')
-      .then(setEvento)
+      .get<{ eventDate: string | null; eventTitle: string | null; videoUploadEnabled: boolean }>('/settings')
+      .then((s) => {
+        setEvento(s);
+        setVideoUploadEnabled(s.videoUploadEnabled);
+      })
       .catch(() => setEvento(null));
   }, []);
 
@@ -451,7 +455,12 @@ export function FeedPage() {
       </div>
 
       {user?.permissions['feed.create'] && (
-        <PostComposerModal open={composerOpen} onOpenChange={setComposerOpen} onPublished={load} />
+        <PostComposerModal
+          open={composerOpen}
+          onOpenChange={setComposerOpen}
+          onPublished={load}
+          podeEnviarVideo={videoUploadEnabled || user?.role === 'admin'}
+        />
       )}
     </PrivateLayout>
   );
