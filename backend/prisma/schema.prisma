@@ -249,6 +249,9 @@ model SiteSettings {
   // Serve pra liberar como novidade quando ja houver gente suficiente -- cla com 7 pessoas
   // vira um cla so e nao tem graca.
   clansEnabled             Boolean  @default(false)
+  // Envio de video no feed. Desligado ate o dia do encontro de proposito -- o admin sempre
+  // pode enviar video, independente disso; o interruptor so afeta os demais membros.
+  videoUploadEnabled       Boolean  @default(false)
   updatedAt                DateTime @updatedAt
 }
 

@@ -1,3 +1,4 @@
+import fs from 'fs/promises';
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthedRequest, requireAuth, requirePermission } from '../middleware/auth';
@@ -70,6 +71,21 @@ postsRouter.post(
 
     if (!req.file && !trimmedCaption) {
       return res.status(400).json({ error: 'Escreva algo ou anexe uma foto/vídeo' });
+    }
+
+    // Video fica restrito ao admin ate o dia do encontro -- serve pra nao lotar o servidor de
+    // video (que ocupa muito mais espaco que foto) antes da festa. O admin sempre pode enviar,
+    // independente do interruptor; os demais so depois que ele for ligado nas Configuracoes.
+    if (req.file && isVideoFile(req.file.filename) && req.userRoleKey !== 'admin') {
+      const settings = await prisma.siteSettings.findFirst({ select: { videoUploadEnabled: true } });
+      if (!settings?.videoUploadEnabled) {
+        // O multer ja escreveu o arquivo em disco antes desta funcao rodar -- sem apagar aqui,
+        // toda tentativa recusada deixaria um video orfao ocupando espaco a toa.
+        await fs.unlink(req.file.path).catch(() => {});
+        return res.status(403).json({
+          error: 'O envio de vídeos ainda não foi liberado. Por enquanto, só fotos e texto.',
+        });
+      }
     }
 
     const role = await prisma.role.findUnique({ where: { key: req.userRoleKey as string }, select: { dailyPostLimit: true } });

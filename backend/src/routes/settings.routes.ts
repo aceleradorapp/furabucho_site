@@ -47,6 +47,7 @@ settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (
     eventDate,
     eventTitle,
     clansEnabled,
+    videoUploadEnabled,
   } = req.body as {
     siteName?: string;
     subtitle?: string | null;
@@ -59,6 +60,7 @@ settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (
     eventDate?: string | null;
     eventTitle?: string | null;
     clansEnabled?: boolean;
+    videoUploadEnabled?: boolean;
   };
 
   // Data vazia desliga a contagem regressiva. Uma data que o navegador não entende seria
@@ -82,6 +84,7 @@ settingsRouter.put('/', requireAuth, requirePermission('settings.edit'), async (
       ...(eventDate !== undefined ? { eventDate: eventDate ? new Date(eventDate) : null } : {}),
       ...(eventTitle !== undefined ? { eventTitle: eventTitle?.trim() || null } : {}),
       ...(clansEnabled !== undefined ? { clansEnabled: Boolean(clansEnabled) } : {}),
+      ...(videoUploadEnabled !== undefined ? { videoUploadEnabled: Boolean(videoUploadEnabled) } : {}),
     },
   });
 
