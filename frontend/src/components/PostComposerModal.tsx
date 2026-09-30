@@ -13,10 +13,13 @@ export function PostComposerModal({
   open,
   onOpenChange,
   onPublished,
+  podeEnviarVideo,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPublished: () => void;
+  /** Enquanto falso, só o admin (que já chega aqui sempre true) consegue anexar vídeo. */
+  podeEnviarVideo: boolean;
 }) {
   const { user } = useAuth();
   const [caption, setCaption] = useState('');
@@ -185,9 +188,9 @@ export function PostComposerModal({
               <button
                 type="button"
                 onClick={() => videoInputRef.current?.click()}
-                disabled={!!file || compressing}
+                disabled={!!file || compressing || !podeEnviarVideo}
                 className="p-2 rounded-full text-purple-600 hover:bg-purple-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
-                title="Adicionar vídeo"
+                title={podeEnviarVideo ? 'Adicionar vídeo' : 'Vídeo ainda não foi liberado'}
               >
                 <Video size={22} />
               </button>

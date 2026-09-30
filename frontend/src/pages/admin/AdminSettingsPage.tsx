@@ -42,6 +42,7 @@ interface SiteSettings {
   eventDate: string | null;
   eventTitle: string | null;
   clansEnabled: boolean;
+  videoUploadEnabled: boolean;
 }
 
 interface Banner {
@@ -96,6 +97,7 @@ export function AdminSettingsPage() {
         eventDate: next.eventDate,
         eventTitle: next.eventTitle,
         clansEnabled: next.clansEnabled,
+        videoUploadEnabled: next.videoUploadEnabled,
       });
       setSettings(updated);
       window.dispatchEvent(new Event('site-settings-updated'));
@@ -384,6 +386,33 @@ export function AdminSettingsPage() {
           <p className="text-xs text-text-muted mt-3">
             Clã com pouca gente vira um clã só e não tem graça. Vale abrir quando a turma já
             estiver dentro do app.
+          </p>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Vídeos no feed"
+          description="Enquanto desligado, só o admin consegue publicar vídeo no feed — os demais continuam publicando foto e texto normalmente. Pensado pra segurar o espaço do servidor até o encontro."
+        >
+          <label className="flex items-center justify-between gap-4 cursor-pointer">
+            <span className="text-sm text-text-main">
+              {settings.videoUploadEnabled
+                ? 'Liberado — todo mundo já pode enviar vídeo'
+                : 'Restrito — só o admin envia vídeo por enquanto'}
+            </span>
+            <span className="relative inline-flex shrink-0">
+              <input
+                type="checkbox"
+                checked={settings.videoUploadEnabled}
+                onChange={(e) => updateField({ videoUploadEnabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <span className="w-11 h-6 rounded-full bg-border peer-checked:bg-primary transition-colors" />
+              <span className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
+            </span>
+          </label>
+          <p className="text-xs text-text-muted mt-3">
+            Vídeo ocupa bem mais espaço que foto. Vale ligar depois do encontro, quando o pico
+            de fotos e vídeos do dia já tiver passado.
           </p>
         </SettingsSection>
 

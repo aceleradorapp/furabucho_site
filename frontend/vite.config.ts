@@ -14,6 +14,10 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
+      // O registro deixa de ser o script mínimo auto-injetado e passa a ser o nosso, em
+      // src/pwa.ts (importado no main.tsx) -- é o que permite conferir atualização ao reabrir
+      // o app e recarregar sozinho, sem perguntar nada. Ver ADR no próprio src/pwa.ts.
+      injectRegister: false,
       // Desligado no dev de propósito: com injectManifest, o service worker importa o workbox
       // como módulo e o registro automático corre contra a pré-compilação de dependências do
       // Vite — falha na primeira carga e funciona na segunda, poluindo o console com um erro
